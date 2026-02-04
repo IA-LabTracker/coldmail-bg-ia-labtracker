@@ -45,26 +45,18 @@ export default function Error({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button 
-                onClick={reset}
-                className="w-full"
-                variant="default"
-              >
+              <Button onClick={reset} className="w-full" variant="default">
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Recarregar Configurações
               </Button>
-              
-              <Button 
-                asChild
-                className="w-full"
-                variant="outline"
-              >
+
+              <Button asChild className="w-full" variant="outline">
                 <Link href="/dashboard">
                   <Settings className="mr-2 h-4 w-4" />
                   Voltar ao Dashboard
                 </Link>
               </Button>
-              
+
               {process.env.NODE_ENV === "development" && (
                 <details className="text-left">
                   <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">

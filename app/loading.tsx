@@ -23,7 +23,7 @@ export default function Loading() {
           <Skeleton className="h-8 w-64 mb-2" />
           <Skeleton className="h-4 w-96" />
         </div>
-        
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
           {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i}>

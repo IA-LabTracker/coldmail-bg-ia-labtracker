@@ -55,9 +55,9 @@ export default function Loading() {
                     <Skeleton className="h-9 w-28" />
                   </div>
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
                     <Skeleton className="h-4 w-16" />
@@ -68,12 +68,12 @@ export default function Loading() {
                     <Skeleton className="h-10 w-full" />
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Skeleton className="h-4 w-20" />
                   <Skeleton className="h-10 w-full" />
                 </div>
-                
+
                 <div className="flex justify-end">
                   <Skeleton className="h-9 w-24" />
                 </div>
@@ -96,9 +96,9 @@ export default function Loading() {
                     <Skeleton className="h-6 w-12" />
                   </div>
                 ))}
-                
+
                 <Separator />
-                
+
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Skeleton className="h-4 w-28" />

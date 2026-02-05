@@ -5,7 +5,7 @@ import axios from "axios";
 import { Email } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { AlertCircle, CheckCircle, Info, Send, Zap } from "lucide-react";
+import { AlertCircle, CheckCircle, Info, Send, Zap, X } from "lucide-react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 interface BulkActionsProps {
@@ -34,7 +34,7 @@ export function BulkActions({ selectedEmails, onClear }: BulkActionsProps) {
     }
 
     setLoading(true);
-    setMessage(null);
+    setMessage({ type: "info", text: "Triggering initial email webhook..." });
 
     try {
       await axios.post(process.env.NEXT_PUBLIC_WEBHOOK_N8N, {
@@ -43,17 +43,19 @@ export function BulkActions({ selectedEmails, onClear }: BulkActionsProps) {
 
       setMessage({
         type: "success",
-        text: `Successfully sent ${selectedEmails.length} email(s)`,
+        text: `Webhook triggered for ${selectedEmails.length} recipient${selectedEmails.length > 1 ? "s" : ""}.`,
       });
 
+      // Auto clear after success
       setTimeout(() => {
         onClear();
         setMessage(null);
-      }, 2000);
+      }, 3000);
     } catch (error) {
       setMessage({
         type: "error",
-        text: error instanceof Error ? error.message : "Failed to send emails. Please try again.",
+        text:
+          error instanceof Error ? error.message : "Failed to trigger webhook. Please try again.",
       });
     } finally {
       setLoading(false);
@@ -63,7 +65,7 @@ export function BulkActions({ selectedEmails, onClear }: BulkActionsProps) {
   const handleWebhookTrigger = () => {
     setMessage({
       type: "info",
-      text: "Webhook trigger placeholder - will trigger n8n workflow with selected emails",
+      text: "Additional webhook actions will be available soon.",
     });
   };
 
@@ -72,57 +74,73 @@ export function BulkActions({ selectedEmails, onClear }: BulkActionsProps) {
   }
 
   const messageIcons: Record<MessageType, React.ReactNode> = {
-    success: <CheckCircle className="h-5 w-5 text-green-600" />,
-    error: <AlertCircle className="h-5 w-5 text-red-600" />,
-    info: <Info className="h-5 w-5 text-blue-600" />,
+    success: <CheckCircle className="h-4 w-4 text-green-600" />,
+    error: <AlertCircle className="h-4 w-4 text-red-600" />,
+    info: <Info className="h-4 w-4 text-blue-600" />,
   };
 
   const messageBgs: Record<MessageType, string> = {
-    success: "bg-green-50 border-green-200 text-green-800",
-    error: "bg-red-50 border-red-200 text-red-800",
-    info: "bg-blue-50 border-blue-200 text-blue-800",
+    success: "bg-green-50 border-green-100 text-green-800",
+    error: "bg-red-50 border-red-100 text-red-800",
+    info: "bg-blue-50 border-blue-100 text-blue-800",
   };
 
   return (
-    <Card className="border-gray-200 bg-white p-4">
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-medium text-gray-900">
-              {selectedEmails.length} email{selectedEmails.length !== 1 ? "s" : ""} selected
-            </p>
+    <Card className="bg-white border border-blue-100 shadow-sm">
+      <div className="flex flex-col gap-3 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-blue-50 text-blue-700 font-semibold flex items-center justify-center">
+              {selectedEmails.length}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">
+                {selectedEmails.length} email{selectedEmails.length > 1 ? "s" : ""} selected
+              </p>
+              <p className="text-xs text-gray-500">
+                Choose an action to run on the selected records.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button onClick={handleSendInitialEmail} disabled={loading} size="sm" className="gap-2">
+              {loading ? <LoadingSpinner /> : <Send className="h-4 w-4" />}
+              {loading ? "Sending..." : "Send Initial Email"}
+            </Button>
+
+            <Button
+              onClick={handleWebhookTrigger}
+              disabled={loading}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Zap className="h-4 w-4" />
+              Webhook Trigger
+            </Button>
+
+            <Button
+              onClick={onClear}
+              disabled={loading}
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            >
+              <X className="h-4 w-4" />
+              Clear
+            </Button>
           </div>
         </div>
 
         {message && (
           <div
-            className={`flex items-center gap-3 rounded-lg border p-3 ${messageBgs[message.type]}`}
+            className={`flex items-center gap-3 rounded-md border p-3 text-sm ${messageBgs[message.type]}`}
           >
             {messageIcons[message.type]}
-            <p className="text-sm">{message.text}</p>
+            <p>{message.text}</p>
           </div>
         )}
-
-        <div className="flex gap-2">
-          <Button onClick={handleSendInitialEmail} disabled={loading} className="gap-2">
-            {loading ? <LoadingSpinner /> : <Send className="h-4 w-4" />}
-            Send Initial Email
-          </Button>
-
-          <Button
-            onClick={handleWebhookTrigger}
-            disabled={loading}
-            variant="outline"
-            className="gap-2"
-          >
-            <Zap className="h-4 w-4" />
-            Webhook Trigger
-          </Button>
-
-          <Button onClick={onClear} disabled={loading} variant="outline">
-            Clear
-          </Button>
-        </div>
       </div>
     </Card>
   );

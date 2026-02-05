@@ -61,7 +61,7 @@ export function EmailTable({
         <TableHeader>
           <TableRow className="border-b border-gray-200 bg-gray-50">
             <TableHead className="w-12">
-              <Checkbox checked={isAllSelected} onChange={onSelectAll} />
+              <Checkbox checked={isAllSelected} onCheckedChange={onSelectAll} />
             </TableHead>
             <TableHead>Company</TableHead>
             <TableHead>Lead Name</TableHead>
@@ -83,7 +83,7 @@ export function EmailTable({
               <TableCell>
                 <Checkbox
                   checked={selectedIds.has(email.id)}
-                  onChange={() => onSelectEmail(email.id)}
+                  onCheckedChange={() => onSelectEmail(email.id)}
                 />
               </TableCell>
               <TableCell className="font-medium text-gray-900">{email.company}</TableCell>

@@ -39,6 +39,16 @@ const classificationColors: Record<string, { bg: string; text: string }> = {
   cold: { bg: "bg-blue-100", text: "text-blue-800" },
 };
 
+const clientStatusColors: Record<string, { bg: string; text: string }> = {
+  "first-send": { bg: "bg-blue-100", text: "text-blue-800" },
+  "first-followup": { bg: "bg-orange-100", text: "text-orange-800" },
+  "second-followup": { bg: "bg-yellow-100", text: "text-yellow-800" },
+  "third-followup": { bg: "bg-purple-100", text: "text-purple-800" },
+  "fourth-followup": { bg: "bg-pink-100", text: "text-pink-800" },
+  "fifth-followup": { bg: "bg-indigo-100", text: "text-indigo-800" },
+  followup: { bg: "bg-gray-100", text: "text-gray-800" },
+};
+
 export function EmailTable({
   emails,
   selectedIds,
@@ -54,6 +64,15 @@ export function EmailTable({
     statusColors[status] || { bg: "bg-gray-100", text: "text-gray-800" };
   const getClassificationColor = (classification: string) =>
     classificationColors[classification] || { bg: "bg-gray-100", text: "text-gray-800" };
+  const getClientStatusColor = (clientStatus: string) => {
+    if (!clientStatus) return { bg: "bg-gray-100", text: "text-gray-800" };
+
+    if (clientStatus.includes("-followup") && !clientStatusColors[clientStatus]) {
+      return clientStatusColors["followup"];
+    }
+
+    return clientStatusColors[clientStatus] || { bg: "bg-gray-100", text: "text-gray-800" };
+  };
 
   return (
     <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
@@ -63,18 +82,19 @@ export function EmailTable({
             <TableHead className="w-12">
               <Checkbox checked={isAllSelected} onCheckedChange={onSelectAll} />
             </TableHead>
-            <TableHead>Company</TableHead>
-            <TableHead>Lead Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Phone</TableHead>
-            <TableHead>Region</TableHead>
-            <TableHead>Industry</TableHead>
-            <TableHead>Keywords</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Classification</TableHead>
-            <TableHead>Campaign</TableHead>
-            <TableHead>Date Sent</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead className="w-36">Company</TableHead>
+            <TableHead className="w-32">Lead Name</TableHead>
+            <TableHead className="w-44">Email</TableHead>
+            <TableHead className="w-28">Phone</TableHead>
+            <TableHead className="w-24">Region</TableHead>
+            <TableHead className="w-32">Industry</TableHead>
+            <TableHead className="w-32">Keywords</TableHead>
+            <TableHead className="w-24">Status</TableHead>
+            <TableHead className="w-28">Classification</TableHead>
+            <TableHead className="w-24">Client Status</TableHead>
+            <TableHead className="w-32">Campaign</TableHead>
+            <TableHead className="w-36">Date Sent</TableHead>
+            <TableHead className="w-24">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -113,6 +133,13 @@ export function EmailTable({
                 <Badge className={getClassificationColor(email.lead_classification).bg}>
                   <span className={getClassificationColor(email.lead_classification).text}>
                     {email.lead_classification}
+                  </span>
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge className={getClientStatusColor(email.client_status || "").bg}>
+                  <span className={getClientStatusColor(email.client_status || "").text}>
+                    {email.client_status || "-"}
                   </span>
                 </Badge>
               </TableCell>

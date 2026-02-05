@@ -5,7 +5,7 @@
  - `emails` - Store B2B cold email campaign data with comprehensive fields for leads, tracking, and responses
  - Core fields: id, user_id, company, email, region, industry, keywords, status
  - Lead info: lead_name, phone, city, state, address, google_maps_url
- - Campaign tracking: campaign_name, lead_classification, notes, date_sent
+ - Campaign tracking: campaign_name, lead_classification, client_status, notes, date_sent
  - Email configuration: sender_email, prospect_cc_email, cc_email_1/2/3, bcc_email_1
  - Response tracking: response_content, reply_we_got, our_last_reply, time_we_got_reply, reply_time
  - Tagging: lead_category, client_tag
@@ -18,7 +18,7 @@
  
  2. Indexes
  - Composite indexes on user_id for all queries
- - Indexes on status, lead_classification, campaign_name for filtering
+ - Indexes on status, lead_classification, client_status, campaign_name for filtering
  - Index on date_sent DESC for chronological sorting
  
  3. Security
@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS emails (
   status text DEFAULT 'sent' CHECK (status IN ('sent', 'replied', 'bounced')),
   response_content text DEFAULT '',
   lead_classification text DEFAULT 'cold' CHECK (lead_classification IN ('hot', 'warm', 'cold')),
+  client_status text DEFAULT '',
   campaign_name text DEFAULT '',
   notes text DEFAULT '',
   date_sent timestamptz DEFAULT now(),
@@ -85,6 +86,8 @@ CREATE INDEX IF NOT EXISTS emails_user_id_idx ON emails(user_id);
 CREATE INDEX IF NOT EXISTS emails_status_idx ON emails(status);
 
 CREATE INDEX IF NOT EXISTS emails_lead_classification_idx ON emails(lead_classification);
+
+CREATE INDEX IF NOT EXISTS emails_client_status_idx ON emails(client_status);
 
 CREATE INDEX IF NOT EXISTS emails_campaign_name_idx ON emails(campaign_name);
 

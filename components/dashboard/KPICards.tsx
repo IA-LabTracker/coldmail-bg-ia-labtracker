@@ -1,4 +1,4 @@
-import { Mail, MessageSquare, Flame, AlertCircle } from "lucide-react";
+import { Mail, Send, MessageSquare, Flame, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Email } from "@/types";
 
@@ -10,14 +10,21 @@ export function KPICards({ emails }: KPICardsProps) {
   const totalSent = emails.length;
   const repliesReceived = emails.filter((e) => e.status === "replied").length;
   const hotLeads = emails.filter((e) => e.lead_classification === "hot").length;
+  const totalSentEmails = emails.filter((e) => e.status === "sent").length;
   const bounced = emails.filter((e) => e.status === "bounced").length;
 
   const kpis = [
     {
-      label: "Total Sent",
+      label: "Total Researched",
       value: totalSent,
       icon: Mail,
       color: "bg-blue-50 text-blue-600",
+    },
+    {
+      label: "Total Sent",
+      value: totalSentEmails,
+      icon: Send,
+      color: "bg-purple-50 text-purple-600",
     },
     {
       label: "Replies Received",
@@ -40,7 +47,7 @@ export function KPICards({ emails }: KPICardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
       {kpis.map((kpi) => {
         const Icon = kpi.icon;
         return (

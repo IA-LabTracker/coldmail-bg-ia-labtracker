@@ -41,6 +41,7 @@ export function EmailFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="researched">Researched</SelectItem>
             <SelectItem value="sent">Sent</SelectItem>
             <SelectItem value="replied">Replied</SelectItem>
             <SelectItem value="bounced">Bounced</SelectItem>
@@ -50,7 +51,10 @@ export function EmailFilters({
 
       <div>
         <label className="block text-sm font-medium text-gray-700">Classification</label>
-        <Select value={classification || "all"} onValueChange={(v) => onClassificationChange(v === "all" ? "" : v)}>
+        <Select
+          value={classification || "all"}
+          onValueChange={(v) => onClassificationChange(v === "all" ? "" : v)}
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>

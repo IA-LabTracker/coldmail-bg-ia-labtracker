@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Eye } from "lucide-react";
+import { Eye, Trash2 } from "lucide-react";
 import { Email } from "@/types";
 import { formatDateOnly } from "@/lib/formatDate";
 import {
@@ -20,14 +20,16 @@ interface EmailTableProps {
   selectedIds: Set<string>;
   expandedIds: Set<string>;
   sortConfig: { key: string; direction: "asc" | "desc" } | null;
-  onSelectEmail: (id: string) => void;
+  onSelectEmail: (id: string, visibleEmails: Email[], shiftKey: boolean) => void;
   onSelectAll: () => void;
   onToggleExpand: (id: string) => void;
   onViewDetails: (email: Email) => void;
+  onDelete: (email: Email) => void;
   isAllSelected: boolean;
 }
 
 const statusColors: Record<string, { bg: string; text: string }> = {
+  researched: { bg: "bg-purple-100", text: "text-purple-800" },
   sent: { bg: "bg-blue-100", text: "text-blue-800" },
   replied: { bg: "bg-green-100", text: "text-green-800" },
   bounced: { bg: "bg-red-100", text: "text-red-800" },
@@ -58,6 +60,7 @@ export function EmailTable({
   onSelectAll,
   onToggleExpand,
   onViewDetails,
+  onDelete,
   isAllSelected,
 }: EmailTableProps) {
   const getStatusColor = (status: string) =>
@@ -82,6 +85,7 @@ export function EmailTable({
             <TableHead className="w-12">
               <Checkbox checked={isAllSelected} onCheckedChange={onSelectAll} />
             </TableHead>
+            <TableHead className="w-36">Created At</TableHead>
             <TableHead className="w-36">Company</TableHead>
             <TableHead className="w-32">Lead Name</TableHead>
             <TableHead className="w-44">Email</TableHead>
@@ -103,9 +107,10 @@ export function EmailTable({
               <TableCell>
                 <Checkbox
                   checked={selectedIds.has(email.id)}
-                  onCheckedChange={() => onSelectEmail(email.id)}
+                  onClick={(e: React.MouseEvent) => onSelectEmail(email.id, emails, e.shiftKey)}
                 />
               </TableCell>
+              <TableCell className="text-gray-700">{formatDateOnly(email.created_at)}</TableCell>
               <TableCell className="font-medium text-gray-900">{email.company}</TableCell>
               <TableCell className="text-gray-700">{email.lead_name || "-"}</TableCell>
               <TableCell className="text-gray-700">{email.email}</TableCell>
@@ -147,17 +152,11 @@ export function EmailTable({
               <TableCell className="text-gray-700">{formatDateOnly(email.date_sent)}</TableCell>
               <TableCell>
                 <div className="flex gap-1">
-                  {(email.city || email.phone || email.address) && (
-                    <Button variant="ghost" size="sm" onClick={() => onToggleExpand(email.id)}>
-                      {expandedIds.has(email.id) ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </Button>
-                  )}
                   <Button variant="ghost" size="sm" onClick={() => onViewDetails(email)}>
                     <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => onDelete(email)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </TableCell>

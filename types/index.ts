@@ -1,4 +1,4 @@
-export type EmailStatus = "sent" | "replied" | "bounced";
+export type EmailStatus = "sent" | "replied" | "bounced" | "researched";
 export type LeadClassification = "hot" | "warm" | "cold";
 
 export interface Email {

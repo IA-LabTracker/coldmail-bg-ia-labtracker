@@ -5,12 +5,13 @@ import axios from "axios";
 import { Email } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { AlertCircle, CheckCircle, Info, Send, Zap, X } from "lucide-react";
+import { AlertCircle, CheckCircle, Info, Send, Trash2, X } from "lucide-react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 interface BulkActionsProps {
   selectedEmails: Email[];
   onClear: () => void;
+  onBulkDelete: () => void;
 }
 
 type MessageType = "success" | "error" | "info";
@@ -20,7 +21,7 @@ interface Message {
   text: string;
 }
 
-export function BulkActions({ selectedEmails, onClear }: BulkActionsProps) {
+export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActionsProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<Message | null>(null);
 
@@ -60,13 +61,6 @@ export function BulkActions({ selectedEmails, onClear }: BulkActionsProps) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleWebhookTrigger = () => {
-    setMessage({
-      type: "info",
-      text: "Additional webhook actions will be available soon.",
-    });
   };
 
   if (selectedEmails.length === 0) {
@@ -110,14 +104,14 @@ export function BulkActions({ selectedEmails, onClear }: BulkActionsProps) {
             </Button>
 
             <Button
-              onClick={handleWebhookTrigger}
+              onClick={onBulkDelete}
               disabled={loading}
               variant="outline"
               size="sm"
-              className="gap-2"
+              className="gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
             >
-              <Zap className="h-4 w-4" />
-              Webhook Trigger
+              <Trash2 className="h-4 w-4" />
+              Delete Selected
             </Button>
 
             <Button

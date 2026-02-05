@@ -11,12 +11,11 @@ import { EmailTable } from "@/components/dashboard/EmailTable";
 import { ExpandableRow } from "@/components/dashboard/ExpandableRow";
 import { EmailDetailModal } from "@/components/dashboard/EmailDetailModal";
 import { BulkActions } from "@/components/dashboard/BulkActions";
-import { Pagination } from "@/components/dashboard/Pagination";
 import { useEmailSelection } from "@/hooks/useEmailSelection";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
-
-const ITEMS_PER_PAGE = 10;
+import { AlertModal } from "@/components/shared/AlertModal";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -26,7 +25,9 @@ export default function DashboardPage() {
   const [selectedDetailEmail, setSelectedDetailEmail] = useState<Email | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [currentPage, setCurrentPage] = useState(1);
+  const [deleteTarget, setDeleteTarget] = useState<Email | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
 
   // Filters
   const [statusFilter, setStatusFilter] = useState("");
@@ -69,11 +70,6 @@ export default function DashboardPage() {
     fetchEmails();
   }, [fetchEmails]);
 
-  // Reset page to 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [statusFilter, classificationFilter, campaignFilter, searchFilter]);
-
   // Apply filters
   const filteredEmails = useMemo(() => {
     let filtered = emails;
@@ -105,16 +101,7 @@ export default function DashboardPage() {
     return filtered;
   }, [emails, statusFilter, classificationFilter, campaignFilter, searchFilter]);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredEmails.length / ITEMS_PER_PAGE);
-  const paginatedEmails = useMemo(
-    () =>
-      filteredEmails.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE,
-      ),
-    [filteredEmails, currentPage],
-  );
+  const { visibleItems: visibleEmails, hasMore, sentinelRef } = useInfiniteScroll(filteredEmails);
 
   const handleViewDetails = useCallback((email: Email) => {
     setSelectedDetailEmail(email);
@@ -132,6 +119,49 @@ export default function DashboardPage() {
       return newSet;
     });
   }, []);
+
+  const handleDeleteRequest = useCallback((email: Email) => {
+    setDeleteTarget(email);
+    setDeleteModalOpen(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deleteTarget) return;
+    try {
+      const { error: deleteError } = await supabase
+        .from("emails")
+        .delete()
+        .eq("id", deleteTarget.id);
+      if (deleteError) throw deleteError;
+      setEmails((prev) => prev.filter((e) => e.id !== deleteTarget.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete email");
+    } finally {
+      setDeleteTarget(null);
+      setDeleteModalOpen(false);
+    }
+  }, [deleteTarget]);
+
+  const handleBulkDeleteRequest = useCallback(() => {
+    setBulkDeleteModalOpen(true);
+  }, []);
+
+  const handleConfirmBulkDelete = useCallback(async () => {
+    try {
+      const ids = Array.from(selectedIds);
+      const { error: deleteError } = await supabase
+        .from("emails")
+        .delete()
+        .in("id", ids);
+      if (deleteError) throw deleteError;
+      setEmails((prev) => prev.filter((e) => !selectedIds.has(e.id)));
+      clearSelection();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete emails");
+    } finally {
+      setBulkDeleteModalOpen(false);
+    }
+  }, [selectedIds, clearSelection]);
 
   return (
     <>
@@ -165,23 +195,24 @@ export default function DashboardPage() {
               </div>
 
               {selectedEmails.length > 0 && (
-                <BulkActions selectedEmails={selectedEmails} onClear={clearSelection} />
+                <BulkActions selectedEmails={selectedEmails} onClear={clearSelection} onBulkDelete={handleBulkDeleteRequest} />
               )}
 
               <div className="rounded-lg border border-gray-200 bg-white">
                 <EmailTable
-                  emails={paginatedEmails}
+                  emails={visibleEmails}
                   selectedIds={selectedIds}
                   expandedIds={expandedIds}
                   sortConfig={null}
-                  onSelectEmail={toggleEmailSelection}
-                  onSelectAll={() => toggleSelectAllVisible(paginatedEmails)}
+                  onSelectEmail={(id, visible, shiftKey) => toggleEmailSelection(id, visible, shiftKey)}
+                  onSelectAll={() => toggleSelectAllVisible(filteredEmails)}
                   onToggleExpand={handleToggleExpand}
                   onViewDetails={handleViewDetails}
-                  isAllSelected={isAllSelected(paginatedEmails)}
+                  onDelete={handleDeleteRequest}
+                  isAllSelected={isAllSelected(filteredEmails)}
                 />
 
-                {paginatedEmails.map((email) => {
+                {visibleEmails.map((email) => {
                   if (!expandedIds.has(email.id)) return null;
                   return (
                     <div key={`expanded-${email.id}`}>
@@ -190,13 +221,11 @@ export default function DashboardPage() {
                   );
                 })}
 
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  totalItems={filteredEmails.length}
-                  itemsPerPage={ITEMS_PER_PAGE}
-                  onPageChange={setCurrentPage}
-                />
+                {hasMore && (
+                  <div ref={sentinelRef} className="flex justify-center py-4">
+                    <LoadingSpinner />
+                  </div>
+                )}
               </div>
 
               <EmailDetailModal
@@ -205,6 +234,45 @@ export default function DashboardPage() {
                 onOpenChange={setDetailModalOpen}
                 onUpdate={fetchEmails}
               />
+
+              <AlertModal open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+                <AlertModal.Header>
+                  <AlertModal.Title>Delete Record</AlertModal.Title>
+                  <AlertModal.Description>
+                    Are you sure you want to delete the record for{" "}
+                    <strong>{deleteTarget?.company}</strong>? This action cannot be undone.
+                  </AlertModal.Description>
+                </AlertModal.Header>
+                <AlertModal.Footer>
+                  <AlertModal.Cancel>Cancel</AlertModal.Cancel>
+                  <AlertModal.Action
+                    onClick={handleConfirmDelete}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Delete
+                  </AlertModal.Action>
+                </AlertModal.Footer>
+              </AlertModal>
+
+              <AlertModal open={bulkDeleteModalOpen} onOpenChange={setBulkDeleteModalOpen}>
+                <AlertModal.Header>
+                  <AlertModal.Title>Delete Selected Records</AlertModal.Title>
+                  <AlertModal.Description>
+                    Are you sure you want to delete{" "}
+                    <strong>{selectedEmails.length}</strong> selected record
+                    {selectedEmails.length > 1 ? "s" : ""}? This action cannot be undone.
+                  </AlertModal.Description>
+                </AlertModal.Header>
+                <AlertModal.Footer>
+                  <AlertModal.Cancel>Cancel</AlertModal.Cancel>
+                  <AlertModal.Action
+                    onClick={handleConfirmBulkDelete}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Delete All
+                  </AlertModal.Action>
+                </AlertModal.Footer>
+              </AlertModal>
             </>
           )}
         </div>

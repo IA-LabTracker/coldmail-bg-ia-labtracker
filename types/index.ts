@@ -25,7 +25,7 @@ export interface Email {
   google_maps_url?: string;
   lead_category?: string;
   client_tag?: string;
-  client_status?: string;
+  client_step?: string;
   sender_email?: string;
   prospect_cc_email?: string;
   cc_email_1?: string;

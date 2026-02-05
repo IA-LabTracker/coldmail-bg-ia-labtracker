@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Email } from "@/types";
 import {
   Table,
@@ -88,7 +88,7 @@ export function EmailTable({
             <TableHead>Email</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Classification</TableHead>
-            <TableHead>Client Status</TableHead>
+            <TableHead>Client Steps</TableHead>
             <TableHead>Campaign</TableHead>
             <TableHead className="w-24">Actions</TableHead>
           </TableRow>
@@ -102,7 +102,15 @@ export function EmailTable({
                   onClick={(e: React.MouseEvent) => onSelectEmail(email.id, emails, e.shiftKey)}
                 />
               </TableCell>
-              <TableCell className="font-medium text-gray-900">{email.company}</TableCell>
+              <TableCell>
+                <button
+                  type="button"
+                  onClick={() => onViewDetails(email)}
+                  className="font-medium text-gray-900 hover:text-primary hover:underline cursor-pointer"
+                >
+                  {email.company}
+                </button>
+              </TableCell>
               <TableCell className="text-gray-700">{email.email}</TableCell>
               <TableCell>
                 <Badge className={getStatusColor(email.status).bg}>
@@ -117,9 +125,9 @@ export function EmailTable({
                 </Badge>
               </TableCell>
               <TableCell>
-                <Badge className={getClientStatusColor(email.client_status || "").bg}>
-                  <span className={getClientStatusColor(email.client_status || "").text}>
-                    {email.client_status || "-"}
+                <Badge className={getClientStatusColor(email.client_step || "").bg}>
+                  <span className={getClientStatusColor(email.client_step || "").text}>
+                    {email.client_step || "-"}
                   </span>
                 </Badge>
               </TableCell>
@@ -127,7 +135,7 @@ export function EmailTable({
               <TableCell>
                 <div className="flex gap-1">
                   <Button variant="ghost" size="sm" onClick={() => onViewDetails(email)}>
-                    <Eye className="h-4 w-4" />
+                    <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"

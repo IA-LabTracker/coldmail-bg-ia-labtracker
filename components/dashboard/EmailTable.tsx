@@ -2,7 +2,6 @@
 
 import { Eye, Trash2 } from "lucide-react";
 import { Email } from "@/types";
-import { formatDateOnly } from "@/lib/formatDate";
 import {
   Table,
   TableBody,
@@ -85,19 +84,12 @@ export function EmailTable({
             <TableHead className="w-12">
               <Checkbox checked={isAllSelected} onCheckedChange={onSelectAll} />
             </TableHead>
-            <TableHead className="w-36">Created At</TableHead>
-            <TableHead className="w-36">Company</TableHead>
-            <TableHead className="w-32">Lead Name</TableHead>
-            <TableHead className="w-44">Email</TableHead>
-            <TableHead className="w-28">Phone</TableHead>
-            <TableHead className="w-24">Region</TableHead>
-            <TableHead className="w-32">Industry</TableHead>
-            <TableHead className="w-32">Keywords</TableHead>
-            <TableHead className="w-24">Status</TableHead>
-            <TableHead className="w-28">Classification</TableHead>
-            <TableHead className="w-24">Client Status</TableHead>
-            <TableHead className="w-32">Campaign</TableHead>
-            <TableHead className="w-36">Date Sent</TableHead>
+            <TableHead>Company</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Classification</TableHead>
+            <TableHead>Client Status</TableHead>
+            <TableHead>Campaign</TableHead>
             <TableHead className="w-24">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -110,25 +102,8 @@ export function EmailTable({
                   onClick={(e: React.MouseEvent) => onSelectEmail(email.id, emails, e.shiftKey)}
                 />
               </TableCell>
-              <TableCell className="text-gray-700">{formatDateOnly(email.created_at)}</TableCell>
               <TableCell className="font-medium text-gray-900">{email.company}</TableCell>
-              <TableCell className="text-gray-700">{email.lead_name || "-"}</TableCell>
               <TableCell className="text-gray-700">{email.email}</TableCell>
-              <TableCell className="text-gray-700">{email.phone || "-"}</TableCell>
-              <TableCell className="text-gray-700">{email.region}</TableCell>
-              <TableCell className="text-gray-700">{email.industry}</TableCell>
-              <TableCell>
-                <div className="flex flex-wrap gap-1">
-                  {email.keywords.slice(0, 2).map((kw, idx) => (
-                    <Badge key={idx} variant="secondary">
-                      {kw}
-                    </Badge>
-                  ))}
-                  {email.keywords.length > 2 && (
-                    <Badge variant="secondary">+{email.keywords.length - 2}</Badge>
-                  )}
-                </div>
-              </TableCell>
               <TableCell>
                 <Badge className={getStatusColor(email.status).bg}>
                   <span className={getStatusColor(email.status).text}>{email.status}</span>
@@ -149,13 +124,17 @@ export function EmailTable({
                 </Badge>
               </TableCell>
               <TableCell className="text-gray-700">{email.campaign_name || "-"}</TableCell>
-              <TableCell className="text-gray-700">{formatDateOnly(email.date_sent)}</TableCell>
               <TableCell>
                 <div className="flex gap-1">
                   <Button variant="ghost" size="sm" onClick={() => onViewDetails(email)}>
                     <Eye className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => onDelete(email)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(email)}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>

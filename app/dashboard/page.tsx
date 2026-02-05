@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Email } from "@/types";
 import { Navbar } from "@/components/Navbar";
-import { KPICards } from "@/components/dashboard/KPICards";
+import { KPICards, KPIFilter } from "@/components/dashboard/KPICards";
 import { EmailFilters } from "@/components/dashboard/EmailFilters";
 import { EmailTable } from "@/components/dashboard/EmailTable";
 import { ExpandableRow } from "@/components/dashboard/ExpandableRow";
@@ -34,6 +34,7 @@ export default function DashboardPage() {
   const [classificationFilter, setClassificationFilter] = useState("");
   const [campaignFilter, setCampaignFilter] = useState("");
   const [searchFilter, setSearchFilter] = useState("");
+  const [kpiFilter, setKpiFilter] = useState<KPIFilter | null>(null);
 
   const {
     selectedIds,
@@ -84,9 +85,7 @@ export default function DashboardPage() {
 
     if (campaignFilter) {
       const lowerCampaign = campaignFilter.toLowerCase();
-      filtered = filtered.filter((e) =>
-        e.campaign_name.toLowerCase().includes(lowerCampaign),
-      );
+      filtered = filtered.filter((e) => e.campaign_name.toLowerCase().includes(lowerCampaign));
     }
 
     if (searchFilter) {
@@ -149,10 +148,7 @@ export default function DashboardPage() {
   const handleConfirmBulkDelete = useCallback(async () => {
     try {
       const ids = Array.from(selectedIds);
-      const { error: deleteError } = await supabase
-        .from("emails")
-        .delete()
-        .in("id", ids);
+      const { error: deleteError } = await supabase.from("emails").delete().in("id", ids);
       if (deleteError) throw deleteError;
       setEmails((prev) => prev.filter((e) => !selectedIds.has(e.id)));
       clearSelection();
@@ -178,15 +174,37 @@ export default function DashboardPage() {
             </div>
           ) : (
             <>
-              <KPICards emails={emails} />
+              <KPICards
+                emails={emails}
+                activeFilter={kpiFilter}
+                onFilterChange={(filter) => {
+                  setKpiFilter(filter);
+                  if (!filter) {
+                    setStatusFilter("");
+                    setClassificationFilter("");
+                  } else if (filter.type === "status") {
+                    setStatusFilter(filter.value);
+                    setClassificationFilter("");
+                  } else if (filter.type === "classification") {
+                    setClassificationFilter(filter.value);
+                    setStatusFilter("");
+                  }
+                }}
+              />
 
               <div className="rounded-lg bg-white p-4">
                 <h2 className="mb-4 text-lg font-semibold text-gray-900">Filters</h2>
                 <EmailFilters
                   status={statusFilter}
-                  onStatusChange={setStatusFilter}
+                  onStatusChange={(v) => {
+                    setStatusFilter(v);
+                    setKpiFilter(null);
+                  }}
                   classification={classificationFilter}
-                  onClassificationChange={setClassificationFilter}
+                  onClassificationChange={(v) => {
+                    setClassificationFilter(v);
+                    setKpiFilter(null);
+                  }}
                   campaign={campaignFilter}
                   onCampaignChange={setCampaignFilter}
                   search={searchFilter}
@@ -195,7 +213,11 @@ export default function DashboardPage() {
               </div>
 
               {selectedEmails.length > 0 && (
-                <BulkActions selectedEmails={selectedEmails} onClear={clearSelection} onBulkDelete={handleBulkDeleteRequest} />
+                <BulkActions
+                  selectedEmails={selectedEmails}
+                  onClear={clearSelection}
+                  onBulkDelete={handleBulkDeleteRequest}
+                />
               )}
 
               <div className="rounded-lg border border-gray-200 bg-white">
@@ -204,7 +226,9 @@ export default function DashboardPage() {
                   selectedIds={selectedIds}
                   expandedIds={expandedIds}
                   sortConfig={null}
-                  onSelectEmail={(id, visible, shiftKey) => toggleEmailSelection(id, visible, shiftKey)}
+                  onSelectEmail={(id, visible, shiftKey) =>
+                    toggleEmailSelection(id, visible, shiftKey)
+                  }
                   onSelectAll={() => toggleSelectAllVisible(filteredEmails)}
                   onToggleExpand={handleToggleExpand}
                   onViewDetails={handleViewDetails}
@@ -258,8 +282,8 @@ export default function DashboardPage() {
                 <AlertModal.Header>
                   <AlertModal.Title>Delete Selected Records</AlertModal.Title>
                   <AlertModal.Description>
-                    Are you sure you want to delete{" "}
-                    <strong>{selectedEmails.length}</strong> selected record
+                    Are you sure you want to delete <strong>{selectedEmails.length}</strong>{" "}
+                    selected record
                     {selectedEmails.length > 1 ? "s" : ""}? This action cannot be undone.
                   </AlertModal.Description>
                 </AlertModal.Header>

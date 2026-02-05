@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Email } from "@/types";
 import { supabase } from "@/lib/supabase";
-import { formatDate } from "@/lib/formatDate";
+import { formatDate, formatDateOnly } from "@/lib/formatDate";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -111,6 +111,10 @@ export function EmailDetailModal({ email, open, onOpenChange, onUpdate }: EmailD
               <CardTitle className="text-base">Basic Information</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-gray-500">Created At</p>
+                <p className="font-medium text-gray-900">{formatDateOnly(email.created_at)}</p>
+              </div>
               <div>
                 <p className="text-gray-500">Email</p>
                 <p className="font-medium text-gray-900">{email.email}</p>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseMiddleware } from "@/lib/supabase-middleware";
 
-const PROTECTED_ROUTES = ["/dashboard", "/search", "/settings", "/linkedin"];
+const PROTECTED_ROUTES = ["/dashboard", "/search", "/settings", "/linkedin", "/import"];
 const AUTH_ROUTES = ["/login", "/signup"];
 
 export async function middleware(request: NextRequest) {
@@ -31,6 +31,7 @@ export const config = {
     "/search/:path*",
     "/settings/:path*",
     "/linkedin/:path*",
+    "/import/:path*",
     "/login",
     "/signup",
   ],

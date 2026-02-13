@@ -56,3 +56,29 @@ export interface LinkedInLead {
   position: string;
   linkedinUrl: string;
 }
+
+export interface ImportRow {
+  company: string;
+  email: string;
+  region: string;
+  industry: string;
+  keywords: string[];
+  status: EmailStatus;
+  campaign_name: string;
+  lead_name: string;
+  phone: string;
+  city: string;
+  state: string;
+  address: string;
+  google_maps_url: string;
+  lead_category: string;
+}
+
+export interface ImportValidation {
+  rowIndex: number;
+  field: string;
+  message: string;
+  severity: "error" | "warning";
+}
+
+export type ImportStatus = "idle" | "parsing" | "preview" | "importing" | "success" | "error";

@@ -16,6 +16,9 @@ import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { AlertModal } from "@/components/shared/AlertModal";
+import Link from "next/link";
+import { Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -164,7 +167,15 @@ export default function DashboardPage() {
       <Navbar />
       <div className="min-h-screen bg-gray-50">
         <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <Link href="/import">
+              <Button className="gap-2">
+                <Upload className="h-4 w-4" />
+                Import Leads
+              </Button>
+            </Link>
+          </div>
 
           {error && <ErrorMessage message={error} />}
 

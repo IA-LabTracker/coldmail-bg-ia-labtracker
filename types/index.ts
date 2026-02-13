@@ -81,4 +81,10 @@ export interface ImportValidation {
   severity: "error" | "warning";
 }
 
+export interface CompanyGroup {
+  companyKey: string;
+  company: string;
+  emails: Email[];
+}
+
 export type ImportStatus = "idle" | "parsing" | "preview" | "importing" | "success" | "error";

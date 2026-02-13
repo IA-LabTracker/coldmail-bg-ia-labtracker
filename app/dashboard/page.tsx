@@ -8,11 +8,11 @@ import { Navbar } from "@/components/Navbar";
 import { KPICards, KPIFilter } from "@/components/dashboard/KPICards";
 import { EmailFilters } from "@/components/dashboard/EmailFilters";
 import { EmailTable } from "@/components/dashboard/EmailTable";
-import { ExpandableRow } from "@/components/dashboard/ExpandableRow";
 import { EmailDetailModal } from "@/components/dashboard/EmailDetailModal";
 import { BulkActions } from "@/components/dashboard/BulkActions";
 import { useEmailSelection } from "@/hooks/useEmailSelection";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { groupEmailsByCompany } from "@/lib/groupEmailsByCompany";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { AlertModal } from "@/components/shared/AlertModal";
@@ -27,14 +27,14 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const [selectedDetailEmail, setSelectedDetailEmail] = useState<Email | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [expandedCompanies, setExpandedCompanies] = useState<Set<string>>(new Set());
   const [deleteTarget, setDeleteTarget] = useState<Email | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
 
-  // Filters
   const [statusFilter, setStatusFilter] = useState("");
   const [classificationFilter, setClassificationFilter] = useState("");
+  const [clientStepFilter, setClientStepFilter] = useState("");
   const [campaignFilter, setCampaignFilter] = useState("");
   const [searchFilter, setSearchFilter] = useState("");
   const [kpiFilter, setKpiFilter] = useState<KPIFilter | null>(null);
@@ -48,7 +48,6 @@ export default function DashboardPage() {
     clearSelection,
   } = useEmailSelection(emails);
 
-  // Fetch emails
   const fetchEmails = useCallback(async () => {
     if (!user) return;
     setLoading(true);
@@ -74,7 +73,6 @@ export default function DashboardPage() {
     fetchEmails();
   }, [fetchEmails]);
 
-  // Apply filters
   const filteredEmails = useMemo(() => {
     let filtered = emails;
 
@@ -84,6 +82,10 @@ export default function DashboardPage() {
 
     if (classificationFilter) {
       filtered = filtered.filter((e) => e.lead_classification === classificationFilter);
+    }
+
+    if (clientStepFilter) {
+      filtered = filtered.filter((e) => e.client_step === clientStepFilter);
     }
 
     if (campaignFilter) {
@@ -96,31 +98,53 @@ export default function DashboardPage() {
       filtered = filtered.filter(
         (e) =>
           e.company.toLowerCase().includes(lowerSearch) ||
-          e.email.toLowerCase().includes(lowerSearch),
+          e.email.toLowerCase().includes(lowerSearch) ||
+          (e.lead_name || "").toLowerCase().includes(lowerSearch) ||
+          (e.lead_category || "").toLowerCase().includes(lowerSearch) ||
+          (e.client_tag || "").toLowerCase().includes(lowerSearch),
       );
     }
 
     return filtered;
-  }, [emails, statusFilter, classificationFilter, campaignFilter, searchFilter]);
+  }, [emails, statusFilter, classificationFilter, clientStepFilter, campaignFilter, searchFilter]);
 
-  const { visibleItems: visibleEmails, hasMore, sentinelRef } = useInfiniteScroll(filteredEmails);
+  const companyGroups = useMemo(() => groupEmailsByCompany(filteredEmails), [filteredEmails]);
+
+  const { visibleItems: visibleGroups, hasMore, sentinelRef } = useInfiniteScroll(companyGroups);
+
+  const allVisibleEmails = useMemo(() => visibleGroups.flatMap((g) => g.emails), [visibleGroups]);
 
   const handleViewDetails = useCallback((email: Email) => {
     setSelectedDetailEmail(email);
     setDetailModalOpen(true);
   }, []);
 
-  const handleToggleExpand = useCallback((id: string) => {
-    setExpandedIds((prev) => {
+  const handleToggleCompany = useCallback((companyKey: string) => {
+    setExpandedCompanies((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
+      if (newSet.has(companyKey)) {
+        newSet.delete(companyKey);
       } else {
-        newSet.add(id);
+        newSet.add(companyKey);
       }
       return newSet;
     });
   }, []);
+
+  const handleSelectGroup = useCallback(
+    (emailIds: string[]) => {
+      const allSelected = emailIds.every((id) => selectedIds.has(id));
+      for (const id of emailIds) {
+        const isCurrentlySelected = selectedIds.has(id);
+        if (allSelected && isCurrentlySelected) {
+          toggleEmailSelection(id, allVisibleEmails, false);
+        } else if (!allSelected && !isCurrentlySelected) {
+          toggleEmailSelection(id, allVisibleEmails, false);
+        }
+      }
+    },
+    [selectedIds, toggleEmailSelection, allVisibleEmails],
+  );
 
   const handleDeleteRequest = useCallback((email: Email) => {
     setDeleteTarget(email);
@@ -216,6 +240,8 @@ export default function DashboardPage() {
                     setClassificationFilter(v);
                     setKpiFilter(null);
                   }}
+                  clientStep={clientStepFilter}
+                  onClientStepChange={setClientStepFilter}
                   campaign={campaignFilter}
                   onCampaignChange={setCampaignFilter}
                   search={searchFilter}
@@ -233,28 +259,19 @@ export default function DashboardPage() {
 
               <div className="rounded-lg border border-gray-200 bg-white">
                 <EmailTable
-                  emails={visibleEmails}
+                  groups={visibleGroups}
                   selectedIds={selectedIds}
-                  expandedIds={expandedIds}
-                  sortConfig={null}
+                  expandedCompanies={expandedCompanies}
                   onSelectEmail={(id, visible, shiftKey) =>
                     toggleEmailSelection(id, visible, shiftKey)
                   }
-                  onSelectAll={() => toggleSelectAllVisible(filteredEmails)}
-                  onToggleExpand={handleToggleExpand}
+                  onSelectGroup={handleSelectGroup}
+                  onSelectAll={() => toggleSelectAllVisible(allVisibleEmails)}
+                  onToggleCompany={handleToggleCompany}
                   onViewDetails={handleViewDetails}
                   onDelete={handleDeleteRequest}
-                  isAllSelected={isAllSelected(filteredEmails)}
+                  isAllSelected={isAllSelected(allVisibleEmails)}
                 />
-
-                {visibleEmails.map((email) => {
-                  if (!expandedIds.has(email.id)) return null;
-                  return (
-                    <div key={`expanded-${email.id}`}>
-                      <ExpandableRow email={email} />
-                    </div>
-                  );
-                })}
 
                 {hasMore && (
                   <div ref={sentinelRef} className="flex justify-center py-4">

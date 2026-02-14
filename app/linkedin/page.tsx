@@ -54,7 +54,7 @@ export default function LinkedInPage() {
         const accounts = data.accounts || [];
 
         const connected = accounts.find(
-          (a: { status: string }) => a.status === "CREATION_SUCCESS" || a.status === "RECONNECTED",
+          (a: { is_active: boolean }) => a.is_active,
         );
 
         return connected?.account_id || null;

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import axios from "axios";
 
 // Map Unipile Account Status webhook messages to our status format
 function normalizeStatus(raw: string): string {
@@ -82,17 +81,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing account_id" }, { status: 400 });
     }
 
-    // If we don't have clientId (Account Status format), fetch it from Unipile API
-    if (!clientId) {
-      clientId = await fetchClientIdFromUnipile(account_id);
-      console.log("Unipile callback: fetched clientId from API:", clientId);
-    }
-
-    if (!clientId) {
-      console.error("Unipile callback: could not determine client_id for account:", account_id);
-      return NextResponse.json({ error: "Could not determine user" }, { status: 400 });
-    }
-
     const normalizedStatus = normalizeStatus(status);
     console.log("Unipile callback: normalized status:", normalizedStatus);
 
@@ -104,36 +92,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
     }
 
-    // Use service role to bypass RLS
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Check if this exact event already exists (avoid duplicates)
-    const { data: existing } = await supabase
-      .from("linkedin_accounts")
-      .select("id")
-      .eq("client_id", clientId)
-      .eq("account_id", account_id)
-      .eq("status", normalizedStatus)
-      .limit(1);
+    // If we don't have clientId (Account Status webhook format),
+    // look up existing row in DB first (most reliable), then fallback to Unipile API
+    if (!clientId) {
+      const { data: existingRow } = await supabase
+        .from("linkedin_accounts")
+        .select("client_id")
+        .eq("account_id", account_id)
+        .limit(1)
+        .single();
 
-    if (existing && existing.length > 0) {
-      console.log("Unipile callback: duplicate event, skipping insert");
-      return NextResponse.json({ ok: true, status: normalizedStatus, duplicate: true });
+      if (existingRow?.client_id) {
+        clientId = existingRow.client_id;
+        console.log("Unipile callback: found client_id from DB:", clientId);
+      }
     }
 
-    // Save event to linkedin_accounts table
-    const { error: insertError } = await supabase.from("linkedin_accounts").insert({
-      client_id: clientId,
-      account_id,
-      status: normalizedStatus,
-    });
+    if (!clientId) {
+      console.error("Unipile callback: could not determine client_id for account:", account_id);
+      return NextResponse.json({ error: "Could not determine user" }, { status: 400 });
+    }
 
-    if (insertError) {
-      console.error("Failed to insert linkedin_accounts:", JSON.stringify(insertError));
+    // Upsert: update existing row for this account_id, or insert if new
+    const { error: upsertError } = await supabase.from("linkedin_accounts").upsert(
+      {
+        client_id: clientId,
+        account_id,
+        status: normalizedStatus,
+      },
+      { onConflict: "account_id" },
+    );
+
+    if (upsertError) {
+      console.error("Failed to upsert linkedin_accounts:", JSON.stringify(upsertError));
       return NextResponse.json({ error: "Failed to save account event" }, { status: 500 });
     }
 
-    console.log("Unipile callback: inserted into linkedin_accounts", {
+    console.log("Unipile callback: upserted linkedin_accounts", {
       normalizedStatus,
       account_id,
       clientId,
@@ -157,36 +154,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * Fetches the account details from Unipile API to get the "name" field
- * (which contains our user_id, set during OAuth creation).
- */
-async function fetchClientIdFromUnipile(accountId: string): Promise<string> {
-  const unipileDsn = process.env.UNIPILE_DSN;
-  const unipileApiKey = process.env.UNIPILE_API_KEY;
-
-  if (!unipileDsn || !unipileApiKey) return "";
-
-  try {
-    const response = await axios.get(`https://${unipileDsn}/api/v1/accounts/${accountId}`, {
-      headers: {
-        "X-API-KEY": unipileApiKey,
-        Accept: "application/json",
-      },
-    });
-
-    const name = response.data?.name || "";
-    console.log("Unipile API account details:", {
-      id: response.data?.id,
-      name,
-      type: response.data?.type,
-    });
-    return name;
-  } catch (err) {
-    console.error(
-      "Failed to fetch account from Unipile:",
-      err instanceof Error ? err.message : err,
-    );
-    return "";
-  }
-}

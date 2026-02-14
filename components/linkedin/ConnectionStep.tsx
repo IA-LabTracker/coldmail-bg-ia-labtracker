@@ -14,17 +14,17 @@ import {
   WifiOff,
   RefreshCw,
   Loader2,
-  Trash2,
 } from "lucide-react";
 
 interface LinkedInAccount {
   id: string;
-  client_id: string;
   account_id: string;
-  status: string;
-  data_conecction: string;
-  provider?: string;
-  unipile_status?: string;
+  display_name: string;
+  provider: string;
+  status: string; // OK, STOPPED, ERROR, CREDENTIALS, CONNECTING, etc.
+  linkedin_username?: string;
+  connected_at: string;
+  is_active: boolean;
 }
 
 interface ConnectionStepProps {
@@ -36,15 +36,9 @@ const STATUS_CONFIG: Record<
   string,
   { label: string; icon: React.ReactNode; dotColor: string; textColor: string }
 > = {
-  CREATION_SUCCESS: {
-    label: "Conectado",
+  OK: {
+    label: "Running",
     icon: <CheckCircle className="h-4 w-4" />,
-    dotColor: "bg-green-500",
-    textColor: "text-green-700",
-  },
-  RECONNECTED: {
-    label: "Reconectado",
-    icon: <RefreshCw className="h-4 w-4" />,
     dotColor: "bg-green-500",
     textColor: "text-green-700",
   },
@@ -54,23 +48,29 @@ const STATUS_CONFIG: Record<
     dotColor: "bg-yellow-500",
     textColor: "text-yellow-700",
   },
+  STOPPED: {
+    label: "Parado",
+    icon: <WifiOff className="h-4 w-4" />,
+    dotColor: "bg-orange-500",
+    textColor: "text-orange-700",
+  },
   ERROR: {
     label: "Erro",
     icon: <WifiOff className="h-4 w-4" />,
     dotColor: "bg-red-500",
     textColor: "text-red-700",
   },
-  CREATION_FAIL: {
-    label: "Falha",
+  CREDENTIALS: {
+    label: "Credenciais",
     icon: <AlertCircle className="h-4 w-4" />,
     dotColor: "bg-red-500",
     textColor: "text-red-700",
   },
-  DELETION: {
-    label: "Removida",
-    icon: <Trash2 className="h-4 w-4" />,
-    dotColor: "bg-gray-400",
-    textColor: "text-gray-600",
+  PERMISSIONS: {
+    label: "Permissões",
+    icon: <AlertCircle className="h-4 w-4" />,
+    dotColor: "bg-red-500",
+    textColor: "text-red-700",
   },
 };
 
@@ -114,9 +114,7 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
 
         // Auto-select the latest active account if none selected
         if (!accountId && accs.length > 0) {
-          const connected = accs.find(
-            (a) => a.status === "CREATION_SUCCESS" || a.status === "RECONNECTED",
-          );
+          const connected = accs.find((a) => a.is_active);
           if (connected) {
             onAccountIdChange(connected.account_id);
           }
@@ -171,15 +169,42 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
     }
   };
 
-  const handleDisconnect = async () => {
+  const handleDisconnect = async (targetAccountId: string) => {
     if (!user) return;
 
     setLoading(true);
     setError("");
 
     try {
-      await supabase.from("settings").update({ linkedin_account_id: null }).eq("user_id", user.id);
-      onAccountIdChange(null);
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error("No session");
+      }
+
+      const res = await fetch("/api/linkedin-accounts", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ account_id: targetAccountId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to remove account");
+      }
+
+      // Remove from local state
+      setAccounts((prev) => prev.filter((a) => a.account_id !== targetAccountId));
+
+      // Clear selection if this was the active account
+      if (accountId === targetAccountId) {
+        onAccountIdChange(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to disconnect");
     } finally {
@@ -188,9 +213,7 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
   };
 
   const isConnected = !!accountId;
-  const activeAccounts = accounts.filter(
-    (a) => a.status === "CREATION_SUCCESS" || a.status === "RECONNECTED",
-  );
+  const activeAccounts = accounts.filter((a) => a.is_active);
 
   return (
     <Card>
@@ -246,16 +269,20 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-900">LinkedIn</span>
+                          <span className="text-sm font-medium text-gray-900">
+                            {account.display_name || "LinkedIn"}
+                          </span>
                           <span
                             className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${config.textColor} bg-opacity-10`}
                           >
                             <span className={`h-1.5 w-1.5 rounded-full ${config.dotColor}`} />
-                            {account.unipile_status || config.label}
+                            {config.label}
                           </span>
                         </div>
                         <p className="text-xs text-gray-500">
-                          ID: {account.account_id.substring(0, 16)}...
+                          {account.linkedin_username
+                            ? `@${account.linkedin_username}`
+                            : `ID: ${account.account_id.substring(0, 16)}...`}
                         </p>
                       </div>
                     </div>
@@ -273,7 +300,7 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
                       )}
                       {isSelected && (
                         <Button
-                          onClick={handleDisconnect}
+                          onClick={() => handleDisconnect(account.account_id)}
                           disabled={loading}
                           variant="ghost"
                           size="sm"

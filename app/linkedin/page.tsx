@@ -35,12 +35,15 @@ export default function LinkedInPage() {
     if (!user) return null;
 
     const { data } = await supabase
-      .from("settings")
-      .select("linkedin_account_id")
-      .eq("user_id", user.id)
+      .from("linkedin_accounts")
+      .select("account_id")
+      .eq("client_id", user.id)
+      .in("status", ["CREATION_SUCCESS", "RECONNECTED"])
+      .order("data_conecction", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
-    return data?.linkedin_account_id || null;
+    return data?.account_id || null;
   }, [user]);
 
   // Initial load + detect OAuth redirect

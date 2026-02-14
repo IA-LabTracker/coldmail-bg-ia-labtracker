@@ -9,11 +9,11 @@ interface UnipileCallbackBody {
 
 export async function POST(request: NextRequest) {
   try {
-    // Validate webhook secret via query parameter
+    // Validate webhook secret via query parameter (if configured)
     const secret = request.nextUrl.searchParams.get("secret");
     const expectedSecret = process.env.UNIPILE_WEBHOOK_SECRET;
 
-    if (!expectedSecret || secret !== expectedSecret) {
+    if (expectedSecret && secret !== expectedSecret) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

@@ -72,18 +72,25 @@ export async function POST(request: NextRequest) {
       ? `${appUrl}/api/unipile-callback?secret=${encodeURIComponent(webhookSecret)}`
       : `${appUrl}/api/unipile-callback`;
 
+    const payload: Record<string, unknown> = {
+      type: "create",
+      api_url: `https://${unipileDsn}`,
+      providers: ["LINKEDIN"],
+      expiresOn: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+      success_redirect_url,
+      failure_redirect_url,
+      name: user.id,
+    };
+
+    // Only include notify_url if it's a publicly reachable URL
+    // Unipile cannot call back to localhost
+    if (notifyUrl && !notifyUrl.includes("localhost")) {
+      payload.notify_url = notifyUrl;
+    }
+
     const response = await axios.post(
       `https://${unipileDsn}/api/v1/hosted/accounts/link`,
-      {
-        type: "create",
-        api_url: `https://${unipileDsn}`,
-        providers: ["LINKEDIN"],
-        expiresOn: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-        success_redirect_url,
-        failure_redirect_url,
-        notify_url: notifyUrl,
-        name: user.id,
-      },
+      payload,
       {
         headers: {
           "X-API-KEY": unipileApiKey,
@@ -94,7 +101,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: response.data.url });
   } catch (error) {
-    console.error("Unipile auth error:", error);
-    return NextResponse.json({ error: "Failed to create auth link" }, { status: 500 });
+    const detail =
+      axios.isAxiosError(error) && error.response?.data
+        ? JSON.stringify(error.response.data)
+        : error instanceof Error
+          ? error.message
+          : "Unknown error";
+    console.error("Unipile auth error:", detail);
+    return NextResponse.json({ error: `Failed to create auth link: ${detail}` }, { status: 500 });
   }
 }

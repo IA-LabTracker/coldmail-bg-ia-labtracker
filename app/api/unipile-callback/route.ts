@@ -18,22 +18,34 @@ interface UnipileCallbackBody {
 
 export async function POST(request: NextRequest) {
   try {
-    // Validate webhook secret via query parameter (if configured)
-    const secret = request.nextUrl.searchParams.get("secret");
+    // Validate webhook secret via query parameter or header (if configured)
     const expectedSecret = process.env.UNIPILE_WEBHOOK_SECRET;
 
-    if (expectedSecret && secret !== expectedSecret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (expectedSecret) {
+      const secretFromQuery = request.nextUrl.searchParams.get("secret");
+      const secretFromHeader = request.headers.get("unipile-auth");
+
+      if (secretFromQuery !== expectedSecret && secretFromHeader !== expectedSecret) {
+        console.error("Unipile callback: secret mismatch", {
+          hasQuery: !!secretFromQuery,
+          hasHeader: !!secretFromHeader,
+        });
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
     }
 
     const body: UnipileCallbackBody = await request.json();
     const { status, account_id, name: clientId } = body;
 
+    console.log("Unipile callback received:", { status, account_id, clientId });
+
     if (!account_id || !clientId) {
+      console.error("Unipile callback: missing fields", { account_id, clientId });
       return NextResponse.json({ error: "Missing account_id or name" }, { status: 400 });
     }
 
     if (!VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])) {
+      console.log("Unipile callback: unknown status ignored", status);
       return NextResponse.json({ ok: true, message: "Unknown status ignored" });
     }
 
@@ -41,6 +53,7 @@ export async function POST(request: NextRequest) {
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !serviceRoleKey) {
+      console.error("Unipile callback: missing supabase env vars");
       return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
     }
 
@@ -55,9 +68,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (insertError) {
-      console.error("Failed to insert linkedin_accounts:", insertError);
+      console.error("Failed to insert linkedin_accounts:", JSON.stringify(insertError));
       return NextResponse.json({ error: "Failed to save account event" }, { status: 500 });
     }
+
+    console.log("Unipile callback: inserted into linkedin_accounts", { status, account_id });
 
     // On successful connection, also update settings for backward compatibility
     if (status === "CREATION_SUCCESS" || status === "RECONNECTED") {
@@ -66,12 +81,13 @@ export async function POST(request: NextRequest) {
         .upsert({ user_id: clientId, linkedin_account_id: account_id }, { onConflict: "user_id" });
 
       if (settingsError) {
-        console.error("Failed to update settings:", settingsError);
+        console.error("Failed to update settings:", JSON.stringify(settingsError));
       }
     }
 
     return NextResponse.json({ ok: true, status });
-  } catch {
+  } catch (err) {
+    console.error("Unipile callback: unexpected error", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

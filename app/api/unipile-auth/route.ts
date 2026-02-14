@@ -7,7 +7,7 @@ interface RequestBody {
   failure_redirect_url: string;
 }
 
-function isAllowedRedirectUrl(url: string): boolean {
+function isAllowedRedirectUrl(url: string, requestHost: string): boolean {
   try {
     const parsed = new URL(url);
     const appHost = process.env.NEXT_PUBLIC_APP_URL
@@ -17,6 +17,7 @@ function isAllowedRedirectUrl(url: string): boolean {
       (parsed.protocol === "https:" || parsed.protocol === "http:") &&
       (parsed.host === "localhost" ||
         parsed.host.startsWith("localhost:") ||
+        parsed.host === requestHost ||
         (appHost !== null && parsed.host === appHost))
     );
   } catch {
@@ -50,9 +51,10 @@ export async function POST(request: NextRequest) {
     const { success_redirect_url, failure_redirect_url } = body;
 
     // Validate redirect URLs to prevent open redirect attacks
+    const requestHost = new URL(request.url).host;
     if (
-      !isAllowedRedirectUrl(success_redirect_url) ||
-      !isAllowedRedirectUrl(failure_redirect_url)
+      !isAllowedRedirectUrl(success_redirect_url, requestHost) ||
+      !isAllowedRedirectUrl(failure_redirect_url, requestHost)
     ) {
       return NextResponse.json({ error: "Invalid redirect URL" }, { status: 400 });
     }

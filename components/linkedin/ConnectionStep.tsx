@@ -108,7 +108,7 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
   const [events, setEvents] = useState<LinkedInAccount[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
 
-  const fetchEvents = useCallback(async () => {
+  const fetchEvents = useCallback(async (sync = false) => {
     if (!user) return;
 
     setLoadingEvents(true);
@@ -117,7 +117,8 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
         data: { session },
       } = await supabase.auth.getSession();
 
-      const res = await fetch("/api/linkedin-accounts", {
+      const url = sync ? "/api/linkedin-accounts?sync=true" : "/api/linkedin-accounts";
+      const res = await fetch(url, {
         headers: {
           ...(session?.access_token && { Authorization: `Bearer ${session.access_token}` }),
         },
@@ -125,17 +126,31 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
 
       if (res.ok) {
         const data = await res.json();
-        setEvents(data.accounts || []);
+        const accounts: LinkedInAccount[] = data.accounts || [];
+        setEvents(accounts);
+
+        // Auto-select the latest successful account if none selected
+        if (!accountId && accounts.length > 0) {
+          const connected = accounts.find(
+            (a) => a.status === "CREATION_SUCCESS" || a.status === "RECONNECTED",
+          );
+          if (connected) {
+            onAccountIdChange(connected.account_id);
+          }
+        }
       }
     } catch {
       // Silently fail - events are supplementary info
     } finally {
       setLoadingEvents(false);
     }
-  }, [user]);
+  }, [user, accountId, onAccountIdChange]);
 
   useEffect(() => {
-    fetchEvents();
+    // If returning from OAuth, sync from Unipile API as fallback
+    const params = new URLSearchParams(window.location.search);
+    const shouldSync = params.get("connected") === "true";
+    fetchEvents(shouldSync);
   }, [fetchEvents]);
 
   const handleConnect = async () => {
@@ -251,7 +266,7 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-medium text-gray-700">Historico de eventos</h4>
-                <button onClick={fetchEvents} className="text-xs text-gray-500 hover:text-gray-700">
+                <button onClick={() => fetchEvents(true)} className="text-xs text-gray-500 hover:text-gray-700">
                   <RefreshCw className="h-3 w-3" />
                 </button>
               </div>

@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     // On successful connection, also update settings for backward compatibility
     if (status === "CREATION_SUCCESS" || status === "RECONNECTED") {
       const { error: settingsError } = await supabase
-        .from("linkedin_accounts")
+        .from("settings")
         .upsert({ user_id: clientId, linkedin_account_id: account_id }, { onConflict: "user_id" });
 
       if (settingsError) {

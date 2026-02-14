@@ -1,29 +1,151 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { CheckCircle, AlertCircle, LinkIcon } from "lucide-react";
+import {
+  CheckCircle,
+  AlertCircle,
+  LinkIcon,
+  Wifi,
+  WifiOff,
+  RefreshCw,
+  Loader2,
+  Trash2,
+  Clock,
+} from "lucide-react";
+
+interface LinkedInAccount {
+  id: string;
+  client_id: string;
+  account_id: string;
+  status: string;
+  data_conecction: string;
+}
 
 interface ConnectionStepProps {
   accountId: string | null;
   onAccountIdChange: (id: string | null) => void;
 }
 
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; icon: React.ReactNode; color: string; bgColor: string; borderColor: string }
+> = {
+  CREATION_SUCCESS: {
+    label: "Conectado com sucesso",
+    icon: <CheckCircle className="h-4 w-4" />,
+    color: "text-green-700",
+    bgColor: "bg-green-50",
+    borderColor: "border-green-200",
+  },
+  CREATION_FAIL: {
+    label: "Falha na conexao",
+    icon: <AlertCircle className="h-4 w-4" />,
+    color: "text-red-700",
+    bgColor: "bg-red-50",
+    borderColor: "border-red-200",
+  },
+  DELETION: {
+    label: "Conta removida",
+    icon: <Trash2 className="h-4 w-4" />,
+    color: "text-gray-700",
+    bgColor: "bg-gray-50",
+    borderColor: "border-gray-200",
+  },
+  RECONNECTED: {
+    label: "Reconectado",
+    icon: <RefreshCw className="h-4 w-4" />,
+    color: "text-blue-700",
+    bgColor: "bg-blue-50",
+    borderColor: "border-blue-200",
+  },
+  CONNECTING: {
+    label: "Conectando...",
+    icon: <Loader2 className="h-4 w-4 animate-spin" />,
+    color: "text-yellow-700",
+    bgColor: "bg-yellow-50",
+    borderColor: "border-yellow-200",
+  },
+  ERROR: {
+    label: "Erro na conta",
+    icon: <WifiOff className="h-4 w-4" />,
+    color: "text-red-700",
+    bgColor: "bg-red-50",
+    borderColor: "border-red-200",
+  },
+};
+
+function getStatusConfig(status: string) {
+  return (
+    STATUS_CONFIG[status] ?? {
+      label: status,
+      icon: <Wifi className="h-4 w-4" />,
+      color: "text-gray-700",
+      bgColor: "bg-gray-50",
+      borderColor: "border-gray-200",
+    }
+  );
+}
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [events, setEvents] = useState<LinkedInAccount[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+
+  const fetchEvents = useCallback(async () => {
+    if (!user) return;
+
+    setLoadingEvents(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const res = await fetch("/api/linkedin-accounts", {
+        headers: {
+          ...(session?.access_token && { Authorization: `Bearer ${session.access_token}` }),
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setEvents(data.accounts || []);
+      }
+    } catch {
+      // Silently fail - events are supplementary info
+    } finally {
+      setLoadingEvents(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   const handleConnect = async () => {
     setLoading(true);
     setError("");
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
       const response = await fetch("/api/unipile-auth", {
         method: "POST",
@@ -117,6 +239,46 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
               Connect LinkedIn
             </Button>
           </div>
+        )}
+
+        {/* Webhook Events History */}
+        {loadingEvents ? (
+          <div className="flex items-center justify-center py-3">
+            <LoadingSpinner />
+          </div>
+        ) : (
+          events.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium text-gray-700">Historico de eventos</h4>
+                <button onClick={fetchEvents} className="text-xs text-gray-500 hover:text-gray-700">
+                  <RefreshCw className="h-3 w-3" />
+                </button>
+              </div>
+              <div className="max-h-48 space-y-1.5 overflow-y-auto">
+                {events.map((event) => {
+                  const config = getStatusConfig(event.status);
+                  return (
+                    <div
+                      key={event.id}
+                      className={`flex items-center justify-between rounded-md border px-3 py-2 ${config.bgColor} ${config.borderColor}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={config.color}>{config.icon}</span>
+                        <span className={`text-sm font-medium ${config.color}`}>
+                          {config.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <Clock className="h-3 w-3" />
+                        {formatDate(event.data_conecction)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )
         )}
       </CardContent>
     </Card>

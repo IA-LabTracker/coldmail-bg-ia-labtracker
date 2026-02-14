@@ -10,12 +10,6 @@ const VALID_STATUSES = [
   "ERROR",
 ] as const;
 
-interface UnipileCallbackBody {
-  status: string;
-  account_id: string;
-  name: string; // maps to our client_id (user_id)
-}
-
 export async function POST(request: NextRequest) {
   try {
     // Validate webhook secret via query parameter or header (if configured)
@@ -34,14 +28,59 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const body: UnipileCallbackBody = await request.json();
-    const { status, account_id, name: clientId } = body;
+    // Log raw body to understand Unipile's actual format
+    const rawText = await request.text();
+    console.log("Unipile callback raw body:", rawText.substring(0, 2000));
+    console.log("Unipile callback content-type:", request.headers.get("content-type"));
 
-    console.log("Unipile callback received:", { status, account_id, clientId });
+    // Parse body - handle both JSON and form-encoded
+    let body: Record<string, unknown>;
+    const contentType = request.headers.get("content-type") || "";
+
+    if (contentType.includes("application/x-www-form-urlencoded")) {
+      const params = new URLSearchParams(rawText);
+      body = Object.fromEntries(params.entries());
+    } else {
+      try {
+        body = JSON.parse(rawText);
+      } catch {
+        console.error("Unipile callback: failed to parse body as JSON");
+        return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+      }
+    }
+
+    console.log("Unipile callback parsed body:", JSON.stringify(body).substring(0, 2000));
+    console.log("Unipile callback body keys:", Object.keys(body));
+
+    // Try multiple possible field names that Unipile might use
+    const status = (body.status || body.event || body.type || body.event_type || "") as string;
+    const account_id = (body.account_id ||
+      body.accountId ||
+      body.id ||
+      body.account ||
+      "") as string;
+    const clientId = (body.name ||
+      body.client_id ||
+      body.clientId ||
+      body.user_id ||
+      body.userId ||
+      "") as string;
+
+    console.log("Unipile callback extracted:", { status, account_id, clientId });
 
     if (!account_id || !clientId) {
-      console.error("Unipile callback: missing fields", { account_id, clientId });
-      return NextResponse.json({ error: "Missing account_id or name" }, { status: 400 });
+      console.error("Unipile callback: missing fields after extraction", {
+        account_id,
+        clientId,
+        bodyKeys: Object.keys(body),
+      });
+      return NextResponse.json(
+        {
+          error: "Missing account_id or name",
+          debug: { keys: Object.keys(body), body: JSON.stringify(body).substring(0, 500) },
+        },
+        { status: 400 },
+      );
     }
 
     if (!VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])) {

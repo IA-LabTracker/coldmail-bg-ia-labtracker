@@ -15,7 +15,6 @@ import {
   RefreshCw,
   Loader2,
   Trash2,
-  Clock,
 } from "lucide-react";
 
 interface LinkedInAccount {
@@ -24,6 +23,8 @@ interface LinkedInAccount {
   account_id: string;
   status: string;
   data_conecction: string;
+  provider?: string;
+  unipile_status?: string;
 }
 
 interface ConnectionStepProps {
@@ -33,49 +34,43 @@ interface ConnectionStepProps {
 
 const STATUS_CONFIG: Record<
   string,
-  { label: string; icon: React.ReactNode; color: string; bgColor: string; borderColor: string }
+  { label: string; icon: React.ReactNode; dotColor: string; textColor: string }
 > = {
   CREATION_SUCCESS: {
     label: "Conectado",
     icon: <CheckCircle className="h-4 w-4" />,
-    color: "text-green-700",
-    bgColor: "bg-green-50",
-    borderColor: "border-green-200",
-  },
-  CREATION_FAIL: {
-    label: "Falha na conexao",
-    icon: <AlertCircle className="h-4 w-4" />,
-    color: "text-red-700",
-    bgColor: "bg-red-50",
-    borderColor: "border-red-200",
-  },
-  DELETION: {
-    label: "Removida",
-    icon: <Trash2 className="h-4 w-4" />,
-    color: "text-gray-700",
-    bgColor: "bg-gray-50",
-    borderColor: "border-gray-200",
+    dotColor: "bg-green-500",
+    textColor: "text-green-700",
   },
   RECONNECTED: {
     label: "Reconectado",
     icon: <RefreshCw className="h-4 w-4" />,
-    color: "text-blue-700",
-    bgColor: "bg-blue-50",
-    borderColor: "border-blue-200",
+    dotColor: "bg-green-500",
+    textColor: "text-green-700",
   },
   CONNECTING: {
     label: "Conectando...",
     icon: <Loader2 className="h-4 w-4 animate-spin" />,
-    color: "text-yellow-700",
-    bgColor: "bg-yellow-50",
-    borderColor: "border-yellow-200",
+    dotColor: "bg-yellow-500",
+    textColor: "text-yellow-700",
   },
   ERROR: {
     label: "Erro",
     icon: <WifiOff className="h-4 w-4" />,
-    color: "text-red-700",
-    bgColor: "bg-red-50",
-    borderColor: "border-red-200",
+    dotColor: "bg-red-500",
+    textColor: "text-red-700",
+  },
+  CREATION_FAIL: {
+    label: "Falha",
+    icon: <AlertCircle className="h-4 w-4" />,
+    dotColor: "bg-red-500",
+    textColor: "text-red-700",
+  },
+  DELETION: {
+    label: "Removida",
+    icon: <Trash2 className="h-4 w-4" />,
+    dotColor: "bg-gray-400",
+    textColor: "text-gray-600",
   },
 };
 
@@ -84,76 +79,59 @@ function getStatusConfig(status: string) {
     STATUS_CONFIG[status] ?? {
       label: status,
       icon: <Wifi className="h-4 w-4" />,
-      color: "text-gray-700",
-      bgColor: "bg-gray-50",
-      borderColor: "border-gray-200",
+      dotColor: "bg-gray-400",
+      textColor: "text-gray-600",
     }
   );
-}
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [events, setEvents] = useState<LinkedInAccount[]>([]);
-  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [accounts, setAccounts] = useState<LinkedInAccount[]>([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(true);
 
-  const fetchEvents = useCallback(
-    async (sync = false) => {
-      if (!user) return;
+  const fetchAccounts = useCallback(async () => {
+    if (!user) return;
 
-      setLoadingEvents(true);
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+    setLoadingAccounts(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-        if (!session?.access_token) return;
+      if (!session?.access_token) return;
 
-        const url = sync ? "/api/linkedin-accounts?sync=true" : "/api/linkedin-accounts";
-        const res = await fetch(url, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
+      const res = await fetch("/api/linkedin-accounts", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
 
-        if (res.ok) {
-          const data = await res.json();
-          const accounts: LinkedInAccount[] = data.accounts || [];
-          setEvents(accounts);
+      if (res.ok) {
+        const data = await res.json();
+        const accs: LinkedInAccount[] = data.accounts || [];
+        setAccounts(accs);
 
-          // Auto-select the latest successful account if none selected
-          if (!accountId && accounts.length > 0) {
-            const connected = accounts.find(
-              (a) => a.status === "CREATION_SUCCESS" || a.status === "RECONNECTED",
-            );
-            if (connected) {
-              onAccountIdChange(connected.account_id);
-            }
+        // Auto-select the latest active account if none selected
+        if (!accountId && accs.length > 0) {
+          const connected = accs.find(
+            (a) => a.status === "CREATION_SUCCESS" || a.status === "RECONNECTED",
+          );
+          if (connected) {
+            onAccountIdChange(connected.account_id);
           }
         }
-      } catch {
-        // Silently fail
-      } finally {
-        setLoadingEvents(false);
       }
-    },
-    [user, accountId, onAccountIdChange],
-  );
+    } catch {
+      // Silently fail
+    } finally {
+      setLoadingAccounts(false);
+    }
+  }, [user, accountId, onAccountIdChange]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const shouldSync = params.get("connected") === "true";
-    fetchEvents(shouldSync);
-  }, [fetchEvents]);
+    fetchAccounts();
+  }, [fetchAccounts]);
 
   const handleConnect = async () => {
     setLoading(true);
@@ -210,114 +188,137 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
   };
 
   const isConnected = !!accountId;
+  const activeAccounts = accounts.filter(
+    (a) => a.status === "CREATION_SUCCESS" || a.status === "RECONNECTED",
+  );
 
   return (
     <Card>
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-base">
             <LinkIcon className="h-5 w-5" />
-            Step 1: LinkedIn Connection
+            LinkedIn Connection
           </div>
-          {/* Connection status indicator */}
           <div className="flex items-center gap-2">
             <div
-              className={`h-2.5 w-2.5 rounded-full ${isConnected ? "bg-green-500" : "bg-gray-300"}`}
+              className={`h-2 w-2 rounded-full ${isConnected ? "bg-green-500" : "bg-gray-300"}`}
             />
             <span
-              className={`text-sm font-medium ${isConnected ? "text-green-700" : "text-gray-500"}`}
+              className={`text-xs font-medium ${isConnected ? "text-green-700" : "text-gray-400"}`}
             >
-              {isConnected ? "Conectado" : "Desconectado"}
+              {isConnected ? "Ativo" : "Inativo"}
             </span>
           </div>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
         {error && (
-          <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-3">
-            <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2">
+            <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+            <p className="text-xs text-red-700">{error}</p>
           </div>
         )}
 
-        {isConnected ? (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-4 py-3">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                <div>
-                  <p className="text-sm font-medium text-green-800">LinkedIn conectado</p>
-                  <p className="text-xs text-green-600">ID: {accountId}</p>
-                </div>
-              </div>
-              <Button
-                onClick={handleDisconnect}
-                disabled={loading}
-                variant="ghost"
-                size="sm"
-                className="text-red-600 hover:bg-red-50 hover:text-red-700"
-              >
-                {loading ? <LoadingSpinner /> : "Desconectar"}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-sm text-gray-600">
-              Conecte sua conta LinkedIn via Unipile para iniciar campanhas
-            </p>
-            <Button onClick={handleConnect} disabled={loading} className="w-full gap-2">
-              {loading ? <LoadingSpinner /> : <LinkIcon className="h-4 w-4" />}
-              Conectar LinkedIn
-            </Button>
-          </div>
-        )}
-
-        {/* Event history */}
-        {loadingEvents ? (
-          <div className="flex items-center justify-center py-2">
+        {loadingAccounts ? (
+          <div className="flex items-center justify-center py-4">
             <LoadingSpinner />
           </div>
-        ) : (
-          events.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                  Historico
-                </h4>
-                <button
-                  onClick={() => fetchEvents(true)}
-                  className="rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-                  title="Sincronizar com Unipile"
+        ) : activeAccounts.length > 0 ? (
+          <div className="space-y-2">
+            {activeAccounts.map((account) => {
+              const config = getStatusConfig(account.status);
+              const isSelected = account.account_id === accountId;
+
+              return (
+                <div
+                  key={account.id}
+                  className={`rounded-lg border p-3 transition-colors ${
+                    isSelected
+                      ? "border-green-200 bg-green-50"
+                      : "border-gray-200 bg-white hover:bg-gray-50"
+                  }`}
                 >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              <div className="max-h-36 space-y-1 overflow-y-auto">
-                {events.map((event) => {
-                  const config = getStatusConfig(event.status);
-                  return (
-                    <div
-                      key={event.id}
-                      className={`flex items-center justify-between rounded border px-3 py-1.5 ${config.bgColor} ${config.borderColor}`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className={config.color}>{config.icon}</span>
-                        <span className={`text-xs font-medium ${config.color}`}>
-                          {config.label}
-                        </span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
+                        <LinkIcon className="h-4 w-4 text-blue-600" />
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-gray-400">
-                        <Clock className="h-3 w-3" />
-                        {formatDate(event.data_conecction)}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900">LinkedIn</span>
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${config.textColor} bg-opacity-10`}
+                          >
+                            <span className={`h-1.5 w-1.5 rounded-full ${config.dotColor}`} />
+                            {account.unipile_status || config.label}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          ID: {account.account_id.substring(0, 16)}...
+                        </p>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )
+
+                    <div className="flex items-center gap-2">
+                      {!isSelected && (
+                        <Button
+                          onClick={() => onAccountIdChange(account.account_id)}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                        >
+                          Usar
+                        </Button>
+                      )}
+                      {isSelected && (
+                        <Button
+                          onClick={handleDisconnect}
+                          disabled={loading}
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs text-red-500 hover:bg-red-50 hover:text-red-600"
+                        >
+                          {loading ? <LoadingSpinner /> : "Remover"}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-500">
+              Conecte sua conta LinkedIn via Unipile para iniciar campanhas
+            </p>
+          </div>
         )}
+
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleConnect}
+            disabled={loading}
+            variant={activeAccounts.length > 0 ? "outline" : "default"}
+            className="flex-1 gap-2"
+            size="sm"
+          >
+            {loading ? <LoadingSpinner /> : <LinkIcon className="h-4 w-4" />}
+            {activeAccounts.length > 0 ? "Conectar outra conta" : "Conectar LinkedIn"}
+          </Button>
+          {accounts.length > 0 && (
+            <Button
+              onClick={fetchAccounts}
+              variant="outline"
+              size="sm"
+              className="gap-1"
+              disabled={loadingAccounts}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${loadingAccounts ? "animate-spin" : ""}`} />
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

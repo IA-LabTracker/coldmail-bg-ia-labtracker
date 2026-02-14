@@ -12,7 +12,7 @@ import { CampaignSettingsStep } from "@/components/linkedin/CampaignSettingsStep
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { AlertCircle, CheckCircle, Loader2, Send } from "lucide-react";
+import { AlertCircle, CheckCircle, Send } from "lucide-react";
 import axios from "axios";
 
 type SubmitStatus = "idle" | "submitting" | "success" | "error";
@@ -26,81 +26,69 @@ export default function LinkedInPage() {
   const [delaySeconds, setDelaySeconds] = useState(90);
   const [maxLeads, setMaxLeads] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [polling, setPolling] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
   const [submitMessage, setSubmitMessage] = useState("");
-  const pollingRef = useRef(false);
+  const hasCheckedOAuth = useRef(false);
 
-  const fetchAccountId = useCallback(async () => {
-    if (!user) return null;
+  // Fetch account ID via API route (bypasses RLS using service_role)
+  const fetchAccountId = useCallback(
+    async (sync = false): Promise<string | null> => {
+      if (!user) return null;
 
-    const { data } = await supabase
-      .from("linkedin_accounts")
-      .select("account_id")
-      .eq("client_id", user.id)
-      .in("status", ["CREATION_SUCCESS", "RECONNECTED"])
-      .order("data_conecction", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-    return data?.account_id || null;
-  }, [user]);
+        if (!session?.access_token) return null;
+
+        const url = sync ? "/api/linkedin-accounts?sync=true" : "/api/linkedin-accounts";
+
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+
+        if (!res.ok) return null;
+
+        const data = await res.json();
+        const accounts = data.accounts || [];
+
+        const connected = accounts.find(
+          (a: { status: string }) => a.status === "CREATION_SUCCESS" || a.status === "RECONNECTED",
+        );
+
+        return connected?.account_id || null;
+      } catch {
+        return null;
+      }
+    },
+    [user],
+  );
 
   // Initial load + detect OAuth redirect
   useEffect(() => {
-    if (!user) return;
+    if (!user || hasCheckedOAuth.current) return;
+    hasCheckedOAuth.current = true;
 
     const init = async () => {
       setLoading(true);
 
-      const id = await fetchAccountId();
-      setAccountId(id);
-      setLoading(false);
-
-      // If returning from OAuth, start polling for the account_id
-      // (Unipile sends it via notify_url webhook which saves to Supabase)
       const params = new URLSearchParams(window.location.search);
-      if (params.get("connected") === "true" && !id) {
-        window.history.replaceState({}, document.title, window.location.pathname);
-        setPolling(true);
-        pollingRef.current = true;
-      } else if (params.has("connected")) {
+      const returningFromOAuth = params.get("connected") === "true";
+
+      // Clean URL params
+      if (params.has("connected")) {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
+
+      // If returning from OAuth, sync from Unipile API first
+      const id = await fetchAccountId(returningFromOAuth);
+      setAccountId(id);
+      setLoading(false);
     };
 
     init();
   }, [user, fetchAccountId]);
-
-  // Poll Supabase for linkedin_account_id after OAuth redirect
-  useEffect(() => {
-    if (!polling || !user) return;
-
-    pollingRef.current = true;
-
-    const interval = setInterval(async () => {
-      if (!pollingRef.current) return;
-
-      const id = await fetchAccountId();
-      if (id) {
-        setAccountId(id);
-        setPolling(false);
-        pollingRef.current = false;
-      }
-    }, 2000);
-
-    // Stop polling after 60 seconds
-    const timeout = setTimeout(() => {
-      setPolling(false);
-      pollingRef.current = false;
-    }, 60000);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-      pollingRef.current = false;
-    };
-  }, [polling, user, fetchAccountId]);
 
   const handleSubmit = async () => {
     if (!user || !accountId || leads.length === 0 || !template || !campaignName) {
@@ -135,9 +123,7 @@ export default function LinkedInPage() {
       });
 
       setSubmitStatus("success");
-      setSubmitMessage(
-        `Campaign submitted! ${selectedLeads.length} leads will be processed.`,
-      );
+      setSubmitMessage(`Campaign submitted! ${selectedLeads.length} leads will be processed.`);
 
       setTimeout(() => {
         setLeads([]);
@@ -150,9 +136,7 @@ export default function LinkedInPage() {
       }, 3000);
     } catch (error) {
       setSubmitStatus("error");
-      setSubmitMessage(
-        error instanceof Error ? error.message : "Failed to submit campaign",
-      );
+      setSubmitMessage(error instanceof Error ? error.message : "Failed to submit campaign");
     }
   };
 
@@ -179,15 +163,6 @@ export default function LinkedInPage() {
             </p>
           </div>
 
-          {polling && (
-            <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
-              <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-              <p className="text-sm text-blue-800">
-                Waiting for LinkedIn connection confirmation...
-              </p>
-            </div>
-          )}
-
           {submitMessage && (
             <div
               className={`flex items-center gap-3 rounded-lg border p-4 ${
@@ -196,12 +171,8 @@ export default function LinkedInPage() {
                   : "border-green-200 bg-green-50"
               }`}
             >
-              {submitStatus === "error" && (
-                <AlertCircle className="h-5 w-5 text-red-600" />
-              )}
-              {submitStatus === "success" && (
-                <CheckCircle className="h-5 w-5 text-green-600" />
-              )}
+              {submitStatus === "error" && <AlertCircle className="h-5 w-5 text-red-600" />}
+              {submitStatus === "success" && <CheckCircle className="h-5 w-5 text-green-600" />}
               <p className={submitStatus === "error" ? "text-red-800" : "text-green-800"}>
                 {submitMessage}
               </p>
@@ -245,9 +216,7 @@ export default function LinkedInPage() {
                           ) : (
                             <Send className="h-4 w-4" />
                           )}
-                          {submitStatus === "submitting"
-                            ? "Submitting..."
-                            : "Submit Campaign"}
+                          {submitStatus === "submitting" ? "Submitting..." : "Submit Campaign"}
                         </Button>
                       </CardContent>
                     </Card>

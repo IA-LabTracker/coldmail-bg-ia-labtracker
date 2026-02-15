@@ -67,7 +67,7 @@ export function LinkedInCompanyGroupRow({
   return (
     <>
       <TableRow
-        className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
+        className="border-b border-border hover:bg-muted cursor-pointer"
         onClick={onToggleExpand}
       >
         <TableCell onClick={(e) => e.stopPropagation()}>
@@ -80,17 +80,17 @@ export function LinkedInCompanyGroupRow({
         <TableCell>
           <div className="flex items-center gap-2">
             {isExpanded ? (
-              <ChevronDown className="h-4 w-4 shrink-0 text-gray-500" />
+              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
             ) : (
-              <ChevronRight className="h-4 w-4 shrink-0 text-gray-500" />
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             )}
-            <span className="font-medium text-gray-900">{group.company}</span>
+            <span className="font-medium text-foreground">{group.company}</span>
             <Badge className="bg-teal-100 text-teal-800 text-xs">
               {group.messages.length} leads
             </Badge>
           </div>
         </TableCell>
-        <TableCell className="text-gray-700">{group.company}</TableCell>
+        <TableCell className="text-foreground">{group.company}</TableCell>
         <TableCell>
           <div className="flex flex-wrap gap-1">
             {uniqueStatuses.map((status) => (
@@ -112,10 +112,7 @@ export function LinkedInCompanyGroupRow({
         group.messages.map((msg) => {
           const fullName = `${msg.first_name} ${msg.last_name}`.trim();
           return (
-            <TableRow
-              key={msg.id}
-              className="border-b border-gray-100 bg-gray-50/50 hover:bg-gray-100/50"
-            >
+            <TableRow key={msg.id} className="border-b border-border bg-muted/50 hover:bg-muted">
               <TableCell onClick={(e) => e.stopPropagation()}>
                 <Checkbox
                   checked={selectedIds.has(msg.id)}
@@ -126,17 +123,19 @@ export function LinkedInCompanyGroupRow({
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2 pl-6">
-                  <div className="h-4 w-px bg-gray-300" />
+                  <div className="h-4 w-px bg-border" />
                   <button
                     type="button"
                     onClick={() => onViewDetails(msg)}
-                    className="text-sm text-gray-600 hover:text-primary hover:underline cursor-pointer"
+                    className="text-sm text-foreground hover:text-primary hover:underline cursor-pointer"
                   >
                     {fullName || "Unknown"}
                   </button>
                 </div>
               </TableCell>
-              <TableCell className="text-gray-700 text-sm">{msg.current_position || "-"}</TableCell>
+              <TableCell className="text-foreground text-sm">
+                {msg.current_position || "-"}
+              </TableCell>
               <TableCell>
                 <Badge className={getStatusColor(msg.status).bg}>
                   <span className={getStatusColor(msg.status).text}>{msg.status}</span>

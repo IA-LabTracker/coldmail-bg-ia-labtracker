@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { LinkedInMessage } from "@/types";
-import { Navbar } from "@/components/Navbar";
+import { AppLayout } from "@/components/AppLayout";
 import { KPIFilter } from "@/components/dashboard/KPICards";
 import { LinkedInKPICards } from "@/components/linkedin-table/LinkedInKPICards";
 import { LinkedInFilters } from "@/components/linkedin-table/LinkedInFilters";
@@ -186,154 +186,151 @@ export default function LinkedInTablePage() {
   }, [selectedIds, clearSelection]);
 
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen bg-gray-50">
-        <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">LinkedIn Messages</h1>
-            {selectedMessages.length > 0 && (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-600">{selectedMessages.length} selected</span>
-                <button
-                  onClick={handleBulkDeleteRequest}
-                  className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
-                >
-                  Delete Selected
-                </button>
-                <button
-                  onClick={clearSelection}
-                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  Clear
-                </button>
-              </div>
-            )}
-          </div>
-
-          {error && <ErrorMessage message={error} />}
-
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <LoadingSpinner />
+    <AppLayout>
+      <div className="space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-foreground">LinkedIn Messages</h1>
+          {selectedMessages.length > 0 && (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">
+                {selectedMessages.length} selected
+              </span>
+              <button
+                onClick={handleBulkDeleteRequest}
+                className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
+              >
+                Delete Selected
+              </button>
+              <button
+                onClick={clearSelection}
+                className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                Clear
+              </button>
             </div>
-          ) : (
-            <>
-              <LinkedInKPICards
-                messages={messages}
-                activeFilter={kpiFilter}
-                onFilterChange={(filter) => {
-                  setKpiFilter(filter);
-                  if (!filter) {
-                    setStatusFilter("");
-                    setClassificationFilter("");
-                  } else if (filter.type === "status") {
-                    setStatusFilter(filter.value);
-                    setClassificationFilter("");
-                  } else if (filter.type === "classification") {
-                    setClassificationFilter(filter.value);
-                    setStatusFilter("");
-                  }
-                }}
-              />
-
-              <div className="rounded-lg bg-white p-4">
-                <h2 className="mb-4 text-lg font-semibold text-gray-900">Filters</h2>
-                <LinkedInFilters
-                  status={statusFilter}
-                  onStatusChange={(v) => {
-                    setStatusFilter(v);
-                    setKpiFilter(null);
-                  }}
-                  classification={classificationFilter}
-                  onClassificationChange={(v) => {
-                    setClassificationFilter(v);
-                    setKpiFilter(null);
-                  }}
-                  campaign={campaignFilter}
-                  onCampaignChange={setCampaignFilter}
-                  search={searchFilter}
-                  onSearchChange={setSearchFilter}
-                />
-              </div>
-
-              <div className="rounded-lg border border-gray-200 bg-white">
-                <LinkedInTable
-                  groups={visibleGroups}
-                  selectedIds={selectedIds}
-                  expandedCompanies={expandedCompanies}
-                  onSelectMessage={(id, visible, shiftKey) =>
-                    toggleSelection(id, visible, shiftKey)
-                  }
-                  onSelectGroup={handleSelectGroup}
-                  onSelectAll={() => toggleSelectAllVisible(allVisibleMessages)}
-                  onToggleCompany={handleToggleCompany}
-                  onViewDetails={handleViewDetails}
-                  onDelete={handleDeleteRequest}
-                  isAllSelected={isAllSelected(allVisibleMessages)}
-                />
-
-                {hasMore && (
-                  <div ref={sentinelRef} className="flex justify-center py-4">
-                    <LoadingSpinner />
-                  </div>
-                )}
-              </div>
-
-              <LinkedInDetailModal
-                message={selectedDetail}
-                open={detailModalOpen}
-                onOpenChange={setDetailModalOpen}
-                onUpdate={fetchMessages}
-              />
-
-              <AlertModal open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
-                <AlertModal.Header>
-                  <AlertModal.Title>Delete Record</AlertModal.Title>
-                  <AlertModal.Description>
-                    Are you sure you want to delete the record for{" "}
-                    <strong>
-                      {deleteTarget
-                        ? `${deleteTarget.first_name} ${deleteTarget.last_name}`.trim()
-                        : ""}
-                    </strong>
-                    ? This action cannot be undone.
-                  </AlertModal.Description>
-                </AlertModal.Header>
-                <AlertModal.Footer>
-                  <AlertModal.Cancel>Cancel</AlertModal.Cancel>
-                  <AlertModal.Action
-                    onClick={handleConfirmDelete}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
-                    Delete
-                  </AlertModal.Action>
-                </AlertModal.Footer>
-              </AlertModal>
-
-              <AlertModal open={bulkDeleteModalOpen} onOpenChange={setBulkDeleteModalOpen}>
-                <AlertModal.Header>
-                  <AlertModal.Title>Delete Selected Records</AlertModal.Title>
-                  <AlertModal.Description>
-                    Are you sure you want to delete <strong>{selectedMessages.length}</strong>{" "}
-                    selected record
-                    {selectedMessages.length > 1 ? "s" : ""}? This action cannot be undone.
-                  </AlertModal.Description>
-                </AlertModal.Header>
-                <AlertModal.Footer>
-                  <AlertModal.Cancel>Cancel</AlertModal.Cancel>
-                  <AlertModal.Action
-                    onClick={handleConfirmBulkDelete}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
-                    Delete All
-                  </AlertModal.Action>
-                </AlertModal.Footer>
-              </AlertModal>
-            </>
           )}
         </div>
+
+        {error && <ErrorMessage message={error} />}
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <LoadingSpinner />
+          </div>
+        ) : (
+          <>
+            <LinkedInKPICards
+              messages={messages}
+              activeFilter={kpiFilter}
+              onFilterChange={(filter) => {
+                setKpiFilter(filter);
+                if (!filter) {
+                  setStatusFilter("");
+                  setClassificationFilter("");
+                } else if (filter.type === "status") {
+                  setStatusFilter(filter.value);
+                  setClassificationFilter("");
+                } else if (filter.type === "classification") {
+                  setClassificationFilter(filter.value);
+                  setStatusFilter("");
+                }
+              }}
+            />
+
+            <div className="rounded-lg bg-card p-4">
+              <h2 className="mb-4 text-lg font-semibold text-foreground">Filters</h2>
+              <LinkedInFilters
+                status={statusFilter}
+                onStatusChange={(v) => {
+                  setStatusFilter(v);
+                  setKpiFilter(null);
+                }}
+                classification={classificationFilter}
+                onClassificationChange={(v) => {
+                  setClassificationFilter(v);
+                  setKpiFilter(null);
+                }}
+                campaign={campaignFilter}
+                onCampaignChange={setCampaignFilter}
+                search={searchFilter}
+                onSearchChange={setSearchFilter}
+              />
+            </div>
+
+            <div className="rounded-lg border border-border bg-card">
+              <LinkedInTable
+                groups={visibleGroups}
+                selectedIds={selectedIds}
+                expandedCompanies={expandedCompanies}
+                onSelectMessage={(id, visible, shiftKey) => toggleSelection(id, visible, shiftKey)}
+                onSelectGroup={handleSelectGroup}
+                onSelectAll={() => toggleSelectAllVisible(allVisibleMessages)}
+                onToggleCompany={handleToggleCompany}
+                onViewDetails={handleViewDetails}
+                onDelete={handleDeleteRequest}
+                isAllSelected={isAllSelected(allVisibleMessages)}
+              />
+
+              {hasMore && (
+                <div ref={sentinelRef} className="flex justify-center py-4">
+                  <LoadingSpinner />
+                </div>
+              )}
+            </div>
+
+            <LinkedInDetailModal
+              message={selectedDetail}
+              open={detailModalOpen}
+              onOpenChange={setDetailModalOpen}
+              onUpdate={fetchMessages}
+            />
+
+            <AlertModal open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+              <AlertModal.Header>
+                <AlertModal.Title>Delete Record</AlertModal.Title>
+                <AlertModal.Description>
+                  Are you sure you want to delete the record for{" "}
+                  <strong>
+                    {deleteTarget
+                      ? `${deleteTarget.first_name} ${deleteTarget.last_name}`.trim()
+                      : ""}
+                  </strong>
+                  ? This action cannot be undone.
+                </AlertModal.Description>
+              </AlertModal.Header>
+              <AlertModal.Footer>
+                <AlertModal.Cancel>Cancel</AlertModal.Cancel>
+                <AlertModal.Action
+                  onClick={handleConfirmDelete}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Delete
+                </AlertModal.Action>
+              </AlertModal.Footer>
+            </AlertModal>
+
+            <AlertModal open={bulkDeleteModalOpen} onOpenChange={setBulkDeleteModalOpen}>
+              <AlertModal.Header>
+                <AlertModal.Title>Delete Selected Records</AlertModal.Title>
+                <AlertModal.Description>
+                  Are you sure you want to delete <strong>{selectedMessages.length}</strong>{" "}
+                  selected record
+                  {selectedMessages.length > 1 ? "s" : ""}? This action cannot be undone.
+                </AlertModal.Description>
+              </AlertModal.Header>
+              <AlertModal.Footer>
+                <AlertModal.Cancel>Cancel</AlertModal.Cancel>
+                <AlertModal.Action
+                  onClick={handleConfirmBulkDelete}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Delete All
+                </AlertModal.Action>
+              </AlertModal.Footer>
+            </AlertModal>
+          </>
+        )}
       </div>
-    </>
+    </AppLayout>
   );
 }

@@ -78,7 +78,7 @@ export function UploadStep({ leads, onLeadsChange }: UploadStepProps) {
 
         {leads.length === 0 ? (
           <div className="space-y-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Upload a CSV file with the following columns: firstName, lastName, company, position,
               linkedinUrl
             </p>
@@ -88,7 +88,7 @@ export function UploadStep({ leads, onLeadsChange }: UploadStepProps) {
         ) : (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-medium text-foreground">
                 {leads.length} lead{leads.length !== 1 ? "s" : ""} uploaded
               </p>
               <Button onClick={handleRemove} variant="outline" size="sm" className="gap-1">
@@ -97,7 +97,7 @@ export function UploadStep({ leads, onLeadsChange }: UploadStepProps) {
               </Button>
             </div>
 
-            <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <div className="overflow-x-auto rounded-lg border border-border">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -132,7 +132,9 @@ export function UploadStep({ leads, onLeadsChange }: UploadStepProps) {
             </div>
 
             {leads.length > 5 && (
-              <p className="text-xs text-gray-500">Showing first 5 of {leads.length} leads</p>
+              <p className="text-xs text-muted-foreground">
+                Showing first 5 of {leads.length} leads
+              </p>
             )}
           </div>
         )}

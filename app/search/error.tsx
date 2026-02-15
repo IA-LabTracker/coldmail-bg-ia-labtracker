@@ -18,12 +18,12 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Simple header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
+      <div className="bg-card border-b border-border shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center">
-            <Link href="/" className="text-xl font-bold text-gray-900">
+            <Link href="/" className="text-xl font-bold text-foreground">
               Cold Email Pro
             </Link>
           </div>
@@ -37,10 +37,10 @@ export default function Error({
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
                 <AlertTriangle className="h-6 w-6 text-red-600" />
               </div>
-              <CardTitle className="text-xl font-semibold text-gray-900">
+              <CardTitle className="text-xl font-semibold text-foreground">
                 Erro na Pesquisa
               </CardTitle>
-              <CardDescription className="text-gray-600">
+              <CardDescription className="text-muted-foreground">
                 Não foi possível carregar a ferramenta de pesquisa. Tente novamente.
               </CardDescription>
             </CardHeader>
@@ -59,10 +59,10 @@ export default function Error({
 
               {process.env.NODE_ENV === "development" && (
                 <details className="text-left">
-                  <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
+                  <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
                     Detalhes do erro
                   </summary>
-                  <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto text-gray-700">
+                  <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-auto text-foreground">
                     {error.message}
                   </pre>
                 </details>

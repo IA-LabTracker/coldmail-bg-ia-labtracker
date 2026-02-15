@@ -81,10 +81,10 @@ export function EmailTable({
     classificationColors[classification] || { bg: "bg-gray-100", text: "text-gray-800" };
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+    <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <Table>
         <TableHeader>
-          <TableRow className="border-b border-gray-200 bg-gray-50">
+          <TableRow className="border-b border-border bg-muted">
             <TableHead className="w-12">
               <Checkbox checked={isAllSelected} onCheckedChange={onSelectAll} />
             </TableHead>
@@ -102,10 +102,7 @@ export function EmailTable({
             if (group.emails.length === 1) {
               const email = group.emails[0];
               return (
-                <TableRow
-                  key={email.id}
-                  className="border-b border-gray-200 hover:bg-gray-50"
-                >
+                <TableRow key={email.id} className="border-b border-border hover:bg-muted">
                   <TableCell>
                     <Checkbox
                       checked={selectedIds.has(email.id)}
@@ -118,51 +115,35 @@ export function EmailTable({
                     <button
                       type="button"
                       onClick={() => onViewDetails(email)}
-                      className="font-medium text-gray-900 hover:text-primary hover:underline cursor-pointer"
+                      className="font-medium text-foreground hover:text-primary hover:underline cursor-pointer"
                     >
                       {email.company}
                     </button>
                   </TableCell>
-                  <TableCell className="text-gray-700">{email.email}</TableCell>
+                  <TableCell className="text-foreground">{email.email}</TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(email.status).bg}>
-                      <span className={getStatusColor(email.status).text}>
-                        {email.status}
-                      </span>
+                      <span className={getStatusColor(email.status).text}>{email.status}</span>
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      className={getClassificationColor(email.lead_classification).bg}
-                    >
-                      <span
-                        className={
-                          getClassificationColor(email.lead_classification).text
-                        }
-                      >
+                    <Badge className={getClassificationColor(email.lead_classification).bg}>
+                      <span className={getClassificationColor(email.lead_classification).text}>
                         {email.lead_classification}
                       </span>
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge className={getClientStatusColor(email.client_step || "").bg}>
-                      <span
-                        className={getClientStatusColor(email.client_step || "").text}
-                      >
+                      <span className={getClientStatusColor(email.client_step || "").text}>
                         {email.client_step || "-"}
                       </span>
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-gray-700">
-                    {email.campaign_name || "-"}
-                  </TableCell>
+                  <TableCell className="text-foreground">{email.campaign_name || "-"}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onViewDetails(email)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => onViewDetails(email)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button

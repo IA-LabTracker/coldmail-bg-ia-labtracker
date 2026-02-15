@@ -63,10 +63,10 @@ export function LinkedInTable({
     classificationColors[classification] || { bg: "bg-gray-100", text: "text-gray-800" };
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+    <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <Table>
         <TableHeader>
-          <TableRow className="border-b border-gray-200 bg-gray-50">
+          <TableRow className="border-b border-border bg-muted">
             <TableHead className="w-12">
               <Checkbox checked={isAllSelected} onCheckedChange={onSelectAll} />
             </TableHead>
@@ -83,7 +83,7 @@ export function LinkedInTable({
               const msg = group.messages[0];
               const fullName = `${msg.first_name} ${msg.last_name}`.trim();
               return (
-                <TableRow key={msg.id} className="border-b border-gray-200 hover:bg-gray-50">
+                <TableRow key={msg.id} className="border-b border-border hover:bg-muted">
                   <TableCell>
                     <Checkbox
                       checked={selectedIds.has(msg.id)}
@@ -96,17 +96,17 @@ export function LinkedInTable({
                     <button
                       type="button"
                       onClick={() => onViewDetails(msg)}
-                      className="font-medium text-gray-900 hover:text-primary hover:underline cursor-pointer"
+                      className="font-medium text-foreground hover:text-primary hover:underline cursor-pointer"
                     >
                       {fullName || "Unknown"}
                     </button>
                     {msg.current_position && (
-                      <p className="text-xs text-gray-500 truncate max-w-[200px]">
+                      <p className="text-xs text-muted-foreground truncate max-w-[200px]">
                         {msg.current_position}
                       </p>
                     )}
                   </TableCell>
-                  <TableCell className="text-gray-700">{msg.current_company || "-"}</TableCell>
+                  <TableCell className="text-foreground">{msg.current_company || "-"}</TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(msg.status).bg}>
                       <span className={getStatusColor(msg.status).text}>{msg.status}</span>

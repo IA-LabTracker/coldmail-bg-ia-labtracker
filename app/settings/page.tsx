@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Settings } from "@/types";
 
-import { Navbar } from "@/components/Navbar";
+import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -170,172 +170,166 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <>
-        <Navbar />
+      <AppLayout>
         <div className="flex justify-center py-12">
           <LoadingSpinner />
         </div>
-      </>
+      </AppLayout>
     );
   }
 
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen bg-gray-50">
-        <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-          {feedback && (
-            <div
-              className={`flex items-center gap-3 rounded-lg border p-4 ${
-                feedback.type === "error"
-                  ? "border-red-200 bg-red-50"
-                  : "border-green-200 bg-green-50"
-              }`}
-            >
-              {feedback.type === "success" && <CheckCircle className="h-5 w-5 text-green-600" />}
-              {feedback.type === "error" && <AlertCircle className="h-5 w-5 text-red-600" />}
-              <p className={feedback.type === "error" ? "text-red-800" : "text-green-800"}>
-                {feedback.text}
-              </p>
-            </div>
-          )}
+    <AppLayout>
+      <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+        {feedback && (
+          <div
+            className={`flex items-center gap-3 rounded-lg border p-4 ${
+              feedback.type === "error"
+                ? "border-red-200 bg-red-50"
+                : "border-green-200 bg-green-50"
+            }`}
+          >
+            {feedback.type === "success" && <CheckCircle className="h-5 w-5 text-green-600" />}
+            {feedback.type === "error" && <AlertCircle className="h-5 w-5 text-red-600" />}
+            <p className={feedback.type === "error" ? "text-red-800" : "text-green-800"}>
+              {feedback.text}
+            </p>
+          </div>
+        )}
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">Webhooks</h1>
-                  <p className="mt-2 text-gray-600">
-                    Configure webhooks, templates and LinkedIn connection
-                  </p>
-                </div>
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Save"
-                  )}
-                </Button>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">Webhooks</h1>
+                <p className="mt-2 text-muted-foreground">
+                  Configure webhooks, templates and LinkedIn connection
+                </p>
               </div>
-              <Tabs defaultValue="webhook" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="webhook">n8n Webhook</TabsTrigger>
-                  <TabsTrigger value="email">Email Template</TabsTrigger>
-                  <TabsTrigger value="linkedin-webhook">LinkedIn Webhook</TabsTrigger>
-                  <TabsTrigger value="linkedin-connection">LinkedIn Account</TabsTrigger>
-                </TabsList>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Save"
+                )}
+              </Button>
+            </div>
+            <Tabs defaultValue="webhook" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="webhook">n8n Webhook</TabsTrigger>
+                <TabsTrigger value="email">Email Template</TabsTrigger>
+                <TabsTrigger value="linkedin-webhook">LinkedIn Webhook</TabsTrigger>
+                <TabsTrigger value="linkedin-connection">LinkedIn Account</TabsTrigger>
+              </TabsList>
 
-                <TabsContent value="webhook">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>n8n Webhook Configuration</CardTitle>
-                      <CardDescription>
-                        Configure the webhook URL for n8n lead search integration
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <FormField
-                        control={form.control}
-                        name="webhookUrl"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Webhook URL</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="url"
-                                placeholder="https://your-n8n-instance.com/webhook/..."
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Get this URL from your n8n workflow webhook node
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+              <TabsContent value="webhook">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>n8n Webhook Configuration</CardTitle>
+                    <CardDescription>
+                      Configure the webhook URL for n8n lead search integration
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <FormField
+                      control={form.control}
+                      name="webhookUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Webhook URL</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="url"
+                              placeholder="https://your-n8n-instance.com/webhook/..."
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Get this URL from your n8n workflow webhook node
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-                <TabsContent value="email">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Email Template</CardTitle>
-                      <CardDescription>
-                        Create a default email template for campaigns
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <FormField
-                        control={form.control}
-                        name="emailTemplate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email Template</FormLabel>
-                            <FormControl>
-                              <Textarea
-                                placeholder={`Hi {{company}},\n\nI noticed you're in the {{industry}} space. I think our solution could help...\n\nBest regards`}
-                                className="min-h-48"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Available variables: {"{{company}}"}, {"{{email}}"}, {"{{region}}"},{" "}
-                              {"{{industry}}"}
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+              <TabsContent value="email">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Email Template</CardTitle>
+                    <CardDescription>Create a default email template for campaigns</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <FormField
+                      control={form.control}
+                      name="emailTemplate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Template</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder={`Hi {{company}},\n\nI noticed you're in the {{industry}} space. I think our solution could help...\n\nBest regards`}
+                              className="min-h-48"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Available variables: {"{{company}}"}, {"{{email}}"}, {"{{region}}"},{" "}
+                            {"{{industry}}"}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-                <TabsContent value="linkedin-webhook">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>LinkedIn Campaign Webhook</CardTitle>
-                      <CardDescription>
-                        Configure the webhook for LinkedIn campaign automation
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <FormField
-                        control={form.control}
-                        name="linkedinWebhookUrl"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>LinkedIn Webhook URL</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="url"
-                                placeholder="https://your-n8n-instance.com/webhook/..."
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Get this URL from your n8n LinkedIn workflow webhook node
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+              <TabsContent value="linkedin-webhook">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>LinkedIn Campaign Webhook</CardTitle>
+                    <CardDescription>
+                      Configure the webhook for LinkedIn campaign automation
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <FormField
+                      control={form.control}
+                      name="linkedinWebhookUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>LinkedIn Webhook URL</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="url"
+                              placeholder="https://your-n8n-instance.com/webhook/..."
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Get this URL from your n8n LinkedIn workflow webhook node
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-                <TabsContent value="linkedin-connection">
-                  <ConnectionStep
-                    accountId={linkedinAccountId}
-                    onAccountIdChange={setLinkedinAccountId}
-                  />
-                </TabsContent>
-              </Tabs>
-            </form>
-          </Form>
-        </div>
+              <TabsContent value="linkedin-connection">
+                <ConnectionStep
+                  accountId={linkedinAccountId}
+                  onAccountIdChange={setLinkedinAccountId}
+                />
+              </TabsContent>
+            </Tabs>
+          </form>
+        </Form>
       </div>
-    </>
+    </AppLayout>
   );
 }

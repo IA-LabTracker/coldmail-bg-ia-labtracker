@@ -80,7 +80,7 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
   };
 
   return (
-    <Card className="bg-white border border-blue-100 shadow-sm">
+    <Card className="bg-card border border-border shadow-sm">
       <div className="flex flex-col gap-3 p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -88,10 +88,10 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
               {selectedEmails.length}
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">
+              <p className="text-sm font-semibold text-foreground">
                 {selectedEmails.length} email{selectedEmails.length > 1 ? "s" : ""} selected
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Choose an action to run on the selected records.
               </p>
             </div>
@@ -119,7 +119,7 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
               disabled={loading}
               variant="ghost"
               size="sm"
-              className="gap-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+              className="gap-2 text-muted-foreground hover:text-foreground hover:bg-muted"
             >
               <X className="h-4 w-4" />
               Clear

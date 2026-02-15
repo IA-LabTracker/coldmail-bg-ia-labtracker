@@ -40,7 +40,7 @@ export function TemplateStep({ template, onTemplateChange, firstLead }: Template
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <label htmlFor="template" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="template" className="block text-sm font-medium text-foreground">
             Message Template
           </label>
           <Textarea
@@ -68,12 +68,12 @@ export function TemplateStep({ template, onTemplateChange, firstLead }: Template
 
         {firstLead && (
           <div>
-            <p className="text-sm font-medium text-gray-700">Preview</p>
-            <div className="mt-2 rounded-lg bg-gray-100 p-4">
-              <div className="space-y-2 rounded-lg bg-white p-3">
-                <p className="whitespace-pre-wrap text-sm text-gray-900">{getPreview()}</p>
+            <p className="text-sm font-medium text-foreground">Preview</p>
+            <div className="mt-2 rounded-lg bg-muted p-4">
+              <div className="space-y-2 rounded-lg bg-card p-3">
+                <p className="whitespace-pre-wrap text-sm text-foreground">{getPreview()}</p>
               </div>
-              <p className="mt-3 text-xs text-gray-500">
+              <p className="mt-3 text-xs text-muted-foreground">
                 Preview with {firstLead.firstName} {firstLead.lastName}
               </p>
             </div>

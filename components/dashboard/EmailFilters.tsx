@@ -38,7 +38,7 @@ export function EmailFilters({
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Status</label>
+          <label className="block text-sm font-medium text-foreground">Status</label>
           <Select
             value={status || "all"}
             onValueChange={(v) => onStatusChange(v === "all" ? "" : v)}
@@ -57,7 +57,7 @@ export function EmailFilters({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Classification</label>
+          <label className="block text-sm font-medium text-foreground">Classification</label>
           <Select
             value={classification || "all"}
             onValueChange={(v) => onClassificationChange(v === "all" ? "" : v)}
@@ -75,7 +75,7 @@ export function EmailFilters({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Client Steps</label>
+          <label className="block text-sm font-medium text-foreground">Client Steps</label>
           <Select
             value={clientStep || "all"}
             onValueChange={(v) => onClientStepChange(v === "all" ? "" : v)}
@@ -96,7 +96,7 @@ export function EmailFilters({
         </div>
 
         <div>
-          <label htmlFor="campaign" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="campaign" className="block text-sm font-medium text-foreground">
             Campaign
           </label>
           <Input
@@ -110,7 +110,7 @@ export function EmailFilters({
       </div>
 
       <div>
-        <label htmlFor="search" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="search" className="block text-sm font-medium text-foreground">
           Search
         </label>
         <Input

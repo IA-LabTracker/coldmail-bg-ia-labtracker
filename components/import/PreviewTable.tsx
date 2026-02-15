@@ -46,9 +46,9 @@ export function PreviewTable({ rows, validations, onRowUpdate }: PreviewTablePro
   );
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white">
-      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-        <h3 className="text-sm font-semibold text-gray-900">Preview ({rows.length} rows)</h3>
+    <div className="rounded-lg border border-border bg-card">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <h3 className="text-sm font-semibold text-foreground">Preview ({rows.length} rows)</h3>
         <p className="text-xs text-gray-500">Double click a cell to edit</p>
       </div>
       <div className="overflow-x-auto">

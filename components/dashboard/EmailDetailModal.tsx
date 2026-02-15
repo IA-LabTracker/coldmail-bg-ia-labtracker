@@ -305,9 +305,23 @@ export function EmailDetailModal({ email, open, onOpenChange, onUpdate }: EmailD
                           <FormLabel className="text-xs text-muted-foreground">
                             Client Steps
                           </FormLabel>
-                          <FormControl>
-                            <Input placeholder="Status" {...field} />
-                          </FormControl>
+                          <Select
+                            onValueChange={(val) => field.onChange(val === "none" ? "" : val)}
+                            value={field.value || "none"}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select step" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="none">-</SelectItem>
+                              <SelectItem value="first_send">first_send</SelectItem>
+                              <SelectItem value="follow_1">follow_1</SelectItem>
+                              <SelectItem value="follow_2">follow_2</SelectItem>
+                              <SelectItem value="follow_3">follow_3</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}

@@ -8,7 +8,7 @@ import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 
-import { Navbar } from "@/components/Navbar";
+import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -115,206 +115,201 @@ export default function SearchPage() {
   };
 
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen bg-gray-50">
-        <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-          {webhookConfigured === false && (
-            <div className="flex items-center gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-              <AlertTriangle className="h-5 w-5 text-yellow-600" />
-              <p className="text-sm text-yellow-800">
-                Webhook URL not configured. Please{" "}
-                <a href="/settings" className="font-medium underline">
-                  configure it in Settings
-                </a>
-              </p>
-            </div>
-          )}
+    <AppLayout>
+      <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+        {webhookConfigured === false && (
+          <div className="flex items-center gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+            <AlertTriangle className="h-5 w-5 text-yellow-600" />
+            <p className="text-sm text-yellow-800">
+              Webhook URL not configured. Please{" "}
+              <a href="/settings" className="font-medium underline">
+                configure it in Settings
+              </a>
+            </p>
+          </div>
+        )}
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-3xl font-bold text-gray-900">Search & Trigger</h1>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-gray-400 hover:text-gray-600"
-                        >
-                          <HelpCircle className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>How It Works</DialogTitle>
-                        </DialogHeader>
-                        <ol className="space-y-3">
-                          <li className="flex gap-3">
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
-                              1
-                            </span>
-                            <div>
-                              <p className="font-medium text-gray-900">Enter Search Criteria</p>
-                              <p className="text-sm text-gray-600">
-                                Specify region, industry, and keywords
-                              </p>
-                            </div>
-                          </li>
-                          <li className="flex gap-3">
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
-                              2
-                            </span>
-                            <div>
-                              <p className="font-medium text-gray-900">Trigger Webhook</p>
-                              <p className="text-sm text-gray-600">
-                                Send data to your n8n workflow
-                              </p>
-                            </div>
-                          </li>
-                          <li className="flex gap-3">
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
-                              3
-                            </span>
-                            <div>
-                              <p className="font-medium text-gray-900">Search for Leads</p>
-                              <p className="text-sm text-gray-600">
-                                n8n finds matching leads automatically
-                              </p>
-                            </div>
-                          </li>
-                          <li className="flex gap-3">
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
-                              4
-                            </span>
-                            <div>
-                              <p className="font-medium text-gray-900">Receive Results</p>
-                              <p className="text-sm text-gray-600">
-                                Leads appear in your dashboard
-                              </p>
-                            </div>
-                          </li>
-                        </ol>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                  <p className="mt-2 text-gray-600">Trigger n8n webhook to search for leads</p>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-3xl font-bold text-foreground">Search & Trigger</h1>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-gray-400 hover:text-gray-600"
+                      >
+                        <HelpCircle className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>How It Works</DialogTitle>
+                      </DialogHeader>
+                      <ol className="space-y-3">
+                        <li className="flex gap-3">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
+                            1
+                          </span>
+                          <div>
+                            <p className="font-medium text-foreground">Enter Search Criteria</p>
+                            <p className="text-sm text-muted-foreground">
+                              Specify region, industry, and keywords
+                            </p>
+                          </div>
+                        </li>
+                        <li className="flex gap-3">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
+                            2
+                          </span>
+                          <div>
+                            <p className="font-medium text-foreground">Trigger Webhook</p>
+                            <p className="text-sm text-muted-foreground">
+                              Send data to your n8n workflow
+                            </p>
+                          </div>
+                        </li>
+                        <li className="flex gap-3">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
+                            3
+                          </span>
+                          <div>
+                            <p className="font-medium text-foreground">Search for Leads</p>
+                            <p className="text-sm text-muted-foreground">
+                              n8n finds matching leads automatically
+                            </p>
+                          </div>
+                        </li>
+                        <li className="flex gap-3">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
+                            4
+                          </span>
+                          <div>
+                            <p className="font-medium text-foreground">Receive Results</p>
+                            <p className="text-sm text-muted-foreground">
+                              Leads appear in your dashboard
+                            </p>
+                          </div>
+                        </li>
+                      </ol>
+                    </DialogContent>
+                  </Dialog>
                 </div>
-                <Button
-                  type="submit"
-                  disabled={submitStatus === "running" || webhookConfigured !== true}
-                  size="sm"
-                >
-                  {submitStatus === "running" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Trigger Campaign"
-                  )}
-                </Button>
+                <p className="mt-2 text-gray-600">Trigger n8n webhook to search for leads</p>
               </div>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Campaign Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="region"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Region</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Brazil, USA, Europe" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <Button
+                type="submit"
+                disabled={submitStatus === "running" || webhookConfigured !== true}
+                size="sm"
+              >
+                {submitStatus === "running" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Trigger Campaign"
+                )}
+              </Button>
+            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Campaign Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="region"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Region</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Brazil, USA, Europe" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <FormField
-                    control={form.control}
-                    name="industry"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Industry</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Tech, Finance, Healthcare" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <FormField
+                  control={form.control}
+                  name="industry"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Industry</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Tech, Finance, Healthcare" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <FormField
-                    control={form.control}
-                    name="keywords"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Keywords (comma-separated)</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="e.g., automation, CRM, SaaS"
-                            className="min-h-20"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <FormField
+                  control={form.control}
+                  name="keywords"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Keywords (comma-separated)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="e.g., automation, CRM, SaaS"
+                          className="min-h-20"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <FormField
-                    control={form.control}
-                    name="campaignName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Campaign Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Give your campaign a name (optional)" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
+                <FormField
+                  control={form.control}
+                  name="campaignName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Campaign Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Give your campaign a name (optional)" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
 
-              {message && (
-                <div
-                  className={`flex items-center gap-3 rounded-lg border p-4 ${
+            {message && (
+              <div
+                className={`flex items-center gap-3 rounded-lg border p-4 ${
+                  submitStatus === "error"
+                    ? "border-red-200 bg-red-50"
+                    : submitStatus === "completed"
+                      ? "border-green-200 bg-green-50"
+                      : "border-blue-200 bg-blue-50"
+                }`}
+              >
+                {submitStatus === "running" && (
+                  <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                )}
+                {submitStatus === "completed" && <CheckCircle className="h-5 w-5 text-green-600" />}
+                {submitStatus === "error" && <AlertCircle className="h-5 w-5 text-red-600" />}
+                <p
+                  className={
                     submitStatus === "error"
-                      ? "border-red-200 bg-red-50"
+                      ? "text-red-800"
                       : submitStatus === "completed"
-                        ? "border-green-200 bg-green-50"
-                        : "border-blue-200 bg-blue-50"
-                  }`}
+                        ? "text-green-800"
+                        : "text-blue-800"
+                  }
                 >
-                  {submitStatus === "running" && (
-                    <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-                  )}
-                  {submitStatus === "completed" && (
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                  )}
-                  {submitStatus === "error" && <AlertCircle className="h-5 w-5 text-red-600" />}
-                  <p
-                    className={
-                      submitStatus === "error"
-                        ? "text-red-800"
-                        : submitStatus === "completed"
-                          ? "text-green-800"
-                          : "text-blue-800"
-                    }
-                  >
-                    {message}
-                  </p>
-                </div>
-              )}
-            </form>
-          </Form>
-        </div>
+                  {message}
+                </p>
+              </div>
+            )}
+          </form>
+        </Form>
       </div>
-    </>
+    </AppLayout>
   );
 }

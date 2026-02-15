@@ -18,11 +18,11 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="border-b border-gray-200 bg-white shadow-sm">
+    <div className="min-h-screen bg-background">
+      <div className="border-b border-border bg-card shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center">
-            <Link href="/" className="text-xl font-bold text-gray-900">
+            <Link href="/" className="text-xl font-bold text-foreground">
               Cold Email Pro
             </Link>
           </div>
@@ -36,10 +36,8 @@ export default function Error({
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
                 <AlertTriangle className="h-6 w-6 text-red-600" />
               </div>
-              <CardTitle className="text-xl font-semibold text-gray-900">
-                Import Error
-              </CardTitle>
-              <CardDescription className="text-gray-600">
+              <CardTitle className="text-xl font-semibold text-foreground">Import Error</CardTitle>
+              <CardDescription className="text-muted-foreground">
                 Something went wrong while loading the import page. Please try again.
               </CardDescription>
             </CardHeader>
@@ -58,10 +56,10 @@ export default function Error({
 
               {process.env.NODE_ENV === "development" && (
                 <details className="text-left">
-                  <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
+                  <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
                     Error details
                   </summary>
-                  <pre className="mt-2 overflow-auto rounded bg-gray-100 p-2 text-xs text-gray-700">
+                  <pre className="mt-2 overflow-auto rounded bg-muted p-2 text-xs text-foreground">
                     {error.message}
                   </pre>
                 </details>

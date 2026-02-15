@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { ImportRow, ImportValidation, ImportStatus } from "@/types";
-import { Navbar } from "@/components/Navbar";
+import { AppLayout } from "@/components/AppLayout";
 import { FileDropzone } from "@/components/import/FileDropzone";
 import { ImportStats } from "@/components/import/ImportStats";
 import { PreviewTable } from "@/components/import/PreviewTable";
@@ -127,60 +127,57 @@ export default function ImportPage() {
   }, [user, rows]);
 
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen bg-gray-50">
-        <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Import Leads</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Upload a CSV or XLSX file to import leads into your database
-            </p>
-          </div>
-
-          {error && <ErrorMessage message={error} />}
-
-          <FileDropzone
-            onFileSelected={handleFileSelected}
-            onClear={handleClear}
-            currentFile={file}
-            isProcessing={status === "parsing"}
-          />
-
-          {status === "parsing" && (
-            <div className="flex items-center justify-center gap-3 py-8">
-              <LoadingSpinner />
-              <p className="text-sm text-gray-600">Processing file...</p>
-            </div>
-          )}
-
-          {(status === "preview" ||
-            status === "importing" ||
-            status === "success" ||
-            status === "error") && (
-            <>
-              <ImportStats
-                totalRawRows={totalRawRows}
-                filteredOutRows={filteredOutRows}
-                validRows={rows.length}
-                warningCount={warningCount}
-              />
-
-              {validations.length > 0 && <ValidationWarnings validations={validations} />}
-
-              <PreviewTable rows={rows} validations={validations} onRowUpdate={handleRowUpdate} />
-
-              <ImportActions
-                status={status}
-                totalRows={rows.length}
-                importedRows={importedCount}
-                onImport={handleImport}
-                onReset={handleClear}
-              />
-            </>
-          )}
+    <AppLayout>
+      <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Import Leads</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Upload a CSV or XLSX file para importar leads para sua base
+          </p>
         </div>
+
+        {error && <ErrorMessage message={error} />}
+
+        <FileDropzone
+          onFileSelected={handleFileSelected}
+          onClear={handleClear}
+          currentFile={file}
+          isProcessing={status === "parsing"}
+        />
+
+        {status === "parsing" && (
+          <div className="flex items-center justify-center gap-3 py-8">
+            <LoadingSpinner />
+            <p className="text-sm text-muted-foreground">Processando arquivo...</p>
+          </div>
+        )}
+
+        {(status === "preview" ||
+          status === "importing" ||
+          status === "success" ||
+          status === "error") && (
+          <>
+            <ImportStats
+              totalRawRows={totalRawRows}
+              filteredOutRows={filteredOutRows}
+              validRows={rows.length}
+              warningCount={warningCount}
+            />
+
+            {validations.length > 0 && <ValidationWarnings validations={validations} />}
+
+            <PreviewTable rows={rows} validations={validations} onRowUpdate={handleRowUpdate} />
+
+            <ImportActions
+              status={status}
+              totalRows={rows.length}
+              importedRows={importedCount}
+              onImport={handleImport}
+              onReset={handleClear}
+            />
+          </>
+        )}
       </div>
-    </>
+    </AppLayout>
   );
 }

@@ -9,37 +9,37 @@ interface ExpandableRowProps {
 
 export function ExpandableRow({ email }: ExpandableRowProps) {
   return (
-    <TableRow className="bg-gray-50">
+    <TableRow className="bg-muted">
       <TableCell colSpan={13}>
         <div className="space-y-4 p-4">
           {/* Contact & Location */}
           <div>
-            <h4 className="mb-3 flex items-center gap-2 font-medium text-gray-900">
+            <h4 className="mb-3 flex items-center gap-2 font-medium text-foreground">
               <MapPin className="h-4 w-4" />
               Contact & Location
             </h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               {email.city && (
                 <div>
-                  <p className="text-gray-500">City</p>
-                  <p className="font-medium text-gray-900">{email.city}</p>
+                  <p className="text-muted-foreground">City</p>
+                  <p className="font-medium text-foreground">{email.city}</p>
                 </div>
               )}
               {email.state && (
                 <div>
-                  <p className="text-gray-500">State</p>
-                  <p className="font-medium text-gray-900">{email.state}</p>
+                  <p className="text-muted-foreground">State</p>
+                  <p className="font-medium text-foreground">{email.state}</p>
                 </div>
               )}
               {email.address && (
                 <div className="col-span-2">
-                  <p className="text-gray-500">Address</p>
-                  <p className="font-medium text-gray-900">{email.address}</p>
+                  <p className="text-muted-foreground">Address</p>
+                  <p className="font-medium text-foreground">{email.address}</p>
                 </div>
               )}
               {email.google_maps_url && (
                 <div className="col-span-2">
-                  <p className="text-gray-500">Location</p>
+                  <p className="text-muted-foreground">Location</p>
                   <a
                     href={email.google_maps_url}
                     target="_blank"
@@ -55,43 +55,43 @@ export function ExpandableRow({ email }: ExpandableRowProps) {
 
           {/* Email Configuration */}
           <div>
-            <h4 className="mb-3 flex items-center gap-2 font-medium text-gray-900">
+            <h4 className="mb-3 flex items-center gap-2 font-medium text-foreground">
               <Mail className="h-4 w-4" />
               Email Configuration
             </h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               {email.sender_email && (
                 <div>
-                  <p className="text-gray-500">Sender Email</p>
-                  <p className="font-medium text-gray-900">{email.sender_email}</p>
+                  <p className="text-muted-foreground">Sender Email</p>
+                  <p className="font-medium text-foreground">{email.sender_email}</p>
                 </div>
               )}
               {email.prospect_cc_email && (
                 <div>
-                  <p className="text-gray-500">Prospect CC</p>
-                  <p className="font-medium text-gray-900">{email.prospect_cc_email}</p>
+                  <p className="text-muted-foreground">Prospect CC</p>
+                  <p className="font-medium text-foreground">{email.prospect_cc_email}</p>
                 </div>
               )}
               {(email.cc_email_1 || email.cc_email_2 || email.cc_email_3) && (
                 <div className="col-span-2">
-                  <p className="mb-1 text-gray-500">CC Emails</p>
+                  <p className="mb-1 text-muted-foreground">CC Emails</p>
                   <div className="space-y-1">
                     {email.cc_email_1 && (
-                      <p className="font-medium text-gray-900">{email.cc_email_1}</p>
+                      <p className="font-medium text-foreground">{email.cc_email_1}</p>
                     )}
                     {email.cc_email_2 && (
-                      <p className="font-medium text-gray-900">{email.cc_email_2}</p>
+                      <p className="font-medium text-foreground">{email.cc_email_2}</p>
                     )}
                     {email.cc_email_3 && (
-                      <p className="font-medium text-gray-900">{email.cc_email_3}</p>
+                      <p className="font-medium text-foreground">{email.cc_email_3}</p>
                     )}
                   </div>
                 </div>
               )}
               {email.bcc_email_1 && (
                 <div>
-                  <p className="text-gray-500">BCC Email</p>
-                  <p className="font-medium text-gray-900">{email.bcc_email_1}</p>
+                  <p className="text-muted-foreground">BCC Email</p>
+                  <p className="font-medium text-foreground">{email.bcc_email_1}</p>
                 </div>
               )}
             </div>
@@ -103,14 +103,14 @@ export function ExpandableRow({ email }: ExpandableRowProps) {
             email.reply_we_got ||
             email.our_last_reply) && (
             <div>
-              <h4 className="mb-3 flex items-center gap-2 font-medium text-gray-900">
+              <h4 className="mb-3 flex items-center gap-2 font-medium text-foreground">
                 <Tag className="h-4 w-4" />
                 Replies & Tags
               </h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 {email.lead_category && (
                   <div>
-                    <p className="mb-1 text-gray-500">Lead Category</p>
+                    <p className="mb-1 text-muted-foreground">Lead Category</p>
                     <Badge variant="secondary" className="bg-purple-100 text-purple-800">
                       {email.lead_category}
                     </Badge>
@@ -118,7 +118,7 @@ export function ExpandableRow({ email }: ExpandableRowProps) {
                 )}
                 {email.client_tag && (
                   <div>
-                    <p className="mb-1 text-gray-500">Client Tag</p>
+                    <p className="mb-1 text-muted-foreground">Client Tag</p>
                     <Badge variant="secondary" className="bg-indigo-100 text-indigo-800">
                       {email.client_tag}
                     </Badge>
@@ -126,14 +126,14 @@ export function ExpandableRow({ email }: ExpandableRowProps) {
                 )}
                 {email.reply_we_got && (
                   <div className="col-span-2">
-                    <p className="text-gray-500">Reply We Got</p>
-                    <p className="font-medium text-gray-900">{email.reply_we_got}</p>
+                    <p className="text-muted-foreground">Reply We Got</p>
+                    <p className="font-medium text-foreground">{email.reply_we_got}</p>
                   </div>
                 )}
                 {email.our_last_reply && (
                   <div className="col-span-2">
-                    <p className="text-gray-500">Our Last Reply</p>
-                    <p className="font-medium text-gray-900">{email.our_last_reply}</p>
+                    <p className="text-muted-foreground">Our Last Reply</p>
+                    <p className="font-medium text-foreground">{email.our_last_reply}</p>
                   </div>
                 )}
               </div>

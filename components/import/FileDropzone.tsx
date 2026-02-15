@@ -86,8 +86,8 @@ export function FileDropzone({
               <FileSpreadsheet className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-900">{currentFile.name}</p>
-              <p className="text-xs text-gray-500">{formatFileSize(currentFile.size)}</p>
+              <p className="text-sm font-medium text-foreground">{currentFile.name}</p>
+              <p className="text-xs text-muted-foreground">{formatFileSize(currentFile.size)}</p>
             </div>
           </div>
           <Button
@@ -117,17 +117,19 @@ export function FileDropzone({
             "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-10 transition-colors",
             isDragOver
               ? "border-blue-500 bg-blue-50"
-              : "border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100",
+              : "border-border bg-muted hover:border-border hover:bg-muted",
           )}
         >
-          <div className={cn("rounded-full p-3", isDragOver ? "bg-blue-100" : "bg-gray-200")}>
-            <Upload className={cn("h-6 w-6", isDragOver ? "text-blue-600" : "text-gray-500")} />
+          <div className={cn("rounded-full p-3", isDragOver ? "bg-blue-100" : "bg-muted")}>
+            <Upload
+              className={cn("h-6 w-6", isDragOver ? "text-blue-600" : "text-muted-foreground")}
+            />
           </div>
           <div className="text-center">
-            <p className="text-sm font-medium text-gray-700">
+            <p className="text-sm font-medium text-foreground">
               Drag and drop your file here, or click to browse
             </p>
-            <p className="mt-1 text-xs text-gray-500">Supports CSV and XLSX files</p>
+            <p className="mt-1 text-xs text-muted-foreground">Supports CSV and XLSX files</p>
           </div>
         </div>
         <input

@@ -54,8 +54,8 @@ export function Pagination({
   };
 
   return (
-    <div className="flex items-center justify-between border-t border-gray-200 bg-white px-6 py-4">
-      <div className="text-sm text-gray-700">
+    <div className="flex items-center justify-between border-t border-border bg-card px-6 py-4">
+      <div className="text-sm text-muted-foreground">
         Showing <span className="font-medium">{startItem}</span> to{" "}
         <span className="font-medium">{endItem}</span> of{" "}
         <span className="font-medium">{totalItems}</span> results
@@ -76,7 +76,7 @@ export function Pagination({
         {getPageNumbers().map((page, idx) => {
           if (page === "...") {
             return (
-              <span key={`ellipsis-${idx}`} className="px-2 text-gray-500">
+              <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground">
                 ...
               </span>
             );

@@ -78,7 +78,7 @@ export function CompanyGroupRow({
   return (
     <>
       <TableRow
-        className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
+        className="border-b border-border hover:bg-muted cursor-pointer"
         onClick={onToggleExpand}
       >
         <TableCell onClick={(e) => e.stopPropagation()}>
@@ -91,20 +91,20 @@ export function CompanyGroupRow({
         <TableCell>
           <div className="flex items-center gap-2">
             {isExpanded ? (
-              <ChevronDown className="h-4 w-4 shrink-0 text-gray-500" />
+              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
             ) : (
-              <ChevronRight className="h-4 w-4 shrink-0 text-gray-500" />
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             )}
-            <span className="font-medium text-gray-900">{group.company}</span>
+            <span className="font-medium text-foreground">{group.company}</span>
             <Badge className="bg-teal-100 text-teal-800 text-xs">
               {group.emails.length} emails
             </Badge>
           </div>
         </TableCell>
-        <TableCell className="text-gray-700">
+        <TableCell className="text-foreground">
           <span>{group.emails[0].email}</span>
           {group.emails.length > 1 && (
-            <span className="ml-1 text-xs text-gray-400">
+            <span className="ml-1 text-xs text-muted-foreground">
               +{group.emails.length - 1} more
             </span>
           )}
@@ -120,43 +120,36 @@ export function CompanyGroupRow({
         </TableCell>
         <TableCell>
           <Badge className={getClassColor(bestClassification).bg}>
-            <span className={getClassColor(bestClassification).text}>
-              {bestClassification}
-            </span>
+            <span className={getClassColor(bestClassification).text}>{bestClassification}</span>
           </Badge>
         </TableCell>
-        <TableCell className="text-gray-400">-</TableCell>
-        <TableCell className="text-gray-700">{campaignLabel}</TableCell>
+        <TableCell className="text-muted-foreground">-</TableCell>
+        <TableCell className="text-foreground">{campaignLabel}</TableCell>
         <TableCell />
       </TableRow>
 
       {isExpanded &&
         group.emails.map((email) => (
-          <TableRow
-            key={email.id}
-            className="border-b border-gray-100 bg-gray-50/50 hover:bg-gray-100/50"
-          >
+          <TableRow key={email.id} className="border-b border-border bg-muted/50 hover:bg-muted">
             <TableCell onClick={(e) => e.stopPropagation()}>
               <Checkbox
                 checked={selectedIds.has(email.id)}
-                onClick={(e: React.MouseEvent) =>
-                  onSelectEmail(email.id, allEmails, e.shiftKey)
-                }
+                onClick={(e: React.MouseEvent) => onSelectEmail(email.id, allEmails, e.shiftKey)}
               />
             </TableCell>
             <TableCell>
               <div className="flex items-center gap-2 pl-6">
-                <div className="h-4 w-px bg-gray-300" />
+                <div className="h-4 w-px bg-border" />
                 <button
                   type="button"
                   onClick={() => onViewDetails(email)}
-                  className="text-sm text-gray-600 hover:text-primary hover:underline cursor-pointer"
+                  className="text-sm text-foreground hover:text-primary hover:underline cursor-pointer"
                 >
                   {email.lead_name || email.company}
                 </button>
               </div>
             </TableCell>
-            <TableCell className="text-gray-700 text-sm">{email.email}</TableCell>
+            <TableCell className="text-foreground text-sm">{email.email}</TableCell>
             <TableCell>
               <Badge className={getStatusColor(email.status).bg}>
                 <span className={getStatusColor(email.status).text}>{email.status}</span>
@@ -176,9 +169,7 @@ export function CompanyGroupRow({
                 </span>
               </Badge>
             </TableCell>
-            <TableCell className="text-gray-700 text-sm">
-              {email.campaign_name || "-"}
-            </TableCell>
+            <TableCell className="text-foreground text-sm">{email.campaign_name || "-"}</TableCell>
             <TableCell>
               <div className="flex gap-1">
                 <Button variant="ghost" size="sm" onClick={() => onViewDetails(email)}>

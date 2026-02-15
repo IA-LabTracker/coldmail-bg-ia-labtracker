@@ -9,7 +9,7 @@ interface PageLoadingProps {
 
 export function PageLoading({ variant = "default", showNavbar = true }: PageLoadingProps) {
   const renderNavbar = () => (
-    <div className="bg-white border-b border-gray-200 shadow-sm">
+    <div className="bg-card border-b border-border shadow-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Skeleton className="h-8 w-32" />
@@ -40,7 +40,7 @@ export function PageLoading({ variant = "default", showNavbar = true }: PageLoad
     <Card>
       <CardContent className="p-0">
         <div className="overflow-hidden">
-          <div className="bg-gray-50 px-6 py-3 border-b">
+          <div className="bg-muted px-6 py-3 border-b border-border">
             <div className="flex items-center space-x-4">
               <Skeleton className="h-4 w-4" />
               <Skeleton className="h-4 w-32" />
@@ -51,7 +51,7 @@ export function PageLoading({ variant = "default", showNavbar = true }: PageLoad
             </div>
           </div>
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="px-6 py-4 border-b border-gray-200">
+            <div key={i} className="px-6 py-4 border-b border-border">
               <div className="flex items-center space-x-4">
                 <Skeleton className="h-4 w-4" />
                 <Skeleton className="h-4 w-32" />
@@ -86,7 +86,7 @@ export function PageLoading({ variant = "default", showNavbar = true }: PageLoad
             <Skeleton className="h-px w-full" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2">
+            <span className="bg-card px-2">
               <Skeleton className="h-3 w-8" />
             </span>
           </div>
@@ -212,7 +212,7 @@ export function PageLoading({ variant = "default", showNavbar = true }: PageLoad
 
       case "auth":
         return (
-          <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+          <div className="min-h-screen bg-background flex items-center justify-center px-4">
             {renderFormSkeleton()}
           </div>
         );
@@ -257,7 +257,7 @@ export function PageLoading({ variant = "default", showNavbar = true }: PageLoad
                     </div>
                   ))}
                 </div>
-                <div className="border-2 border-dashed border-gray-200 rounded-lg p-12">
+                <div className="border-2 border-dashed border-border rounded-lg p-12">
                   <div className="text-center space-y-4">
                     <Skeleton className="h-12 w-12 mx-auto" />
                     <Skeleton className="h-4 w-64 mx-auto" />
@@ -310,7 +310,7 @@ export function PageLoading({ variant = "default", showNavbar = true }: PageLoad
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {showNavbar && renderNavbar()}
       {renderContent()}
     </div>

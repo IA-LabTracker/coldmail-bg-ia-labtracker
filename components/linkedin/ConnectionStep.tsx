@@ -259,7 +259,7 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
                   className={`rounded-lg border p-3 transition-colors ${
                     isSelected
                       ? "border-green-200 bg-green-50"
-                      : "border-gray-200 bg-white hover:bg-gray-50"
+                      : "border-border bg-card hover:bg-muted"
                   }`}
                 >
                   <div className="flex items-center justify-between">

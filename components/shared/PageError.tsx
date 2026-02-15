@@ -94,7 +94,7 @@ export function PageError({
   };
 
   const renderNavbar = () => (
-    <div className="bg-white border-b border-gray-200 shadow-sm">
+    <div className="bg-card border-b border-border shadow-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center">
           <Link href="/" className="text-xl font-bold text-gray-900">
@@ -108,13 +108,13 @@ export function PageError({
   const content = getErrorContent();
   const isAuthPage = variant === "login" || variant === "signup" || variant === "auth";
   const containerClass = isAuthPage
-    ? "min-h-screen bg-gray-50 flex items-center justify-center px-4"
+    ? "min-h-screen bg-background flex items-center justify-center px-4"
     : "mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8";
 
   const cardClass = isAuthPage ? "w-full max-w-md" : "mx-auto max-w-md";
 
   return (
-    <div className={isAuthPage ? "" : "min-h-screen bg-gray-50"}>
+    <div className={isAuthPage ? "" : "min-h-screen bg-background"}>
       {showNavbar && !isAuthPage && renderNavbar()}
 
       <div className={containerClass}>

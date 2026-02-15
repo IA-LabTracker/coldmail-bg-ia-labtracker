@@ -3,9 +3,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Navbar skeleton */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
+      <div className="bg-card border-b border-border shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <Skeleton className="h-8 w-32" />
@@ -15,13 +15,11 @@ export default function Loading() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="mb-8">
           <Skeleton className="h-8 w-48 mb-2" />
           <Skeleton className="h-4 w-96" />
         </div>
-
-        {/* KPI Cards */}
+        ]
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
           {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i}>
@@ -36,7 +34,6 @@ export default function Loading() {
             </Card>
           ))}
         </div>
-
         {/* Filters */}
         <Card className="mb-6">
           <CardHeader>
@@ -53,12 +50,11 @@ export default function Loading() {
             </div>
           </CardContent>
         </Card>
-
         {/* Email Table */}
         <Card>
           <CardContent className="p-0">
             <div className="overflow-hidden">
-              <div className="bg-gray-50 px-6 py-3 border-b">
+              <div className="bg-muted px-6 py-3 border-b border-border">
                 <div className="flex items-center space-x-4">
                   <Skeleton className="h-4 w-4" />
                   <Skeleton className="h-4 w-32" />
@@ -70,7 +66,7 @@ export default function Loading() {
               </div>
 
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="px-6 py-4 border-b border-gray-200">
+                <div key={i} className="px-6 py-4 border-b border-border">
                   <div className="flex items-center space-x-4">
                     <Skeleton className="h-4 w-4" />
                     <Skeleton className="h-4 w-32" />
@@ -84,7 +80,6 @@ export default function Loading() {
             </div>
           </CardContent>
         </Card>
-
         {/* Pagination */}
         <div className="mt-6 flex items-center justify-between">
           <Skeleton className="h-4 w-40" />

@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Email } from "@/types";
-import { Navbar } from "@/components/Navbar";
+import { AppLayout } from "@/components/AppLayout";
 import { KPICards, KPIFilter } from "@/components/dashboard/KPICards";
 import { EmailFilters } from "@/components/dashboard/EmailFilters";
 import { EmailTable } from "@/components/dashboard/EmailTable";
@@ -187,148 +187,145 @@ export default function DashboardPage() {
   }, [selectedIds, clearSelection]);
 
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen bg-gray-50">
-        <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <Link href="/import">
-              <Button className="gap-2">
-                <Upload className="h-4 w-4" />
-                Import Leads
-              </Button>
-            </Link>
-          </div>
-
-          {error && <ErrorMessage message={error} />}
-
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <>
-              <KPICards
-                emails={emails}
-                activeFilter={kpiFilter}
-                onFilterChange={(filter) => {
-                  setKpiFilter(filter);
-                  if (!filter) {
-                    setStatusFilter("");
-                    setClassificationFilter("");
-                  } else if (filter.type === "status") {
-                    setStatusFilter(filter.value);
-                    setClassificationFilter("");
-                  } else if (filter.type === "classification") {
-                    setClassificationFilter(filter.value);
-                    setStatusFilter("");
-                  }
-                }}
-              />
-
-              <div className="rounded-lg bg-white p-4">
-                <h2 className="mb-4 text-lg font-semibold text-gray-900">Filters</h2>
-                <EmailFilters
-                  status={statusFilter}
-                  onStatusChange={(v) => {
-                    setStatusFilter(v);
-                    setKpiFilter(null);
-                  }}
-                  classification={classificationFilter}
-                  onClassificationChange={(v) => {
-                    setClassificationFilter(v);
-                    setKpiFilter(null);
-                  }}
-                  clientStep={clientStepFilter}
-                  onClientStepChange={setClientStepFilter}
-                  campaign={campaignFilter}
-                  onCampaignChange={setCampaignFilter}
-                  search={searchFilter}
-                  onSearchChange={setSearchFilter}
-                />
-              </div>
-
-              {selectedEmails.length > 0 && (
-                <BulkActions
-                  selectedEmails={selectedEmails}
-                  onClear={clearSelection}
-                  onBulkDelete={handleBulkDeleteRequest}
-                />
-              )}
-
-              <div className="rounded-lg border border-gray-200 bg-white">
-                <EmailTable
-                  groups={visibleGroups}
-                  selectedIds={selectedIds}
-                  expandedCompanies={expandedCompanies}
-                  onSelectEmail={(id, visible, shiftKey) =>
-                    toggleEmailSelection(id, visible, shiftKey)
-                  }
-                  onSelectGroup={handleSelectGroup}
-                  onSelectAll={() => toggleSelectAllVisible(allVisibleEmails)}
-                  onToggleCompany={handleToggleCompany}
-                  onViewDetails={handleViewDetails}
-                  onDelete={handleDeleteRequest}
-                  isAllSelected={isAllSelected(allVisibleEmails)}
-                />
-
-                {hasMore && (
-                  <div ref={sentinelRef} className="flex justify-center py-4">
-                    <LoadingSpinner />
-                  </div>
-                )}
-              </div>
-
-              <EmailDetailModal
-                email={selectedDetailEmail}
-                open={detailModalOpen}
-                onOpenChange={setDetailModalOpen}
-                onUpdate={fetchEmails}
-              />
-
-              <AlertModal open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
-                <AlertModal.Header>
-                  <AlertModal.Title>Delete Record</AlertModal.Title>
-                  <AlertModal.Description>
-                    Are you sure you want to delete the record for{" "}
-                    <strong>{deleteTarget?.company}</strong>? This action cannot be undone.
-                  </AlertModal.Description>
-                </AlertModal.Header>
-                <AlertModal.Footer>
-                  <AlertModal.Cancel>Cancel</AlertModal.Cancel>
-                  <AlertModal.Action
-                    onClick={handleConfirmDelete}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
-                    Delete
-                  </AlertModal.Action>
-                </AlertModal.Footer>
-              </AlertModal>
-
-              <AlertModal open={bulkDeleteModalOpen} onOpenChange={setBulkDeleteModalOpen}>
-                <AlertModal.Header>
-                  <AlertModal.Title>Delete Selected Records</AlertModal.Title>
-                  <AlertModal.Description>
-                    Are you sure you want to delete <strong>{selectedEmails.length}</strong>{" "}
-                    selected record
-                    {selectedEmails.length > 1 ? "s" : ""}? This action cannot be undone.
-                  </AlertModal.Description>
-                </AlertModal.Header>
-                <AlertModal.Footer>
-                  <AlertModal.Cancel>Cancel</AlertModal.Cancel>
-                  <AlertModal.Action
-                    onClick={handleConfirmBulkDelete}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
-                    Delete All
-                  </AlertModal.Action>
-                </AlertModal.Footer>
-              </AlertModal>
-            </>
-          )}
+    <AppLayout>
+      <div className="space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+          <Link href="/import">
+            <Button className="gap-2">
+              <Upload className="h-4 w-4" />
+              Import Leads
+            </Button>
+          </Link>
         </div>
+
+        {error && <ErrorMessage message={error} />}
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <LoadingSpinner />
+          </div>
+        ) : (
+          <>
+            <KPICards
+              emails={emails}
+              activeFilter={kpiFilter}
+              onFilterChange={(filter) => {
+                setKpiFilter(filter);
+                if (!filter) {
+                  setStatusFilter("");
+                  setClassificationFilter("");
+                } else if (filter.type === "status") {
+                  setStatusFilter(filter.value);
+                  setClassificationFilter("");
+                } else if (filter.type === "classification") {
+                  setClassificationFilter(filter.value);
+                  setStatusFilter("");
+                }
+              }}
+            />
+
+            <div className="rounded-lg bg-card p-4">
+              <h2 className="mb-4 text-lg font-semibold text-foreground">Filters</h2>
+              <EmailFilters
+                status={statusFilter}
+                onStatusChange={(v) => {
+                  setStatusFilter(v);
+                  setKpiFilter(null);
+                }}
+                classification={classificationFilter}
+                onClassificationChange={(v) => {
+                  setClassificationFilter(v);
+                  setKpiFilter(null);
+                }}
+                clientStep={clientStepFilter}
+                onClientStepChange={setClientStepFilter}
+                campaign={campaignFilter}
+                onCampaignChange={setCampaignFilter}
+                search={searchFilter}
+                onSearchChange={setSearchFilter}
+              />
+            </div>
+
+            {selectedEmails.length > 0 && (
+              <BulkActions
+                selectedEmails={selectedEmails}
+                onClear={clearSelection}
+                onBulkDelete={handleBulkDeleteRequest}
+              />
+            )}
+
+            <div className="rounded-lg border border-border bg-card">
+              <EmailTable
+                groups={visibleGroups}
+                selectedIds={selectedIds}
+                expandedCompanies={expandedCompanies}
+                onSelectEmail={(id, visible, shiftKey) =>
+                  toggleEmailSelection(id, visible, shiftKey)
+                }
+                onSelectGroup={handleSelectGroup}
+                onSelectAll={() => toggleSelectAllVisible(allVisibleEmails)}
+                onToggleCompany={handleToggleCompany}
+                onViewDetails={handleViewDetails}
+                onDelete={handleDeleteRequest}
+                isAllSelected={isAllSelected(allVisibleEmails)}
+              />
+
+              {hasMore && (
+                <div ref={sentinelRef} className="flex justify-center py-4">
+                  <LoadingSpinner />
+                </div>
+              )}
+            </div>
+
+            <EmailDetailModal
+              email={selectedDetailEmail}
+              open={detailModalOpen}
+              onOpenChange={setDetailModalOpen}
+              onUpdate={fetchEmails}
+            />
+
+            <AlertModal open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+              <AlertModal.Header>
+                <AlertModal.Title>Delete Record</AlertModal.Title>
+                <AlertModal.Description>
+                  Are you sure you want to delete the record for{" "}
+                  <strong>{deleteTarget?.company}</strong>? This action cannot be undone.
+                </AlertModal.Description>
+              </AlertModal.Header>
+              <AlertModal.Footer>
+                <AlertModal.Cancel>Cancel</AlertModal.Cancel>
+                <AlertModal.Action
+                  onClick={handleConfirmDelete}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Delete
+                </AlertModal.Action>
+              </AlertModal.Footer>
+            </AlertModal>
+
+            <AlertModal open={bulkDeleteModalOpen} onOpenChange={setBulkDeleteModalOpen}>
+              <AlertModal.Header>
+                <AlertModal.Title>Delete Selected Records</AlertModal.Title>
+                <AlertModal.Description>
+                  Are you sure you want to delete <strong>{selectedEmails.length}</strong> selected
+                  record
+                  {selectedEmails.length > 1 ? "s" : ""}? This action cannot be undone.
+                </AlertModal.Description>
+              </AlertModal.Header>
+              <AlertModal.Footer>
+                <AlertModal.Cancel>Cancel</AlertModal.Cancel>
+                <AlertModal.Action
+                  onClick={handleConfirmBulkDelete}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Delete All
+                </AlertModal.Action>
+              </AlertModal.Footer>
+            </AlertModal>
+          </>
+        )}
       </div>
-    </>
+    </AppLayout>
   );
 }

@@ -17,14 +17,14 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
             <AlertTriangle className="h-6 w-6 text-red-600" />
           </div>
-          <CardTitle className="text-xl font-semibold text-gray-900">Algo deu errado!</CardTitle>
-          <CardDescription className="text-gray-600">
+          <CardTitle className="text-xl font-semibold text-foreground">Algo deu errado!</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Ocorreu um erro inesperado. Por favor, tente novamente.
           </CardDescription>
         </CardHeader>
@@ -36,10 +36,10 @@ export default function Error({
 
           {process.env.NODE_ENV === "development" && (
             <details className="mt-4 text-left">
-              <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
+              <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
                 Detalhes do erro
               </summary>
-              <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto text-gray-700">
+              <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-auto text-foreground">
                 {error.message}
               </pre>
             </details>

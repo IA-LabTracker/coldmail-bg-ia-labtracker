@@ -39,8 +39,8 @@ const STATUS_CONFIG: Record<
   OK: {
     label: "Running",
     icon: <CheckCircle className="h-4 w-4" />,
-    dotColor: "bg-green-500",
-    textColor: "text-green-700",
+    dotColor: "bg-green-500 dark:bg-green-500/70",
+    textColor: "text-green-700 dark:text-green-400",
   },
   CONNECTING: {
     label: "Conectando...",
@@ -225,10 +225,16 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
           </div>
           <div className="flex items-center gap-2">
             <div
-              className={`h-2 w-2 rounded-full ${isConnected ? "bg-green-500" : "bg-gray-300"}`}
+              className={`h-2 w-2 rounded-full ${
+                isConnected ? "bg-green-500 dark:bg-green-500/70" : "bg-gray-300 dark:bg-gray-600"
+              }`}
             />
             <span
-              className={`text-xs font-medium ${isConnected ? "text-green-700" : "text-gray-400"}`}
+              className={`text-xs font-medium ${
+                isConnected
+                  ? "text-green-700 dark:text-green-400"
+                  : "text-gray-400 dark:text-gray-500"
+              }`}
             >
               {isConnected ? "Ativo" : "Inativo"}
             </span>
@@ -258,7 +264,7 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
                   key={account.id}
                   className={`rounded-lg border p-3 transition-colors ${
                     isSelected
-                      ? "border-green-200 bg-green-50"
+                      ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950"
                       : "border-border bg-card hover:bg-muted"
                   }`}
                 >

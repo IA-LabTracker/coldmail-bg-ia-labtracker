@@ -185,13 +185,23 @@ export default function SettingsPage() {
           <div
             className={`flex items-center gap-3 rounded-lg border p-4 ${
               feedback.type === "error"
-                ? "border-red-200 bg-red-50"
-                : "border-green-200 bg-green-50"
+                ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950"
+                : "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950"
             }`}
           >
-            {feedback.type === "success" && <CheckCircle className="h-5 w-5 text-green-600" />}
-            {feedback.type === "error" && <AlertCircle className="h-5 w-5 text-red-600" />}
-            <p className={feedback.type === "error" ? "text-red-800" : "text-green-800"}>
+            {feedback.type === "success" && (
+              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+            )}
+            {feedback.type === "error" && (
+              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+            )}
+            <p
+              className={
+                feedback.type === "error"
+                  ? "text-red-800 dark:text-red-300"
+                  : "text-green-800 dark:text-green-300"
+              }
+            >
               {feedback.text}
             </p>
           </div>

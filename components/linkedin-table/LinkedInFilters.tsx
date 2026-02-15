@@ -34,7 +34,7 @@ export function LinkedInFilters({
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Status</label>
+          <label className="block text-sm font-medium text-foreground">Status</label>
           <Select
             value={status || "all"}
             onValueChange={(v) => onStatusChange(v === "all" ? "" : v)}
@@ -55,7 +55,7 @@ export function LinkedInFilters({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Classification</label>
+          <label className="block text-sm font-medium text-foreground">Classification</label>
           <Select
             value={classification || "all"}
             onValueChange={(v) => onClassificationChange(v === "all" ? "" : v)}
@@ -73,7 +73,7 @@ export function LinkedInFilters({
         </div>
 
         <div>
-          <label htmlFor="li-campaign" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="li-campaign" className="block text-sm font-medium text-foreground">
             Campaign
           </label>
           <Input
@@ -87,7 +87,7 @@ export function LinkedInFilters({
       </div>
 
       <div>
-        <label htmlFor="li-search" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="search" className="block text-sm font-medium text-foreground">
           Search
         </label>
         <Input

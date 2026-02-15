@@ -275,7 +275,7 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-900">
+                          <span className="text-sm font-medium text-foreground">
                             {account.display_name || "LinkedIn"}
                           </span>
                           <span

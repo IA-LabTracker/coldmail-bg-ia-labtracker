@@ -1,4 +1,4 @@
-import { Mail, Send, MessageSquare, Flame, AlertCircle } from "lucide-react";
+import { Mail, Send, MessageSquare, Flame, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Email } from "@/types";
 
@@ -18,7 +18,7 @@ export function KPICards({ emails, activeFilter, onFilterChange }: KPICardsProps
   const totalSentEmails = emails.filter((e) => e.status === "sent").length;
   const repliesReceived = emails.filter((e) => e.status === "replied").length;
   const hotLeads = emails.filter((e) => e.lead_classification === "hot").length;
-  const bounced = emails.filter((e) => e.status === "bounced").length;
+  const opened = emails.filter((e) => e.status === "opened").length;
 
   const kpis = [
     {
@@ -54,12 +54,12 @@ export function KPICards({ emails, activeFilter, onFilterChange }: KPICardsProps
       filter: { type: "classification" as const, value: "hot" },
     },
     {
-      label: "Bounced",
-      value: bounced,
-      icon: AlertCircle,
-      color: "bg-red-50 text-red-600",
-      ringColor: "ring-red-400",
-      filter: { type: "status" as const, value: "bounced" },
+      label: "Opened",
+      value: opened,
+      icon: Eye,
+      color: "bg-orange-50 text-orange-600",
+      ringColor: "ring-orange-400",
+      filter: { type: "status" as const, value: "opened" },
     },
   ];
 

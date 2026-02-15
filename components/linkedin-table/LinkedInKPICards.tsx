@@ -1,4 +1,4 @@
-import { Send, Eye, MessageSquare, Flame, AlertCircle } from "lucide-react";
+import { Send, Eye, MessageSquare, Flame } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { LinkedInMessage } from "@/types";
 import { KPIFilter } from "@/components/dashboard/KPICards";
@@ -24,7 +24,7 @@ export function LinkedInKPICards({
   const totalRead = messages.filter((m) => m.status === "read").length;
   const totalReplied = messages.filter((m) => m.status === "replied").length;
   const hotLeads = messages.filter((m) => m.lead_classification === "hot").length;
-  const totalFailed = messages.filter((m) => m.status === "failed").length;
+  const totalOpened = messages.filter((m) => m.status === "opened").length;
 
   const kpis = [
     {
@@ -60,12 +60,12 @@ export function LinkedInKPICards({
       filter: { type: "classification" as const, value: "hot" },
     },
     {
-      label: "Failed",
-      value: totalFailed,
-      icon: AlertCircle,
+      label: "Opened",
+      value: totalOpened,
+      icon: Eye,
       color: "bg-orange-50 text-orange-600",
       ringColor: "ring-orange-400",
-      filter: { type: "status" as const, value: "failed" },
+      filter: { type: "status" as const, value: "opened" },
     },
   ];
 

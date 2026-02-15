@@ -1,4 +1,4 @@
-export type EmailStatus = "sent" | "replied" | "bounced" | "researched";
+export type EmailStatus = "sent" | "replied" | "bounced" | "researched" | "opened";
 export type LeadClassification = "hot" | "warm" | "cold";
 
 export interface Email {
@@ -89,7 +89,14 @@ export interface CompanyGroup {
 
 export type ImportStatus = "idle" | "parsing" | "preview" | "importing" | "success" | "error";
 
-export type LinkedInMessageStatus = "pending" | "sent" | "delivered" | "read" | "replied" | "failed";
+export type LinkedInMessageStatus =
+  | "pending"
+  | "sent"
+  | "delivered"
+  | "read"
+  | "replied"
+  | "failed"
+  | "opened";
 
 export interface LinkedInMessage {
   id: string;

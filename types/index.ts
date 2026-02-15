@@ -88,3 +88,49 @@ export interface CompanyGroup {
 }
 
 export type ImportStatus = "idle" | "parsing" | "preview" | "importing" | "success" | "error";
+
+export type LinkedInMessageStatus = "pending" | "sent" | "delivered" | "read" | "replied" | "failed";
+
+export interface LinkedInMessage {
+  id: string;
+  user_id: string;
+  account_id: string;
+  campaign_name: string;
+  chat_id: string;
+  message_id: string;
+  provider_id: string;
+  public_identifier: string;
+  member_urn: string;
+  linkedin_url: string;
+  first_name: string;
+  last_name: string;
+  headline: string;
+  location: string;
+  current_company: string;
+  current_position: string;
+  top_skills: string[];
+  follower_count: number;
+  connections_count: number;
+  is_premium: boolean;
+  profile_summary: string;
+  lead_quality_score: number;
+  profile_picture_url: string;
+  message_sent: string;
+  status: LinkedInMessageStatus;
+  response_content: string;
+  response_message_id: string;
+  lead_classification: LeadClassification;
+  notes: string;
+  sent_at: string | null;
+  delivered_at: string | null;
+  read_at: string | null;
+  replied_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LinkedInCompanyGroup {
+  companyKey: string;
+  company: string;
+  messages: LinkedInMessage[];
+}

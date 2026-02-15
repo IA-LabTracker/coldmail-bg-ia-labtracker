@@ -1,45 +1,51 @@
-import { Mail, Send, MessageSquare, Flame, AlertCircle } from "lucide-react";
+import { Send, Eye, MessageSquare, Flame, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Email } from "@/types";
+import { LinkedInMessage } from "@/types";
+import { KPIFilter } from "@/components/dashboard/KPICards";
 
-export interface KPIFilter {
-  type: "status" | "classification";
-  value: string;
-}
-
-interface KPICardsProps {
-  emails: Email[];
+interface LinkedInKPICardsProps {
+  messages: LinkedInMessage[];
   activeFilter: KPIFilter | null;
   onFilterChange: (filter: KPIFilter | null) => void;
 }
 
-export function KPICards({ emails, activeFilter, onFilterChange }: KPICardsProps) {
-  const totalResearched = emails.filter((e) => e.status === "researched").length;
-  const totalSentEmails = emails.filter((e) => e.status === "sent").length;
-  const repliesReceived = emails.filter((e) => e.status === "replied").length;
-  const hotLeads = emails.filter((e) => e.lead_classification === "hot").length;
-  const bounced = emails.filter((e) => e.status === "bounced").length;
+export function LinkedInKPICards({
+  messages,
+  activeFilter,
+  onFilterChange,
+}: LinkedInKPICardsProps) {
+  const totalSent = messages.filter(
+    (m) =>
+      m.status === "sent" ||
+      m.status === "delivered" ||
+      m.status === "read" ||
+      m.status === "replied",
+  ).length;
+  const totalRead = messages.filter((m) => m.status === "read").length;
+  const totalReplied = messages.filter((m) => m.status === "replied").length;
+  const hotLeads = messages.filter((m) => m.lead_classification === "hot").length;
+  const totalFailed = messages.filter((m) => m.status === "failed").length;
 
   const kpis = [
     {
-      label: "New Researches",
-      value: totalResearched,
-      icon: Mail,
+      label: "Total Sent",
+      value: totalSent,
+      icon: Send,
       color: "bg-blue-50 text-blue-600",
       ringColor: "ring-blue-400",
-      filter: { type: "status" as const, value: "researched" },
-    },
-    {
-      label: "Total Sent",
-      value: totalSentEmails,
-      icon: Send,
-      color: "bg-purple-50 text-purple-600",
-      ringColor: "ring-purple-400",
       filter: { type: "status" as const, value: "sent" },
     },
     {
-      label: "Replies Received",
-      value: repliesReceived,
+      label: "Read",
+      value: totalRead,
+      icon: Eye,
+      color: "bg-purple-50 text-purple-600",
+      ringColor: "ring-purple-400",
+      filter: { type: "status" as const, value: "read" },
+    },
+    {
+      label: "Replies",
+      value: totalReplied,
       icon: MessageSquare,
       color: "bg-green-50 text-green-600",
       ringColor: "ring-green-400",
@@ -54,12 +60,12 @@ export function KPICards({ emails, activeFilter, onFilterChange }: KPICardsProps
       filter: { type: "classification" as const, value: "hot" },
     },
     {
-      label: "Bounced",
-      value: bounced,
+      label: "Failed",
+      value: totalFailed,
       icon: AlertCircle,
-      color: "bg-red-50 text-red-600",
-      ringColor: "ring-red-400",
-      filter: { type: "status" as const, value: "bounced" },
+      color: "bg-orange-50 text-orange-600",
+      ringColor: "ring-orange-400",
+      filter: { type: "status" as const, value: "failed" },
     },
   ];
 

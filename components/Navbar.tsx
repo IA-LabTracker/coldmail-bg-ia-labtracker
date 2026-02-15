@@ -43,11 +43,11 @@ export function Navbar() {
               <Link href="/search">
                 <Button variant="ghost">Search & Trigger</Button>
               </Link>
-              <Link href="/linkedin">
+              <Link href="/linkedin-table">
                 <Button variant="ghost">LinkedIn</Button>
               </Link>
               <Link href="/settings">
-                <Button variant="ghost">Settings</Button>
+                <Button variant="ghost">Webhooks</Button>
               </Link>
             </div>
           </div>

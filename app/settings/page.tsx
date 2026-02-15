@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,6 +23,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { ConnectionStep } from "@/components/linkedin/ConnectionStep";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 
@@ -41,16 +42,50 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState<FeedbackMessage>(null);
+  const [linkedinAccountId, setLinkedinAccountId] = useState<string | null>(null);
+  const hasCheckedOAuth = useRef(false);
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
     defaultValues: { webhookUrl: "", emailTemplate: "", linkedinWebhookUrl: "" },
   });
 
+  const fetchLinkedInAccount = useCallback(
+    async (sync = false): Promise<string | null> => {
+      if (!user) return null;
+
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session?.access_token) return null;
+
+        const url = sync ? "/api/linkedin-accounts?sync=true" : "/api/linkedin-accounts";
+
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+
+        if (!res.ok) return null;
+
+        const data = await res.json();
+        const accounts = data.accounts || [];
+
+        const connected = accounts.find((a: { is_active: boolean }) => a.is_active);
+
+        return connected?.account_id || null;
+      } catch {
+        return null;
+      }
+    },
+    [user],
+  );
+
   useEffect(() => {
     if (!user) return;
 
-    const fetchSettings = async () => {
+    const init = async () => {
       setLoading(true);
 
       try {
@@ -84,13 +119,27 @@ export default function SettingsPage() {
           type: "error",
           text: error instanceof Error ? error.message : "Failed to load settings",
         });
-      } finally {
-        setLoading(false);
       }
+
+      if (!hasCheckedOAuth.current) {
+        hasCheckedOAuth.current = true;
+
+        const params = new URLSearchParams(window.location.search);
+        const returningFromOAuth = params.get("connected") === "true";
+
+        if (params.has("connected")) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        const id = await fetchLinkedInAccount(returningFromOAuth);
+        setLinkedinAccountId(id);
+      }
+
+      setLoading(false);
     };
 
-    fetchSettings();
-  }, [user]);
+    init();
+  }, [user, fetchLinkedInAccount, form]);
 
   const onSubmit = async (values: SettingsFormValues) => {
     if (!user || !settings) return;
@@ -135,11 +184,6 @@ export default function SettingsPage() {
       <Navbar />
       <div className="min-h-screen bg-gray-50">
         <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-            <p className="mt-2 text-gray-600">Configure webhooks and email templates</p>
-          </div>
-
           {feedback && (
             <div
               className={`flex items-center gap-3 rounded-lg border p-4 ${
@@ -158,11 +202,27 @@ export default function SettingsPage() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900">Webhooks</h1>
+                  <p className="mt-2 text-gray-600">
+                    Configure webhooks, templates and LinkedIn connection
+                  </p>
+                </div>
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Save"
+                  )}
+                </Button>
+              </div>
               <Tabs defaultValue="webhook" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="webhook">n8n Webhook</TabsTrigger>
                   <TabsTrigger value="email">Email Template</TabsTrigger>
-                  <TabsTrigger value="linkedin">LinkedIn Webhook</TabsTrigger>
+                  <TabsTrigger value="linkedin-webhook">LinkedIn Webhook</TabsTrigger>
+                  <TabsTrigger value="linkedin-connection">LinkedIn Account</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="webhook">
@@ -232,7 +292,7 @@ export default function SettingsPage() {
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="linkedin">
+                <TabsContent value="linkedin-webhook">
                   <Card>
                     <CardHeader>
                       <CardTitle>LinkedIn Campaign Webhook</CardTitle>
@@ -264,15 +324,14 @@ export default function SettingsPage() {
                     </CardContent>
                   </Card>
                 </TabsContent>
-              </Tabs>
 
-              <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
-                {form.formState.isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Save Settings"
-                )}
-              </Button>
+                <TabsContent value="linkedin-connection">
+                  <ConnectionStep
+                    accountId={linkedinAccountId}
+                    onAccountIdChange={setLinkedinAccountId}
+                  />
+                </TabsContent>
+              </Tabs>
             </form>
           </Form>
         </div>

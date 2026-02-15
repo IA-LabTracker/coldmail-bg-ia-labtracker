@@ -21,7 +21,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { AlertCircle, CheckCircle, Loader2, AlertTriangle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { AlertCircle, CheckCircle, Loader2, AlertTriangle, HelpCircle } from "lucide-react";
 
 type SubmitStatus = "idle" | "running" | "completed" | "error";
 
@@ -62,7 +69,9 @@ export default function SearchPage() {
     };
 
     checkWebhook();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   const onSubmit = async (values: SearchFormValues) => {
@@ -110,11 +119,6 @@ export default function SearchPage() {
       <Navbar />
       <div className="min-h-screen bg-gray-50">
         <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Search & Trigger</h1>
-            <p className="mt-2 text-gray-600">Trigger n8n webhook to search for leads</p>
-          </div>
-
           {webhookConfigured === false && (
             <div className="flex items-center gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
               <AlertTriangle className="h-5 w-5 text-yellow-600" />
@@ -129,6 +133,87 @@ export default function SearchPage() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-3xl font-bold text-gray-900">Search & Trigger</h1>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-gray-400 hover:text-gray-600"
+                        >
+                          <HelpCircle className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>How It Works</DialogTitle>
+                        </DialogHeader>
+                        <ol className="space-y-3">
+                          <li className="flex gap-3">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
+                              1
+                            </span>
+                            <div>
+                              <p className="font-medium text-gray-900">Enter Search Criteria</p>
+                              <p className="text-sm text-gray-600">
+                                Specify region, industry, and keywords
+                              </p>
+                            </div>
+                          </li>
+                          <li className="flex gap-3">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
+                              2
+                            </span>
+                            <div>
+                              <p className="font-medium text-gray-900">Trigger Webhook</p>
+                              <p className="text-sm text-gray-600">
+                                Send data to your n8n workflow
+                              </p>
+                            </div>
+                          </li>
+                          <li className="flex gap-3">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
+                              3
+                            </span>
+                            <div>
+                              <p className="font-medium text-gray-900">Search for Leads</p>
+                              <p className="text-sm text-gray-600">
+                                n8n finds matching leads automatically
+                              </p>
+                            </div>
+                          </li>
+                          <li className="flex gap-3">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
+                              4
+                            </span>
+                            <div>
+                              <p className="font-medium text-gray-900">Receive Results</p>
+                              <p className="text-sm text-gray-600">
+                                Leads appear in your dashboard
+                              </p>
+                            </div>
+                          </li>
+                        </ol>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                  <p className="mt-2 text-gray-600">Trigger n8n webhook to search for leads</p>
+                </div>
+                <Button
+                  type="submit"
+                  disabled={submitStatus === "running" || webhookConfigured !== true}
+                  size="sm"
+                >
+                  {submitStatus === "running" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Trigger Campaign"
+                  )}
+                </Button>
+              </div>
               <Card>
                 <CardHeader>
                   <CardTitle>Campaign Details</CardTitle>
@@ -187,10 +272,7 @@ export default function SearchPage() {
                       <FormItem>
                         <FormLabel>Campaign Name</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Give your campaign a name (optional)"
-                            {...field}
-                          />
+                          <Input placeholder="Give your campaign a name (optional)" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -215,9 +297,7 @@ export default function SearchPage() {
                   {submitStatus === "completed" && (
                     <CheckCircle className="h-5 w-5 text-green-600" />
                   )}
-                  {submitStatus === "error" && (
-                    <AlertCircle className="h-5 w-5 text-red-600" />
-                  )}
+                  {submitStatus === "error" && <AlertCircle className="h-5 w-5 text-red-600" />}
                   <p
                     className={
                       submitStatus === "error"
@@ -231,66 +311,8 @@ export default function SearchPage() {
                   </p>
                 </div>
               )}
-
-              <Button
-                type="submit"
-                disabled={submitStatus === "running" || webhookConfigured !== true}
-                className="w-full"
-              >
-                {submitStatus === "running" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Trigger Campaign"
-                )}
-              </Button>
             </form>
           </Form>
-
-          <Card className="border-gray-200">
-            <CardHeader>
-              <CardTitle>How It Works</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ol className="space-y-3">
-                <li className="flex gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
-                    1
-                  </span>
-                  <div>
-                    <p className="font-medium text-gray-900">Enter Search Criteria</p>
-                    <p className="text-sm text-gray-600">Specify region, industry, and keywords</p>
-                  </div>
-                </li>
-                <li className="flex gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
-                    2
-                  </span>
-                  <div>
-                    <p className="font-medium text-gray-900">Trigger Webhook</p>
-                    <p className="text-sm text-gray-600">Send data to your n8n workflow</p>
-                  </div>
-                </li>
-                <li className="flex gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
-                    3
-                  </span>
-                  <div>
-                    <p className="font-medium text-gray-900">Search for Leads</p>
-                    <p className="text-sm text-gray-600">n8n finds matching leads automatically</p>
-                  </div>
-                </li>
-                <li className="flex gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
-                    4
-                  </span>
-                  <div>
-                    <p className="font-medium text-gray-900">Receive Results</p>
-                    <p className="text-sm text-gray-600">Leads appear in your dashboard</p>
-                  </div>
-                </li>
-              </ol>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </>

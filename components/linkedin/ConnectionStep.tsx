@@ -147,8 +147,8 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
           ...(session?.access_token && { Authorization: `Bearer ${session.access_token}` }),
         },
         body: JSON.stringify({
-          success_redirect_url: `${window.location.origin}/linkedin?connected=true`,
-          failure_redirect_url: `${window.location.origin}/linkedin?connected=false`,
+          success_redirect_url: `${window.location.origin}/settings?connected=true`,
+          failure_redirect_url: `${window.location.origin}/settings?connected=false`,
         }),
       });
 

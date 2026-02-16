@@ -74,6 +74,7 @@ export function LinkedInTable({
             <TableHead>Company</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Classification</TableHead>
+            <TableHead>Created At</TableHead>
             <TableHead className="w-24">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -118,6 +119,11 @@ export function LinkedInTable({
                         {msg.lead_classification}
                       </span>
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-foreground">
+                    {msg.created_at
+                      ? new Date(msg.created_at).toLocaleDateString("en-US")
+                      : "-"}
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">

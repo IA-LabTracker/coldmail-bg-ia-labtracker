@@ -105,6 +105,7 @@ export function LinkedInCompanyGroupRow({
             <span className={getClassColor(bestClassification).text}>{bestClassification}</span>
           </Badge>
         </TableCell>
+        <TableCell className="text-sm text-muted-foreground">-</TableCell>
         <TableCell />
       </TableRow>
 
@@ -147,6 +148,11 @@ export function LinkedInCompanyGroupRow({
                     {msg.lead_classification}
                   </span>
                 </Badge>
+              </TableCell>
+              <TableCell className="text-sm text-foreground">
+                {msg.created_at
+                  ? new Date(msg.created_at).toLocaleDateString("en-US")
+                  : "-"}
               </TableCell>
               <TableCell>
                 <div className="flex gap-1">

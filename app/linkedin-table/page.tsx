@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { DateRange } from "react-day-picker";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { LinkedInMessage } from "@/types";
@@ -16,6 +17,7 @@ import { groupLinkedInByCompany } from "@/lib/groupLinkedInByCompany";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { AlertModal } from "@/components/shared/AlertModal";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 export default function LinkedInTablePage() {
   const { user } = useAuth();
@@ -29,10 +31,10 @@ export default function LinkedInTablePage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
 
+  const [searchFilter, setSearchFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [classificationFilter, setClassificationFilter] = useState("");
-  const [campaignFilter, setCampaignFilter] = useState("");
-  const [searchFilter, setSearchFilter] = useState("");
+  const [dateRangeFilter, setDateRangeFilter] = useState<DateRange | undefined>(undefined);
   const [kpiFilter, setKpiFilter] = useState<KPIFilter | null>(null);
 
   const {
@@ -80,11 +82,6 @@ export default function LinkedInTablePage() {
       filtered = filtered.filter((m) => m.lead_classification === classificationFilter);
     }
 
-    if (campaignFilter) {
-      const lowerCampaign = campaignFilter.toLowerCase();
-      filtered = filtered.filter((m) => m.campaign_name.toLowerCase().includes(lowerCampaign));
-    }
-
     if (searchFilter) {
       const lowerSearch = searchFilter.toLowerCase();
       filtered = filtered.filter(
@@ -98,8 +95,18 @@ export default function LinkedInTablePage() {
       );
     }
 
+    if (dateRangeFilter?.from) {
+      filtered = filtered.filter((m) => {
+        const createdAt = m.created_at ? new Date(m.created_at) : null;
+        if (!createdAt) return false;
+        if (dateRangeFilter.from && createdAt < dateRangeFilter.from) return false;
+        if (dateRangeFilter.to && createdAt > dateRangeFilter.to) return false;
+        return true;
+      });
+    }
+
     return filtered;
-  }, [messages, statusFilter, classificationFilter, campaignFilter, searchFilter]);
+  }, [messages, searchFilter, statusFilter, classificationFilter, dateRangeFilter]);
 
   const companyGroups = useMemo(() => groupLinkedInByCompany(filteredMessages), [filteredMessages]);
 
@@ -190,6 +197,11 @@ export default function LinkedInTablePage() {
       <div className="space-y-6 px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-foreground">LinkedIn Messages</h1>
+          <div className="flex items-center gap-3">
+            <DateRangePicker date={dateRangeFilter} onDateChange={setDateRangeFilter} />
+          </div>
+        </div>
+        <div className="flex items-center justify-end">
           {selectedMessages.length > 0 && (
             <div className="flex items-center gap-3">
               <span className="text-sm text-muted-foreground">
@@ -237,9 +249,10 @@ export default function LinkedInTablePage() {
               }}
             />
 
-            <div className="rounded-lg bg-card p-4">
-              <h2 className="mb-4 text-lg font-semibold text-foreground">Filters</h2>
+            <div className="mt-2">
               <LinkedInFilters
+                search={searchFilter}
+                onSearchChange={setSearchFilter}
                 status={statusFilter}
                 onStatusChange={(v) => {
                   setStatusFilter(v);
@@ -250,10 +263,6 @@ export default function LinkedInTablePage() {
                   setClassificationFilter(v);
                   setKpiFilter(null);
                 }}
-                campaign={campaignFilter}
-                onCampaignChange={setCampaignFilter}
-                search={searchFilter}
-                onSearchChange={setSearchFilter}
               />
             </div>
 

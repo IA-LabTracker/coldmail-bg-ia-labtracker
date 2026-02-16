@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { ChevronRight, ChevronDown, Pencil, Trash2 } from "lucide-react";
+import { ChevronRight, ChevronDown, Mail, Phone, Pencil, Trash2 } from "lucide-react";
 import { Email, CompanyGroup } from "@/types";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -101,13 +101,24 @@ export function CompanyGroupRow({
             </Badge>
           </div>
         </TableCell>
-        <TableCell className="text-foreground">
-          <span>{group.emails[0].email}</span>
-          {group.emails.length > 1 && (
-            <span className="ml-1 text-xs text-muted-foreground">
-              +{group.emails.length - 1} more
+        <TableCell>
+          <div className="flex flex-col gap-0.5">
+            {group.emails[0].phone && (
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Phone className="h-3 w-3" />
+                {group.emails[0].phone}
+              </span>
+            )}
+            <span className="flex items-center gap-1.5 text-foreground">
+              <Mail className="h-3 w-3 text-muted-foreground" />
+              {group.emails[0].email}
             </span>
-          )}
+            {group.emails.length > 1 && (
+              <span className="text-xs text-muted-foreground ml-[18px]">
+                +{group.emails.length - 1} more
+              </span>
+            )}
+          </div>
         </TableCell>
         <TableCell>
           <div className="flex flex-wrap gap-1">
@@ -125,6 +136,7 @@ export function CompanyGroupRow({
         </TableCell>
         <TableCell className="text-muted-foreground">-</TableCell>
         <TableCell className="text-foreground">{campaignLabel}</TableCell>
+        <TableCell className="text-sm text-muted-foreground">-</TableCell>
         <TableCell />
       </TableRow>
 
@@ -149,7 +161,20 @@ export function CompanyGroupRow({
                 </button>
               </div>
             </TableCell>
-            <TableCell className="text-foreground text-sm">{email.email}</TableCell>
+            <TableCell>
+              <div className="flex flex-col gap-0.5">
+                {email.phone && (
+                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Phone className="h-3 w-3" />
+                    {email.phone}
+                  </span>
+                )}
+                <span className="flex items-center gap-1.5 text-foreground text-sm">
+                  <Mail className="h-3 w-3 text-muted-foreground" />
+                  {email.email}
+                </span>
+              </div>
+            </TableCell>
             <TableCell>
               <Badge className={getStatusColor(email.status).bg}>
                 <span className={getStatusColor(email.status).text}>{email.status}</span>
@@ -170,6 +195,11 @@ export function CompanyGroupRow({
               </Badge>
             </TableCell>
             <TableCell className="text-foreground text-sm">{email.campaign_name || "-"}</TableCell>
+            <TableCell className="text-sm text-foreground">
+              {email.created_at
+                ? new Date(email.created_at).toLocaleDateString("en-US")
+                : "-"}
+            </TableCell>
             <TableCell>
               <div className="flex gap-1">
                 <Button variant="ghost" size="sm" onClick={() => onViewDetails(email)}>

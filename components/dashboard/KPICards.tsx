@@ -35,7 +35,7 @@ const kpiConfig = [
     ringColor: "ring-purple-400",
     filter: { type: "status" as const, value: "sent" },
     compute: (emails: Email[]) => emails.filter((e) => e.status === "sent").length,
-    subtitle: "Emails sent",
+    subtitle: "Companies sent",
   },
   {
     label: "Replies Received",

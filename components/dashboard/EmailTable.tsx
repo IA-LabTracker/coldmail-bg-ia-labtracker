@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { Mail, Phone, Pencil, Trash2 } from "lucide-react";
 import { Email, CompanyGroup } from "@/types";
 import {
   Table,
@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { CompanyGroupRow } from "@/components/dashboard/CompanyGroupRow";
 
 export const statusColors: Record<string, { bg: string; text: string }> = {
+  opened: { bg: "bg-cyan-100", text: "text-cyan-800" },
   researched: { bg: "bg-purple-100", text: "text-purple-800" },
   sent: { bg: "bg-blue-100", text: "text-blue-800" },
   replied: { bg: "bg-green-100", text: "text-green-800" },
@@ -29,22 +30,14 @@ export const classificationColors: Record<string, { bg: string; text: string }> 
 };
 
 const clientStatusColors: Record<string, { bg: string; text: string }> = {
-  "first-send": { bg: "bg-blue-100", text: "text-blue-800" },
-  "first-followup": { bg: "bg-orange-100", text: "text-orange-800" },
-  "second-followup": { bg: "bg-yellow-100", text: "text-yellow-800" },
-  "third-followup": { bg: "bg-purple-100", text: "text-purple-800" },
-  "fourth-followup": { bg: "bg-pink-100", text: "text-pink-800" },
-  "fifth-followup": { bg: "bg-indigo-100", text: "text-indigo-800" },
-  followup: { bg: "bg-gray-100", text: "text-gray-800" },
+  first_send: { bg: "bg-blue-100", text: "text-blue-800" },
+  follow_1: { bg: "bg-orange-100", text: "text-orange-800" },
+  follow_2: { bg: "bg-yellow-100", text: "text-yellow-800" },
+  follow_3: { bg: "bg-purple-100", text: "text-purple-800" },
 };
 
 export function getClientStatusColor(clientStatus: string) {
   if (!clientStatus) return { bg: "bg-gray-100", text: "text-gray-800" };
-
-  if (clientStatus.includes("-followup") && !clientStatusColors[clientStatus]) {
-    return clientStatusColors["followup"];
-  }
-
   return clientStatusColors[clientStatus] || { bg: "bg-gray-100", text: "text-gray-800" };
 }
 
@@ -89,11 +82,12 @@ export function EmailTable({
               <Checkbox checked={isAllSelected} onCheckedChange={onSelectAll} />
             </TableHead>
             <TableHead>Company</TableHead>
-            <TableHead>Email</TableHead>
+            <TableHead>Contacts</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Classification</TableHead>
             <TableHead>Client Steps</TableHead>
             <TableHead>Campaign</TableHead>
+            <TableHead>Created At</TableHead>
             <TableHead className="w-24">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -117,10 +111,23 @@ export function EmailTable({
                       onClick={() => onViewDetails(email)}
                       className="font-medium text-foreground hover:text-primary hover:underline cursor-pointer"
                     >
-                      {email.company}
+                      {email.lead_name || email.company}
                     </button>
                   </TableCell>
-                  <TableCell className="text-foreground">{email.email}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-0.5">
+                      {email.phone && (
+                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Phone className="h-3 w-3" />
+                          {email.phone}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1.5 text-foreground">
+                        <Mail className="h-3 w-3 text-muted-foreground" />
+                        {email.email}
+                      </span>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(email.status).bg}>
                       <span className={getStatusColor(email.status).text}>{email.status}</span>
@@ -141,6 +148,11 @@ export function EmailTable({
                     </Badge>
                   </TableCell>
                   <TableCell className="text-foreground">{email.campaign_name || "-"}</TableCell>
+                  <TableCell className="text-sm text-foreground">
+                    {email.created_at
+                      ? new Date(email.created_at).toLocaleDateString("en-US")
+                      : "-"}
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="sm" onClick={() => onViewDetails(email)}>

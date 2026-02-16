@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { DateRange } from "react-day-picker";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Email } from "@/types";
@@ -16,9 +17,7 @@ import { groupEmailsByCompany } from "@/lib/groupEmailsByCompany";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { AlertModal } from "@/components/shared/AlertModal";
-import Link from "next/link";
-import { Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -32,11 +31,11 @@ export default function DashboardPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
 
+  const [searchFilter, setSearchFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [classificationFilter, setClassificationFilter] = useState("");
   const [clientStepFilter, setClientStepFilter] = useState("");
-  const [campaignFilter, setCampaignFilter] = useState("");
-  const [searchFilter, setSearchFilter] = useState("");
+  const [dateRangeFilter, setDateRangeFilter] = useState<DateRange | undefined>(undefined);
   const [kpiFilter, setKpiFilter] = useState<KPIFilter | null>(null);
 
   const {
@@ -76,23 +75,6 @@ export default function DashboardPage() {
   const filteredEmails = useMemo(() => {
     let filtered = emails;
 
-    if (statusFilter) {
-      filtered = filtered.filter((e) => e.status === statusFilter);
-    }
-
-    if (classificationFilter) {
-      filtered = filtered.filter((e) => e.lead_classification === classificationFilter);
-    }
-
-    if (clientStepFilter) {
-      filtered = filtered.filter((e) => e.client_step === clientStepFilter);
-    }
-
-    if (campaignFilter) {
-      const lowerCampaign = campaignFilter.toLowerCase();
-      filtered = filtered.filter((e) => e.campaign_name.toLowerCase().includes(lowerCampaign));
-    }
-
     if (searchFilter) {
       const lowerSearch = searchFilter.toLowerCase();
       filtered = filtered.filter(
@@ -105,8 +87,37 @@ export default function DashboardPage() {
       );
     }
 
+    if (statusFilter) {
+      filtered = filtered.filter((e) => e.status === statusFilter);
+    }
+
+    if (classificationFilter) {
+      filtered = filtered.filter((e) => e.lead_classification === classificationFilter);
+    }
+
+    if (clientStepFilter) {
+      filtered = filtered.filter((e) => e.client_step === clientStepFilter);
+    }
+
+    if (dateRangeFilter?.from) {
+      filtered = filtered.filter((e) => {
+        const createdAt = e.created_at ? new Date(e.created_at) : null;
+        if (!createdAt) return false;
+        if (dateRangeFilter.from && createdAt < dateRangeFilter.from) return false;
+        if (dateRangeFilter.to && createdAt > dateRangeFilter.to) return false;
+        return true;
+      });
+    }
+
     return filtered;
-  }, [emails, statusFilter, classificationFilter, clientStepFilter, campaignFilter, searchFilter]);
+  }, [
+    emails,
+    searchFilter,
+    statusFilter,
+    classificationFilter,
+    clientStepFilter,
+    dateRangeFilter,
+  ]);
 
   const companyGroups = useMemo(() => groupEmailsByCompany(filteredEmails), [filteredEmails]);
 
@@ -191,12 +202,7 @@ export default function DashboardPage() {
       <div className="space-y-6 px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <Link href="/import">
-            <Button className="gap-2">
-              <Upload className="h-4 w-4" />
-              Import Leads
-            </Button>
-          </Link>
+          <DateRangePicker date={dateRangeFilter} onDateChange={setDateRangeFilter} />
         </div>
 
         {error && <ErrorMessage message={error} />}
@@ -225,9 +231,10 @@ export default function DashboardPage() {
               }}
             />
 
-            <div className="rounded-lg bg-card p-4">
-              <h2 className="mb-4 text-lg font-semibold text-foreground">Filters</h2>
+            <div className="mt-2">
               <EmailFilters
+                search={searchFilter}
+                onSearchChange={setSearchFilter}
                 status={statusFilter}
                 onStatusChange={(v) => {
                   setStatusFilter(v);
@@ -240,10 +247,6 @@ export default function DashboardPage() {
                 }}
                 clientStep={clientStepFilter}
                 onClientStepChange={setClientStepFilter}
-                campaign={campaignFilter}
-                onCampaignChange={setCampaignFilter}
-                search={searchFilter}
-                onSearchChange={setSearchFilter}
               />
             </div>
 

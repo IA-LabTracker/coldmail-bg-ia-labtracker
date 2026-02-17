@@ -43,6 +43,7 @@ import {
   Crown,
   ExternalLink,
 } from "lucide-react";
+import { ChatMessageList, ChatMessage } from "@/components/shared/ChatMessageList";
 
 interface LinkedInDetailModalProps {
   message: LinkedInMessage | null;
@@ -88,7 +89,45 @@ function getDefaults(msg: LinkedInMessage | null): EditFormValues {
   };
 }
 
-export function LinkedInDetailModal({ message, open, onOpenChange, onUpdate }: LinkedInDetailModalProps) {
+function buildChatMessages(msg: LinkedInMessage): ChatMessage[] {
+  const messages: ChatMessage[] = [];
+
+  if (msg.message_sent) {
+    const status = msg.replied_at
+      ? "replied"
+      : msg.read_at
+        ? "read"
+        : msg.delivered_at
+          ? "delivered"
+          : "sent";
+
+    messages.push({
+      id: `${msg.id}-sent`,
+      content: msg.message_sent,
+      timestamp: msg.sent_at,
+      direction: "sent",
+      status,
+    });
+  }
+
+  if (msg.response_content) {
+    messages.push({
+      id: `${msg.id}-response`,
+      content: msg.response_content,
+      timestamp: msg.replied_at,
+      direction: "received",
+    });
+  }
+
+  return messages;
+}
+
+export function LinkedInDetailModal({
+  message,
+  open,
+  onOpenChange,
+  onUpdate,
+}: LinkedInDetailModalProps) {
   const form = useForm<EditFormValues>({
     resolver: zodResolver(editSchema),
     defaultValues: getDefaults(message),
@@ -148,7 +187,8 @@ export function LinkedInDetailModal({ message, open, onOpenChange, onUpdate }: L
             <div className="flex-1 min-w-0">
               <DialogTitle className="text-lg">{fullName || "Unknown Lead"}</DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground truncate">
-                {message.current_position} {message.current_company ? `at ${message.current_company}` : ""}
+                {message.current_position}{" "}
+                {message.current_company ? `at ${message.current_company}` : ""}
               </DialogDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -157,7 +197,9 @@ export function LinkedInDetailModal({ message, open, onOpenChange, onUpdate }: L
                   {message.status}
                 </span>
               </Badge>
-              <Badge className={classificationBadgeColors[message.lead_classification] || "bg-gray-100"}>
+              <Badge
+                className={classificationBadgeColors[message.lead_classification] || "bg-gray-100"}
+              >
                 {message.lead_classification}
               </Badge>
             </div>
@@ -248,7 +290,9 @@ export function LinkedInDetailModal({ message, open, onOpenChange, onUpdate }: L
                     name="lead_classification"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs text-muted-foreground">Classification</FormLabel>
+                        <FormLabel className="text-xs text-muted-foreground">
+                          Classification
+                        </FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -330,11 +374,15 @@ export function LinkedInDetailModal({ message, open, onOpenChange, onUpdate }: L
                   <div className="grid grid-cols-3 gap-3 rounded-lg border p-3 text-sm bg-muted/30">
                     <div>
                       <p className="text-xs text-muted-foreground">Followers</p>
-                      <p className="font-medium">{message.follower_count?.toLocaleString() || "0"}</p>
+                      <p className="font-medium">
+                        {message.follower_count?.toLocaleString() || "0"}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Connections</p>
-                      <p className="font-medium">{message.connections_count?.toLocaleString() || "0"}</p>
+                      <p className="font-medium">
+                        {message.connections_count?.toLocaleString() || "0"}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Lead Score</p>
@@ -365,60 +413,11 @@ export function LinkedInDetailModal({ message, open, onOpenChange, onUpdate }: L
                   )}
                 </TabsContent>
 
-                <TabsContent value="message" className="mt-0 space-y-4">
-                  {message.message_sent && (
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Message Sent</p>
-                      <div className="rounded-lg border p-3 text-sm bg-muted/30 whitespace-pre-wrap">
-                        {message.message_sent}
-                      </div>
-                    </div>
-                  )}
-
-                  {(message.sent_at || message.delivered_at || message.read_at || message.replied_at) && (
-                    <div className="grid grid-cols-2 gap-3 rounded-lg border p-3 text-sm bg-muted/30">
-                      {message.sent_at && (
-                        <div>
-                          <p className="text-xs text-muted-foreground">Sent At</p>
-                          <p className="font-medium">{formatDate(message.sent_at)}</p>
-                        </div>
-                      )}
-                      {message.delivered_at && (
-                        <div>
-                          <p className="text-xs text-muted-foreground">Delivered At</p>
-                          <p className="font-medium">{formatDate(message.delivered_at)}</p>
-                        </div>
-                      )}
-                      {message.read_at && (
-                        <div>
-                          <p className="text-xs text-muted-foreground">Read At</p>
-                          <p className="font-medium">{formatDate(message.read_at)}</p>
-                        </div>
-                      )}
-                      {message.replied_at && (
-                        <div>
-                          <p className="text-xs text-muted-foreground">Replied At</p>
-                          <p className="font-medium">{formatDate(message.replied_at)}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {message.response_content && (
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Response</p>
-                      <div className="rounded-lg border p-3 text-sm bg-green-50 whitespace-pre-wrap">
-                        {message.response_content}
-                      </div>
-                    </div>
-                  )}
-
-                  {!message.message_sent && !message.response_content && (
-                    <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                      <MessageSquare className="h-8 w-8 mb-2 opacity-40" />
-                      <p className="text-sm">No message data yet</p>
-                    </div>
-                  )}
+                <TabsContent value="message" className="mt-0">
+                  <ChatMessageList
+                    messages={buildChatMessages(message)}
+                    emptyMessage="No message data yet"
+                  />
                 </TabsContent>
               </div>
 

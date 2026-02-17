@@ -29,16 +29,19 @@ function formatMessageTime(dateString: string): string {
   }).format(date);
 }
 
-function StatusIcon({ status }: { status?: string }) {
+function StatusIcon({ status, direction }: { status?: string; direction: "sent" | "received" }) {
   if (!status) return null;
 
+  const baseClass = direction === "sent" ? "text-primary-foreground/70" : "text-muted-foreground";
+  const blueClass = "text-blue-400";
+
   if (status === "read" || status === "replied") {
-    return <CheckCheck className="h-3.5 w-3.5 text-blue-400" />;
+    return <CheckCheck className={cn("h-4 w-4", blueClass)} />;
   }
   if (status === "delivered") {
-    return <CheckCheck className="h-3.5 w-3.5 text-primary-foreground/60" />;
+    return <CheckCheck className={cn("h-4 w-4", baseClass)} />;
   }
-  return <Check className="h-3.5 w-3.5 text-primary-foreground/60" />;
+  return <Check className={cn("h-4 w-4", baseClass)} />;
 }
 
 export function ChatMessageList({
@@ -86,14 +89,19 @@ export function ChatMessageList({
               )}
             >
               {msg.content}
-            </div>
-            <div className="flex items-center gap-1 mt-1 px-1">
-              {msg.timestamp && (
-                <span className="text-[10px] text-muted-foreground">
-                  {formatMessageTime(msg.timestamp)}
-                </span>
-              )}
-              {msg.direction === "sent" && <StatusIcon status={msg.status} />}
+              <div
+                className={cn(
+                  "flex items-center justify-end gap-1 mt-1",
+                  msg.direction === "sent" ? "text-primary-foreground/60" : "text-muted-foreground",
+                )}
+              >
+                {msg.timestamp && (
+                  <span className="text-[10px]">{formatMessageTime(msg.timestamp)}</span>
+                )}
+                {msg.direction === "sent" && (
+                  <StatusIcon status={msg.status} direction={msg.direction} />
+                )}
+              </div>
             </div>
           </div>
         ))}

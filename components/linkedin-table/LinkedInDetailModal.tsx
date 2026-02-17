@@ -44,6 +44,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { ChatMessageList, ChatMessage } from "@/components/shared/ChatMessageList";
+import Image from "next/image";
 
 interface LinkedInDetailModalProps {
   message: LinkedInMessage | null;
@@ -174,9 +175,11 @@ export function LinkedInDetailModal({
         <DialogHeader className="pb-4 border-b">
           <div className="flex items-center gap-3">
             {message.profile_picture_url ? (
-              <img
+              <Image
                 src={message.profile_picture_url}
                 alt={fullName}
+                width={40}
+                height={40}
                 className="h-10 w-10 rounded-full object-cover"
               />
             ) : (

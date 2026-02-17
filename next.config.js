@@ -5,11 +5,12 @@ const nextConfig = {
   },
   // Remover images: { unoptimized: true } para aproveitar otimização da Vercel
   images: {
-    domains: [], // Adicione domínios de imagens externas aqui se necessário
-  },
-  // Configuração para melhor performance na Vercel
-  experimental: {
-    scrollRestoration: true,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "media.licdn.com",
+      },
+    ],
   },
 };
 

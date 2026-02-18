@@ -424,22 +424,22 @@ export function LinkedInDetailModal({
                 </TabsContent>
               </div>
 
-              <div className="flex gap-2 pt-4 border-t mt-4 shrink-0">
+              <div className="flex justify-between gap-2 pt-4 border-t mt-4 shrink-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  disabled={form.formState.isSubmitting}
+                  className="flex-1 hover:bg-destructive hover:text-destructive-foreground hover:border-destructive"
+                >
+                  Cancel
+                </Button>
                 <Button type="submit" disabled={form.formState.isSubmitting} className="flex-1">
                   {form.formState.isSubmitting ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     "Save Changes"
                   )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                  disabled={form.formState.isSubmitting}
-                  className="flex-1"
-                >
-                  Cancel
                 </Button>
               </div>
             </Tabs>

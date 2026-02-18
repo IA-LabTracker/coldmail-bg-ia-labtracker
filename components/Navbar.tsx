@@ -63,7 +63,7 @@ export function Navbar() {
               <AlertDialogContent>
                 <AlertDialogTitle>Sign Out</AlertDialogTitle>
                 <AlertDialogDescription>Are you sure you want to sign out?</AlertDialogDescription>
-                <div className="flex gap-3">
+                <div className="flex justify-between gap-3">
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction onClick={handleSignOut}>Sign Out</AlertDialogAction>
                 </div>

@@ -47,14 +47,14 @@ export function Sidebar() {
   if (!user) return null;
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r border-border bg-background">
+    <aside className="flex h-screen w-64 flex-col border-r border-sidebar-border bg-sidebar">
       <div className="flex items-center gap-3 px-6 py-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600">
-          <LayoutDashboard className="h-5 w-5 text-white" />
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-accent">
+          <LayoutDashboard className="h-5 w-5 text-sidebar-foreground" />
         </div>
         <div>
-          <h1 className="text-base font-bold text-foreground">Cold Email Pro</h1>
-          <p className="text-xs text-muted-foreground">by IA LabTracker</p>
+          <h1 className="text-base font-bold text-sidebar-foreground">Cold Email Pro</h1>
+          <p className="text-xs text-sidebar-foreground/60">by IA LabTracker</p>
         </div>
       </div>
 
@@ -69,8 +69,8 @@ export function Sidebar() {
               href={item.href}
               className={`flex items-center gap-3 px-6 py-2.5 text-sm font-medium transition-colors ${
                 isActive
-                  ? "border-y border-border bg-muted text-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-sidebar-accent text-sidebar-foreground"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
               }`}
             >
               <Icon className="h-5 w-5" />
@@ -80,19 +80,19 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-border p-4">
+      <div className="border-t border-sidebar-border p-4">
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="mb-2 flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="mb-2 flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
         >
           <Sun className="h-5 w-5 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
           {theme === "dark" ? "Light Mode" : "Dark Mode"}
         </button>
-        <p className="mb-3 truncate px-3 text-xs text-muted-foreground">{user.email}</p>
+        <p className="mb-3 truncate px-3 text-xs text-sidebar-foreground/60">{user.email}</p>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <button className="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+            <button className="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground">
               <LogOut className="h-5 w-5" />
               Sign Out
             </button>
@@ -100,7 +100,7 @@ export function Sidebar() {
           <AlertDialogContent>
             <AlertDialogTitle>Sign Out</AlertDialogTitle>
             <AlertDialogDescription>Are you sure you want to sign out?</AlertDialogDescription>
-            <div className="flex gap-3">
+            <div className="flex justify-between gap-3">
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleSignOut}>Sign Out</AlertDialogAction>
             </div>

@@ -25,6 +25,8 @@
     --border: 220 13% 88%;
     --input: 220 13% 88%;
     --ring: 225 70% 55%;
+    --dialog: 220 16% 93%;
+    --dialog-foreground: 222 47% 11%;
     --chart-1: 225 70% 55%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -40,7 +42,7 @@
   .dark {
     --background: 0 0% 12%;
     --foreground: 0 0% 95%;
-    --card: 0 0% 12%;
+    --card: 0 0% 15%;
     --card-foreground: 0 0% 95%;
     --popover: 0 0% 12%;
     --popover-foreground: 0 0% 95%;
@@ -57,6 +59,8 @@
     --border: 0 0% 26%;
     --input: 0 0% 26%;
     --ring: 225 60% 55%;
+    --dialog: 0 0% 16%;
+    --dialog-foreground: 0 0% 95%;
     --chart-1: 225 70% 55%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;

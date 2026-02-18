@@ -49,6 +49,10 @@ const config: Config = {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
         },
+        dialog: {
+          DEFAULT: "hsl(var(--dialog))",
+          foreground: "hsl(var(--dialog-foreground))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

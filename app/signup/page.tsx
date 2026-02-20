@@ -17,6 +17,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 
@@ -25,6 +26,9 @@ const signupSchema = z
     email: z.string().email("Enter a valid email"),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
+    acceptTerms: z.literal(true, {
+      errorMap: () => ({ message: "Você deve aceitar os Termos de Uso" }),
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -40,7 +44,12 @@ export default function SignupPage() {
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { email: "", password: "", confirmPassword: "" },
+    defaultValues: {
+      email: "",
+      password: "",
+      confirmPassword: "",
+      acceptTerms: false as unknown as true,
+    },
   });
 
   const onSubmit = async (values: SignupFormValues) => {
@@ -113,6 +122,31 @@ export default function SignupPage() {
                       <Input type="password" placeholder="Confirm your password" {...field} />
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="acceptTerms"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="text-sm font-normal">
+                        Li e aceito os{" "}
+                        <Link
+                          href="/terms"
+                          target="_blank"
+                          className="text-primary hover:underline"
+                        >
+                          Termos de Uso
+                        </Link>
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
                   </FormItem>
                 )}
               />

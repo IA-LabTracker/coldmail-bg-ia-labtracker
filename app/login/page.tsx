@@ -101,11 +101,17 @@ export default function LoginPage() {
             </form>
           </Form>
 
-          <div className="mt-4 text-center">
+          <div className="mt-4 text-center space-y-2">
             <p className="text-sm text-muted-foreground">
               Don&apos;t have an account?{" "}
               <Link href="/signup" className="text-primary hover:underline">
                 Sign up
+              </Link>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Ao fazer login, você concorda com nossos{" "}
+              <Link href="/terms" target="_blank" className="text-primary hover:underline">
+                Termos de Uso
               </Link>
             </p>
           </div>

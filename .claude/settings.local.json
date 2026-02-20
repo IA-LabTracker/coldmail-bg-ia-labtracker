@@ -7,7 +7,8 @@
       "Bash(findstr:*)",
       "WebFetch(domain:www.unipile.com)",
       "Bash(npx next build:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "WebFetch(domain:instantly.ai)"
     ]
   }
 }

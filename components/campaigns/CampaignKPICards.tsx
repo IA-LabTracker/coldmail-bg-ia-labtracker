@@ -12,30 +12,27 @@ const kpiConfig = [
   {
     label: "Total Campaigns",
     icon: Megaphone,
-    iconBg: "bg-indigo-50 dark:bg-indigo-950",
     iconColor: "text-indigo-500",
     valueColor: "text-indigo-600 dark:text-indigo-400",
-    borderColor: "bg-indigo-500",
+    borderColor: "bg-indigo-500/70",
     compute: (_emails: Email[], totalCampaigns: number) => totalCampaigns,
     subtitle: "Active campaigns",
   },
   {
     label: "Total Emails",
     icon: Mail,
-    iconBg: "bg-blue-50 dark:bg-blue-950",
     iconColor: "text-blue-500",
     valueColor: "text-blue-600 dark:text-blue-400",
-    borderColor: "bg-blue-500",
+    borderColor: "bg-blue-500/70",
     compute: (emails: Email[]) => emails.length,
     subtitle: "Across all campaigns",
   },
   {
     label: "Reply Rate",
     icon: Reply,
-    iconBg: "bg-green-50 dark:bg-green-950",
     iconColor: "text-green-500",
     valueColor: "text-green-600 dark:text-green-400",
-    borderColor: "bg-green-500",
+    borderColor: "bg-green-500/70",
     compute: (emails: Email[]) => {
       const sent = emails.filter((e) => e.status !== "researched").length;
       if (sent === 0) return "0%";
@@ -47,10 +44,9 @@ const kpiConfig = [
   {
     label: "Hot Leads",
     icon: Flame,
-    iconBg: "bg-red-50 dark:bg-red-950",
     iconColor: "text-red-500",
     valueColor: "text-red-600 dark:text-red-400",
-    borderColor: "bg-red-500",
+    borderColor: "bg-red-500/70",
     compute: (emails: Email[]) => emails.filter((e) => e.lead_classification === "hot").length,
     subtitle: "Hot classification",
   },
@@ -77,12 +73,10 @@ export function CampaignKPICards({ emails, totalCampaigns }: CampaignKPICardsPro
                   <p className={`mt-2 text-3xl font-bold ${kpi.valueColor}`}>{value}</p>
                   <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{kpi.subtitle}</p>
                 </div>
-                <div className={`rounded-xl p-2.5 ${kpi.iconBg}`}>
-                  <Icon className={`h-5 w-5 ${kpi.iconColor}`} />
-                </div>
+                <Icon className={`h-5 w-5 ${kpi.iconColor}`} />
               </div>
             </div>
-            <div className={`h-1 w-full ${kpi.borderColor}`} />
+            <div className={`h-0.5 w-full ${kpi.borderColor}`} />
           </div>
         );
       })}

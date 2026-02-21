@@ -16,10 +16,9 @@ const kpiConfig = [
   {
     label: "New Researches",
     icon: Mail,
-    iconBg: "bg-blue-50 dark:bg-blue-950",
     iconColor: "text-blue-500",
     valueColor: "text-blue-600 dark:text-blue-400",
-    borderColor: "bg-blue-500",
+    borderColor: "bg-blue-500/70",
     ringColor: "ring-blue-400",
     filter: { type: "status" as const, value: "researched" },
     compute: (emails: Email[]) => emails.filter((e) => e.status === "researched").length,
@@ -28,10 +27,9 @@ const kpiConfig = [
   {
     label: "Total Sent",
     icon: Send,
-    iconBg: "bg-purple-50 dark:bg-purple-950",
     iconColor: "text-purple-500",
     valueColor: "text-purple-600 dark:text-purple-400",
-    borderColor: "bg-purple-500",
+    borderColor: "bg-purple-500/70",
     ringColor: "ring-purple-400",
     filter: { type: "status" as const, value: "sent" },
     compute: (emails: Email[]) => emails.filter((e) => e.status === "sent").length,
@@ -40,10 +38,9 @@ const kpiConfig = [
   {
     label: "Replies Received",
     icon: MessageSquare,
-    iconBg: "bg-green-50 dark:bg-green-950",
     iconColor: "text-green-500",
     valueColor: "text-green-600 dark:text-green-400",
-    borderColor: "bg-green-500",
+    borderColor: "bg-green-500/70",
     ringColor: "ring-green-400",
     filter: { type: "status" as const, value: "replied" },
     compute: (emails: Email[]) => emails.filter((e) => e.status === "replied").length,
@@ -52,10 +49,9 @@ const kpiConfig = [
   {
     label: "Hot Leads",
     icon: Flame,
-    iconBg: "bg-red-50 dark:bg-red-950",
     iconColor: "text-red-500",
     valueColor: "text-red-600 dark:text-red-400",
-    borderColor: "bg-red-500",
+    borderColor: "bg-red-500/70",
     ringColor: "ring-red-400",
     filter: { type: "classification" as const, value: "hot" },
     compute: (emails: Email[]) => emails.filter((e) => e.lead_classification === "hot").length,
@@ -64,10 +60,9 @@ const kpiConfig = [
   {
     label: "Opened",
     icon: Eye,
-    iconBg: "bg-orange-50 dark:bg-orange-950",
     iconColor: "text-orange-500",
     valueColor: "text-orange-600 dark:text-orange-400",
-    borderColor: "bg-orange-500",
+    borderColor: "bg-orange-500/70",
     ringColor: "ring-orange-400",
     filter: { type: "status" as const, value: "opened" },
     compute: (emails: Email[]) => emails.filter((e) => e.status === "opened").length,
@@ -101,12 +96,10 @@ export function KPICards({ emails, activeFilter, onFilterChange }: KPICardsProps
                   <p className={`mt-2 text-3xl font-bold ${kpi.valueColor}`}>{value}</p>
                   <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{kpi.subtitle}</p>
                 </div>
-                <div className={`rounded-xl p-2.5 ${kpi.iconBg}`}>
-                  <Icon className={`h-5 w-5 ${kpi.iconColor}`} />
-                </div>
+                <Icon className={`h-5 w-5 ${kpi.iconColor}`} />
               </div>
             </div>
-            <div className={`h-1 w-full ${kpi.borderColor}`} />
+            <div className={`h-0.5 w-full ${kpi.borderColor}`} />
           </div>
         );
       })}

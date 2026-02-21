@@ -11,7 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
@@ -40,9 +39,12 @@ interface EmailListTableProps {
 }
 
 const getStatusColor = (status: string) =>
-  statusColors[status] || { bg: "bg-gray-100", text: "text-gray-800" };
+  statusColors[status] || { dot: "bg-slate-400", text: "text-slate-600 dark:text-slate-300" };
 const getClassificationColor = (classification: string) =>
-  classificationColors[classification] || { bg: "bg-gray-100", text: "text-gray-800" };
+  classificationColors[classification] || {
+    dot: "bg-slate-400",
+    text: "text-slate-600 dark:text-slate-300",
+  };
 
 export function EmailListTable({
   emails,
@@ -55,6 +57,17 @@ export function EmailListTable({
   showCampaign = false,
 }: EmailListTableProps) {
   const { visibleItems, hasMore, sentinelRef } = useInfiniteScroll(emails);
+  const formatLabel = (value: string) =>
+    value
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+  const DotLabel = ({ label, dotClass, textClass }: { label: string; dotClass: string; textClass: string }) => (
+    <span className={`inline-flex items-center gap-2 text-sm font-medium ${textClass}`}>
+      <span className={`h-2 w-2 rounded-full ${dotClass}`} />
+      {label}
+    </span>
+  );
 
   if (emails.length === 0) {
     return (
@@ -126,23 +139,25 @@ export function EmailListTable({
                 </div>
               </TableCell>
               <TableCell>
-                <Badge className={getStatusColor(email.status).bg}>
-                  <span className={getStatusColor(email.status).text}>{email.status}</span>
-                </Badge>
+                <DotLabel
+                  label={formatLabel(email.status)}
+                  dotClass={getStatusColor(email.status).dot}
+                  textClass={getStatusColor(email.status).text}
+                />
               </TableCell>
               <TableCell>
-                <Badge className={getClassificationColor(email.lead_classification).bg}>
-                  <span className={getClassificationColor(email.lead_classification).text}>
-                    {email.lead_classification}
-                  </span>
-                </Badge>
+                <DotLabel
+                  label={formatLabel(email.lead_classification)}
+                  dotClass={getClassificationColor(email.lead_classification).dot}
+                  textClass={getClassificationColor(email.lead_classification).text}
+                />
               </TableCell>
               <TableCell>
-                <Badge className={getClientStatusColor(email.client_step || "").bg}>
-                  <span className={getClientStatusColor(email.client_step || "").text}>
-                    {email.client_step || "-"}
-                  </span>
-                </Badge>
+                <DotLabel
+                  label={email.client_step ? formatLabel(email.client_step) : "-"}
+                  dotClass={getClientStatusColor(email.client_step || "").dot}
+                  textClass={getClientStatusColor(email.client_step || "").text}
+                />
               </TableCell>
               {showCampaign && (
                 <TableCell className="text-sm text-foreground">

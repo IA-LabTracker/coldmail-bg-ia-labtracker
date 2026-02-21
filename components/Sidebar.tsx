@@ -49,7 +49,7 @@ export function Sidebar() {
   if (!user) return null;
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r border-sidebar-border bg-sidebar">
+    <aside className="flex h-screen w-64 flex-col bg-sidebar">
       <div className="flex items-center gap-3 px-6 py-6">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-accent">
           <LayoutDashboard className="h-5 w-5 text-sidebar-foreground" />
@@ -91,7 +91,7 @@ export function Sidebar() {
           <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
           {theme === "dark" ? "Light Mode" : "Dark Mode"}
         </button>
-        <p className="mb-3 truncate px-3 text-xs text-sidebar-foreground/60">{user.email}</p>
+
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <button className="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground">

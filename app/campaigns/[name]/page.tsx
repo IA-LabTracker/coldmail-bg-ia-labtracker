@@ -169,70 +169,63 @@ export default function CampaignDetailPage() {
       label: "Total Emails",
       value: totalEmails,
       icon: Mail,
-      iconBg: "bg-blue-50 dark:bg-blue-950",
       iconColor: "text-blue-500",
       valueColor: "text-blue-600 dark:text-blue-400",
-      borderColor: "bg-blue-500",
+      borderColor: "bg-blue-500/70",
       filterValue: "",
     },
     {
       label: "Companies Contacted",
       value: sentCount,
       icon: Building,
-      iconBg: "bg-purple-50 dark:bg-purple-950",
       iconColor: "text-purple-500",
       valueColor: "text-purple-600 dark:text-purple-400",
-      borderColor: "bg-purple-500",
+      borderColor: "bg-purple-500/70",
       filterValue: "sent",
     },
     {
       label: "Replied",
       value: repliedCount,
       icon: MessageSquare,
-      iconBg: "bg-green-50 dark:bg-green-950",
       iconColor: "text-green-500",
       valueColor: "text-green-600 dark:text-green-400",
-      borderColor: "bg-green-500",
+      borderColor: "bg-green-500/70",
       filterValue: "replied",
     },
     {
       label: "Bounced",
       value: bouncedCount,
       icon: XCircle,
-      iconBg: "bg-red-50 dark:bg-red-950",
       iconColor: "text-red-500",
       valueColor: "text-red-600 dark:text-red-400",
-      borderColor: "bg-red-500",
+      borderColor: "bg-red-500/70",
       filterValue: "bounced",
     },
     {
       label: "Opened",
       value: openedCount,
       icon: Eye,
-      iconBg: "bg-cyan-50 dark:bg-cyan-950",
       iconColor: "text-cyan-500",
       valueColor: "text-cyan-600 dark:text-cyan-400",
-      borderColor: "bg-cyan-500",
+      borderColor: "bg-cyan-500/70",
       filterValue: "opened",
     },
     {
       label: "Reply Rate",
       value: `${replyRate}%`,
       icon: MessageSquare,
-      iconBg: "bg-emerald-50 dark:bg-emerald-950",
       iconColor: "text-emerald-500",
       valueColor: "text-emerald-600 dark:text-emerald-400",
-      borderColor: "bg-emerald-500",
+      borderColor: "bg-emerald-500/70",
       filterValue: "",
     },
     {
       label: "Hot Leads",
       value: hotLeads,
       icon: Flame,
-      iconBg: "bg-orange-50 dark:bg-orange-950",
       iconColor: "text-orange-500",
       valueColor: "text-orange-600 dark:text-orange-400",
-      borderColor: "bg-orange-500",
+      borderColor: "bg-orange-500/70",
       filterValue: "",
     },
   ];
@@ -292,12 +285,10 @@ export default function CampaignDetailPage() {
                           </p>
                           <p className={`mt-1 text-2xl font-bold ${kpi.valueColor}`}>{kpi.value}</p>
                         </div>
-                        <div className={`rounded-lg p-2 ${kpi.iconBg}`}>
-                          <Icon className={`h-4 w-4 ${kpi.iconColor}`} />
-                        </div>
+                        <Icon className={`h-4 w-4 ${kpi.iconColor}`} />
                       </div>
                     </div>
-                    <div className={`h-1 w-full ${kpi.borderColor}`} />
+                    <div className={`h-0.5 w-full ${kpi.borderColor}`} />
                   </div>
                 );
               })}

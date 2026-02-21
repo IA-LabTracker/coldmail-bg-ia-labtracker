@@ -11,7 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 
 interface PreviewTableProps {
   rows: ImportRow[];
@@ -73,11 +72,15 @@ export function PreviewTable({ rows, validations, onRowUpdate }: PreviewTablePro
                   if (col.key === "keywords") {
                     return (
                       <TableCell key={col.key}>
-                        <div className="flex gap-1">
+                        <div className="flex flex-wrap gap-2">
                           {row.keywords.map((kw, i) => (
-                            <Badge key={i} variant="secondary" className="text-[10px]">
+                            <span
+                              key={i}
+                              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-700 dark:text-slate-300"
+                            >
+                              <span className="h-1.5 w-1.5 rounded-full bg-slate-500" />
                               {kw}
-                            </Badge>
+                            </span>
                           ))}
                         </div>
                       </TableCell>

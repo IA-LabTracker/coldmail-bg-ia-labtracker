@@ -12,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export interface CampaignGroup {
@@ -140,7 +139,10 @@ export function CampaignTable({ emails, searchFilter }: CampaignTableProps) {
                   <span className="font-semibold text-foreground">{campaign.campaignName}</span>
                 </TableCell>
                 <TableCell className="text-center">
-                  <Badge variant="secondary">{campaign.totalEmails}</Badge>
+                  <span className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <span className="h-2 w-2 rounded-full bg-slate-500" />
+                    {campaign.totalEmails} emails
+                  </span>
                 </TableCell>
                 <TableCell className="text-center">
                   <div className="flex items-center justify-center gap-1.5">

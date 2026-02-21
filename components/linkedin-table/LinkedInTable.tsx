@@ -12,22 +12,21 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { LinkedInCompanyGroupRow } from "./LinkedInCompanyGroupRow";
 
-export const linkedInStatusColors: Record<string, { bg: string; text: string }> = {
-  pending: { bg: "bg-gray-100", text: "text-gray-800" },
-  sent: { bg: "bg-blue-100", text: "text-blue-800" },
-  delivered: { bg: "bg-indigo-100", text: "text-indigo-800" },
-  read: { bg: "bg-purple-100", text: "text-purple-800" },
-  replied: { bg: "bg-green-100", text: "text-green-800" },
-  failed: { bg: "bg-red-100", text: "text-red-800" },
+export const linkedInStatusColors: Record<string, { dot: string; text: string }> = {
+  pending: { dot: "bg-slate-400", text: "text-slate-600 dark:text-slate-300" },
+  sent: { dot: "bg-blue-500", text: "text-blue-700 dark:text-blue-400" },
+  delivered: { dot: "bg-indigo-500", text: "text-indigo-700 dark:text-indigo-400" },
+  read: { dot: "bg-purple-500", text: "text-purple-700 dark:text-purple-400" },
+  replied: { dot: "bg-green-500", text: "text-green-700 dark:text-green-400" },
+  failed: { dot: "bg-red-500", text: "text-red-700 dark:text-red-400" },
 };
 
-export const classificationColors: Record<string, { bg: string; text: string }> = {
-  hot: { bg: "bg-red-100", text: "text-red-800" },
-  warm: { bg: "bg-yellow-100", text: "text-yellow-800" },
-  cold: { bg: "bg-blue-100", text: "text-blue-800" },
+export const classificationColors: Record<string, { dot: string; text: string }> = {
+  hot: { dot: "bg-red-500", text: "text-red-700 dark:text-red-400" },
+  warm: { dot: "bg-amber-500", text: "text-amber-700 dark:text-amber-400" },
+  cold: { dot: "bg-blue-500", text: "text-blue-700 dark:text-blue-400" },
 };
 
 interface LinkedInTableProps {
@@ -57,10 +56,34 @@ export function LinkedInTable({
 }: LinkedInTableProps) {
   const allMessages = groups.flatMap((g) => g.messages);
 
+  const formatLabel = (value: string) =>
+    value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+
   const getStatusColor = (status: string) =>
-    linkedInStatusColors[status] || { bg: "bg-gray-100", text: "text-gray-800" };
+    linkedInStatusColors[status] || {
+      dot: "bg-slate-400",
+      text: "text-slate-600 dark:text-slate-300",
+    };
   const getClassificationColor = (classification: string) =>
-    classificationColors[classification] || { bg: "bg-gray-100", text: "text-gray-800" };
+    classificationColors[classification] || {
+      dot: "bg-slate-400",
+      text: "text-slate-600 dark:text-slate-300",
+    };
+
+  const DotLabel = ({
+    label,
+    dotClass,
+    textClass,
+  }: {
+    label: string;
+    dotClass: string;
+    textClass: string;
+  }) => (
+    <span className={`inline-flex items-center gap-2 text-sm font-medium ${textClass}`}>
+      <span className={`h-2 w-2 rounded-full ${dotClass}`} />
+      {label}
+    </span>
+  );
 
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-card">
@@ -109,21 +132,21 @@ export function LinkedInTable({
                   </TableCell>
                   <TableCell className="text-foreground">{msg.current_company || "-"}</TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(msg.status).bg}>
-                      <span className={getStatusColor(msg.status).text}>{msg.status}</span>
-                    </Badge>
+                    <DotLabel
+                      label={formatLabel(msg.status)}
+                      dotClass={getStatusColor(msg.status).dot}
+                      textClass={getStatusColor(msg.status).text}
+                    />
                   </TableCell>
                   <TableCell>
-                    <Badge className={getClassificationColor(msg.lead_classification).bg}>
-                      <span className={getClassificationColor(msg.lead_classification).text}>
-                        {msg.lead_classification}
-                      </span>
-                    </Badge>
+                    <DotLabel
+                      label={formatLabel(msg.lead_classification)}
+                      dotClass={getClassificationColor(msg.lead_classification).dot}
+                      textClass={getClassificationColor(msg.lead_classification).text}
+                    />
                   </TableCell>
                   <TableCell className="text-sm text-foreground">
-                    {msg.created_at
-                      ? new Date(msg.created_at).toLocaleDateString("en-US")
-                      : "-"}
+                    {msg.created_at ? new Date(msg.created_at).toLocaleDateString("en-US") : "-"}
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">

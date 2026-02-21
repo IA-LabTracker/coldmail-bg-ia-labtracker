@@ -12,33 +12,37 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { CompanyGroupRow } from "@/components/dashboard/CompanyGroupRow";
 
-export const statusColors: Record<string, { bg: string; text: string }> = {
-  opened: { bg: "bg-cyan-100", text: "text-cyan-800" },
-  researched: { bg: "bg-purple-100", text: "text-purple-800" },
-  sent: { bg: "bg-blue-100", text: "text-blue-800" },
-  replied: { bg: "bg-green-100", text: "text-green-800" },
-  bounced: { bg: "bg-red-100", text: "text-red-800" },
+export const statusColors: Record<string, { dot: string; text: string }> = {
+  opened: { dot: "bg-cyan-500", text: "text-cyan-700 dark:text-cyan-400" },
+  researched: { dot: "bg-purple-500", text: "text-purple-700 dark:text-purple-400" },
+  sent: { dot: "bg-blue-500", text: "text-blue-700 dark:text-blue-400" },
+  replied: { dot: "bg-green-500", text: "text-green-700 dark:text-green-400" },
+  bounced: { dot: "bg-red-500", text: "text-red-700 dark:text-red-400" },
 };
 
-export const classificationColors: Record<string, { bg: string; text: string }> = {
-  hot: { bg: "bg-red-100", text: "text-red-800" },
-  warm: { bg: "bg-yellow-100", text: "text-yellow-800" },
-  cold: { bg: "bg-blue-100", text: "text-blue-800" },
+export const classificationColors: Record<string, { dot: string; text: string }> = {
+  hot: { dot: "bg-red-500", text: "text-red-700 dark:text-red-400" },
+  warm: { dot: "bg-amber-500", text: "text-amber-700 dark:text-amber-400" },
+  cold: { dot: "bg-blue-500", text: "text-blue-700 dark:text-blue-400" },
 };
 
-const clientStatusColors: Record<string, { bg: string; text: string }> = {
-  first_send: { bg: "bg-blue-100", text: "text-blue-800" },
-  follow_1: { bg: "bg-orange-100", text: "text-orange-800" },
-  follow_2: { bg: "bg-yellow-100", text: "text-yellow-800" },
-  follow_3: { bg: "bg-purple-100", text: "text-purple-800" },
+const clientStatusColors: Record<string, { dot: string; text: string }> = {
+  first_send: { dot: "bg-blue-500", text: "text-blue-700 dark:text-blue-400" },
+  follow_1: { dot: "bg-orange-500", text: "text-orange-700 dark:text-orange-400" },
+  follow_2: { dot: "bg-amber-500", text: "text-amber-700 dark:text-amber-400" },
+  follow_3: { dot: "bg-purple-500", text: "text-purple-700 dark:text-purple-400" },
 };
 
 export function getClientStatusColor(clientStatus: string) {
-  if (!clientStatus) return { bg: "bg-gray-100", text: "text-gray-800" };
-  return clientStatusColors[clientStatus] || { bg: "bg-gray-100", text: "text-gray-800" };
+  if (!clientStatus) return { dot: "bg-slate-400", text: "text-slate-600 dark:text-slate-300" };
+  return (
+    clientStatusColors[clientStatus] || {
+      dot: "bg-slate-400",
+      text: "text-slate-600 dark:text-slate-300",
+    }
+  );
 }
 
 interface EmailTableProps {
@@ -68,10 +72,25 @@ export function EmailTable({
 }: EmailTableProps) {
   const allEmails = groups.flatMap((g) => g.emails);
 
+  const formatLabel = (value: string) =>
+    value
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
   const getStatusColor = (status: string) =>
-    statusColors[status] || { bg: "bg-gray-100", text: "text-gray-800" };
+    statusColors[status] || { dot: "bg-slate-400", text: "text-slate-600 dark:text-slate-300" };
   const getClassificationColor = (classification: string) =>
-    classificationColors[classification] || { bg: "bg-gray-100", text: "text-gray-800" };
+    classificationColors[classification] || {
+      dot: "bg-slate-400",
+      text: "text-slate-600 dark:text-slate-300",
+    };
+
+  const DotLabel = ({ label, dotClass, textClass }: { label: string; dotClass: string; textClass: string }) => (
+    <span className={`inline-flex items-center gap-2 text-sm font-medium ${textClass}`}>
+      <span className={`h-2 w-2 rounded-full ${dotClass}`} />
+      {label}
+    </span>
+  );
 
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-card">
@@ -129,23 +148,25 @@ export function EmailTable({
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(email.status).bg}>
-                      <span className={getStatusColor(email.status).text}>{email.status}</span>
-                    </Badge>
+                    <DotLabel
+                      label={formatLabel(email.status)}
+                      dotClass={getStatusColor(email.status).dot}
+                      textClass={getStatusColor(email.status).text}
+                    />
                   </TableCell>
                   <TableCell>
-                    <Badge className={getClassificationColor(email.lead_classification).bg}>
-                      <span className={getClassificationColor(email.lead_classification).text}>
-                        {email.lead_classification}
-                      </span>
-                    </Badge>
+                    <DotLabel
+                      label={formatLabel(email.lead_classification)}
+                      dotClass={getClassificationColor(email.lead_classification).dot}
+                      textClass={getClassificationColor(email.lead_classification).text}
+                    />
                   </TableCell>
                   <TableCell>
-                    <Badge className={getClientStatusColor(email.client_step || "").bg}>
-                      <span className={getClientStatusColor(email.client_step || "").text}>
-                        {email.client_step || "-"}
-                      </span>
-                    </Badge>
+                    <DotLabel
+                      label={email.client_step ? formatLabel(email.client_step) : "-"}
+                      dotClass={getClientStatusColor(email.client_step || "").dot}
+                      textClass={getClientStatusColor(email.client_step || "").text}
+                    />
                   </TableCell>
                   <TableCell className="text-foreground">{email.campaign_name || "-"}</TableCell>
                   <TableCell className="text-sm text-foreground">

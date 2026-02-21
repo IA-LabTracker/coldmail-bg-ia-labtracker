@@ -6,7 +6,6 @@ import { Email, CompanyGroup } from "@/types";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   statusColors,
   classificationColors,
@@ -70,10 +69,31 @@ export function CompanyGroupRow({
   };
 
   const getStatusColor = (status: string) =>
-    statusColors[status] || { bg: "bg-gray-100", text: "text-gray-800" };
+    statusColors[status] || { dot: "bg-slate-400", text: "text-slate-600 dark:text-slate-300" };
 
   const getClassColor = (classification: string) =>
-    classificationColors[classification] || { bg: "bg-gray-100", text: "text-gray-800" };
+    classificationColors[classification] || {
+      dot: "bg-slate-400",
+      text: "text-slate-600 dark:text-slate-300",
+    };
+
+  const formatLabel = (value: string) =>
+    value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+  const DotLabel = ({
+    label,
+    dotClass,
+    textClass,
+  }: {
+    label: string;
+    dotClass: string;
+    textClass: string;
+  }) => (
+    <span className={`inline-flex items-center gap-2 text-sm font-medium ${textClass}`}>
+      <span className={`h-2 w-2 rounded-full ${dotClass}`} />
+      {label}
+    </span>
+  );
 
   return (
     <>
@@ -96,9 +116,7 @@ export function CompanyGroupRow({
               <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             )}
             <span className="font-medium text-foreground">{group.company}</span>
-            <Badge className="bg-teal-100 text-teal-800 text-xs">
-              {group.emails.length} emails
-            </Badge>
+            <span className="text-xs text-muted-foreground">{group.emails.length} emails</span>
           </div>
         </TableCell>
         <TableCell>
@@ -123,16 +141,21 @@ export function CompanyGroupRow({
         <TableCell>
           <div className="flex flex-wrap gap-1">
             {uniqueStatuses.map((status) => (
-              <Badge key={status} className={getStatusColor(status).bg}>
-                <span className={getStatusColor(status).text}>{status}</span>
-              </Badge>
+              <DotLabel
+                key={status}
+                label={formatLabel(status)}
+                dotClass={getStatusColor(status).dot}
+                textClass={getStatusColor(status).text}
+              />
             ))}
           </div>
         </TableCell>
         <TableCell>
-          <Badge className={getClassColor(bestClassification).bg}>
-            <span className={getClassColor(bestClassification).text}>{bestClassification}</span>
-          </Badge>
+          <DotLabel
+            label={formatLabel(bestClassification)}
+            dotClass={getClassColor(bestClassification).dot}
+            textClass={getClassColor(bestClassification).text}
+          />
         </TableCell>
         <TableCell className="text-muted-foreground">-</TableCell>
         <TableCell className="text-foreground">{campaignLabel}</TableCell>
@@ -176,29 +199,29 @@ export function CompanyGroupRow({
               </div>
             </TableCell>
             <TableCell>
-              <Badge className={getStatusColor(email.status).bg}>
-                <span className={getStatusColor(email.status).text}>{email.status}</span>
-              </Badge>
+              <DotLabel
+                label={formatLabel(email.status)}
+                dotClass={getStatusColor(email.status).dot}
+                textClass={getStatusColor(email.status).text}
+              />
             </TableCell>
             <TableCell>
-              <Badge className={getClassColor(email.lead_classification).bg}>
-                <span className={getClassColor(email.lead_classification).text}>
-                  {email.lead_classification}
-                </span>
-              </Badge>
+              <DotLabel
+                label={formatLabel(email.lead_classification)}
+                dotClass={getClassColor(email.lead_classification).dot}
+                textClass={getClassColor(email.lead_classification).text}
+              />
             </TableCell>
             <TableCell>
-              <Badge className={getClientStatusColor(email.client_step || "").bg}>
-                <span className={getClientStatusColor(email.client_step || "").text}>
-                  {email.client_step || "-"}
-                </span>
-              </Badge>
+              <DotLabel
+                label={email.client_step ? formatLabel(email.client_step) : "-"}
+                dotClass={getClientStatusColor(email.client_step || "").dot}
+                textClass={getClientStatusColor(email.client_step || "").text}
+              />
             </TableCell>
             <TableCell className="text-foreground text-sm">{email.campaign_name || "-"}</TableCell>
             <TableCell className="text-sm text-foreground">
-              {email.created_at
-                ? new Date(email.created_at).toLocaleDateString("en-US")
-                : "-"}
+              {email.created_at ? new Date(email.created_at).toLocaleDateString("en-US") : "-"}
             </TableCell>
             <TableCell>
               <div className="flex gap-1">

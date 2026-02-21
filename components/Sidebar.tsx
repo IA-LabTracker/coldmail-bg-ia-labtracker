@@ -14,6 +14,7 @@ import {
   LogOut,
   Sun,
   Moon,
+  Megaphone,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -27,6 +28,7 @@ import {
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/search", label: "Search & Trigger", icon: Search },
   { href: "/linkedin-table", label: "LinkedIn", icon: Linkedin },
   { href: "/import", label: "Import Leads", icon: Upload },

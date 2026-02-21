@@ -3,6 +3,7 @@ import { createSupabaseMiddleware } from "@/lib/supabase-middleware";
 
 const PROTECTED_ROUTES = [
   "/dashboard",
+  "/campaigns",
   "/search",
   "/settings",
   "/linkedin-table",
@@ -34,6 +35,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/campaigns/:path*",
     "/search/:path*",
     "/settings/:path*",
     "/linkedin-table/:path*",

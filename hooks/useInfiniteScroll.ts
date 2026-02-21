@@ -11,10 +11,7 @@ export function useInfiniteScroll<T>(items: T[]) {
     setVisibleCount(CHUNK_SIZE);
   }, [items]);
 
-  const visibleItems = useMemo(
-    () => items.slice(0, visibleCount),
-    [items, visibleCount],
-  );
+  const visibleItems = useMemo(() => items.slice(0, visibleCount), [items, visibleCount]);
 
   const hasMore = visibleCount < items.length;
 

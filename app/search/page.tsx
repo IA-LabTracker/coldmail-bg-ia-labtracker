@@ -36,7 +36,7 @@ const searchSchema = z.object({
   region: z.string().min(1, "Region is required"),
   industry: z.string().min(1, "Industry is required"),
   keywords: z.string().min(1, "Keywords are required"),
-  campaignName: z.string().optional(),
+  campaignName: z.string().min(1, "Campaign name is required"),
 });
 
 type SearchFormValues = z.infer<typeof searchSchema>;
@@ -268,9 +268,11 @@ export default function SearchPage() {
                   name="campaignName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Campaign Name</FormLabel>
+                      <FormLabel>
+                        Campaign Name <span className="text-red-500">*</span>
+                      </FormLabel>
                       <FormControl>
-                        <Input placeholder="Give your campaign a name (optional)" {...field} />
+                        <Input placeholder="Give your campaign a name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

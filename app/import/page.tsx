@@ -14,6 +14,9 @@ import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { parseImportFile } from "@/lib/importParser";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Megaphone } from "lucide-react";
 
 const BATCH_SIZE = 100;
 
@@ -27,6 +30,7 @@ export default function ImportPage() {
   const [status, setStatus] = useState<ImportStatus>("idle");
   const [importedCount, setImportedCount] = useState(0);
   const [error, setError] = useState("");
+  const [campaignName, setCampaignName] = useState("");
 
   const warningCount = useMemo(
     () => validations.filter((v) => v.severity === "warning").length,
@@ -81,6 +85,13 @@ export default function ImportPage() {
 
   const handleImport = useCallback(async () => {
     if (!user) return;
+
+    const hasAnyCampaign = rows.some((row) => row.campaign_name?.trim());
+    if (!campaignName.trim() && !hasAnyCampaign) {
+      toast.error("Campaign name is required. Fill in the field above or include it in your CSV.");
+      return;
+    }
+
     setStatus("importing");
     setImportedCount(0);
     setError("");
@@ -99,7 +110,7 @@ export default function ImportPage() {
           status: row.status,
           response_content: "",
           lead_classification: "cold" as const,
-          campaign_name: row.campaign_name,
+          campaign_name: row.campaign_name?.trim() || campaignName.trim(),
           notes: "",
           lead_name: row.lead_name || null,
           phone: row.phone || null,
@@ -124,7 +135,7 @@ export default function ImportPage() {
       setError(err instanceof Error ? err.message : "Failed to import data");
       setStatus("error");
     }
-  }, [user, rows]);
+  }, [user, rows, campaignName]);
 
   return (
     <AppLayout>
@@ -137,6 +148,22 @@ export default function ImportPage() {
         </div>
 
         {error && <ErrorMessage message={error} />}
+
+        <div className="rounded-lg border border-border bg-card p-4">
+          <Label htmlFor="campaign-name" className="mb-2 flex items-center gap-2 text-sm font-medium">
+            <Megaphone className="h-4 w-4 text-indigo-500" />
+            Campaign Name <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="campaign-name"
+            placeholder="e.g., US Tech Companies Q1 2026"
+            value={campaignName}
+            onChange={(e) => setCampaignName(e.target.value)}
+          />
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            All imported leads will be assigned to this campaign (unless the CSV already has a campaign_name column)
+          </p>
+        </div>
 
         <FileDropzone
           onFileSelected={handleFileSelected}

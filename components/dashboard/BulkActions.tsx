@@ -26,6 +26,15 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
   const [message, setMessage] = useState<Message | null>(null);
 
   const handleSendInitialEmail = async () => {
+    const missingCampaign = selectedEmails.filter((e) => !e.campaign_name?.trim());
+    if (missingCampaign.length > 0) {
+      setMessage({
+        type: "error",
+        text: `${missingCampaign.length} email${missingCampaign.length > 1 ? "s" : ""} without a campaign assigned. Please assign a campaign before sending.`,
+      });
+      return;
+    }
+
     if (!process.env.NEXT_PUBLIC_WEBHOOK_N8N) {
       setMessage({
         type: "error",

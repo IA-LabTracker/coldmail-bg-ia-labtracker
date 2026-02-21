@@ -394,7 +394,6 @@ export default function TermsPage() {
               </CardContent>
             </Card>
 
-            {/* Back to top */}
             <div className="flex justify-center pb-4">
               <Button variant="ghost" size="sm" asChild className="gap-2 text-muted-foreground">
                 <a href="#">

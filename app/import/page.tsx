@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { ImportRow, ImportValidation, ImportStatus } from "@/types";
@@ -10,13 +10,15 @@ import { ImportStats } from "@/components/import/ImportStats";
 import { PreviewTable } from "@/components/import/PreviewTable";
 import { ValidationWarnings } from "@/components/import/ValidationWarnings";
 import { ImportActions } from "@/components/import/ImportActions";
+import { CampaignAssignBar } from "@/components/import/CampaignAssignBar";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { parseImportFile } from "@/lib/importParser";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Megaphone } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { AlertCircle, Info } from "lucide-react";
 
 const BATCH_SIZE = 100;
 
@@ -30,17 +32,51 @@ export default function ImportPage() {
   const [status, setStatus] = useState<ImportStatus>("idle");
   const [importedCount, setImportedCount] = useState(0);
   const [error, setError] = useState("");
-  const [campaignName, setCampaignName] = useState("");
+  const [defaultCampaign, setDefaultCampaign] = useState("");
+  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  const [dbCampaigns, setDbCampaigns] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchCampaigns = async () => {
+      const { data } = await supabase
+        .from("emails")
+        .select("campaign_name")
+        .eq("user_id", user.id)
+        .neq("campaign_name", "")
+        .not("campaign_name", "is", null);
+      if (data) {
+        const unique = Array.from(new Set(data.map((d) => d.campaign_name).filter(Boolean)));
+        unique.sort((a, b) => a.localeCompare(b));
+        setDbCampaigns(unique);
+      }
+    };
+    fetchCampaigns();
+  }, [user]);
+
+  const campaignSuggestions = useMemo(() => {
+    const csvCampaigns = Array.from(
+      new Set(rows.map((r) => r.campaign_name?.trim()).filter(Boolean)),
+    );
+    const all = new Set(dbCampaigns.concat(csvCampaigns));
+    return Array.from(all).sort((a, b) => a.localeCompare(b));
+  }, [dbCampaigns, rows]);
 
   const warningCount = useMemo(
     () => validations.filter((v) => v.severity === "warning").length,
     [validations],
   );
 
+  const rowsWithoutCampaign = useMemo(
+    () => rows.filter((r) => !r.campaign_name?.trim()).length,
+    [rows],
+  );
+
   const handleFileSelected = useCallback(async (selectedFile: File) => {
     setFile(selectedFile);
     setStatus("parsing");
     setError("");
+    setSelectedRows(new Set());
 
     try {
       const result = await parseImportFile(selectedFile);
@@ -71,6 +107,7 @@ export default function ImportPage() {
     setStatus("idle");
     setImportedCount(0);
     setError("");
+    setSelectedRows(new Set());
   }, []);
 
   const handleRowUpdate = useCallback((rowIndex: number, field: keyof ImportRow, value: string) => {
@@ -79,16 +116,59 @@ export default function ImportPage() {
       updated[rowIndex] = { ...updated[rowIndex], [field]: value };
       return updated;
     });
-
     setValidations((prev) => prev.filter((v) => !(v.rowIndex === rowIndex && v.field === field)));
+  }, []);
+
+  const handleSelectRow = useCallback((rowIndex: number) => {
+    setSelectedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(rowIndex)) {
+        next.delete(rowIndex);
+      } else {
+        next.add(rowIndex);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    setSelectedRows((prev) => {
+      if (prev.size === rows.length) {
+        return new Set();
+      }
+      const all = new Set<number>();
+      rows.forEach((_, i) => all.add(i));
+      return all;
+    });
+  }, [rows]);
+
+  const handleCampaignAssign = useCallback(
+    (campaignName: string) => {
+      if (selectedRows.size === 0) return;
+      setRows((prev) => {
+        const updated = [...prev];
+        selectedRows.forEach((rowIndex) => {
+          updated[rowIndex] = { ...updated[rowIndex], campaign_name: campaignName };
+        });
+        return updated;
+      });
+      toast.success(`Campaign "${campaignName}" assigned to ${selectedRows.size} leads`);
+      setSelectedRows(new Set());
+    },
+    [selectedRows],
+  );
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedRows(new Set());
   }, []);
 
   const handleImport = useCallback(async () => {
     if (!user) return;
 
-    const hasAnyCampaign = rows.some((row) => row.campaign_name?.trim());
-    if (!campaignName.trim() && !hasAnyCampaign) {
-      toast.error("Campaign name is required. Fill in the field above or include it in your CSV.");
+    if (rowsWithoutCampaign > 0 && !defaultCampaign.trim()) {
+      toast.error(
+        `${rowsWithoutCampaign} lead${rowsWithoutCampaign > 1 ? "s" : ""} without campaign. Assign campaigns in the table or set a default campaign.`,
+      );
       return;
     }
 
@@ -110,7 +190,7 @@ export default function ImportPage() {
           status: row.status,
           response_content: "",
           lead_classification: "cold" as const,
-          campaign_name: row.campaign_name?.trim() || campaignName.trim(),
+          campaign_name: row.campaign_name?.trim() || defaultCampaign.trim(),
           notes: "",
           lead_name: row.lead_name || null,
           phone: row.phone || null,
@@ -122,7 +202,6 @@ export default function ImportPage() {
         }));
 
         const { error: insertError } = await supabase.from("emails").insert(batch);
-
         if (insertError) throw insertError;
 
         totalInserted += batch.length;
@@ -135,72 +214,117 @@ export default function ImportPage() {
       setError(err instanceof Error ? err.message : "Failed to import data");
       setStatus("error");
     }
-  }, [user, rows, campaignName]);
+  }, [user, rows, defaultCampaign, rowsWithoutCampaign]);
+
+  const showPreview =
+    status === "preview" || status === "importing" || status === "success" || status === "error";
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Import Leads</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Upload a CSV or XLSX file para importar leads para sua base
-          </p>
+      <div className="space-y-5 px-4 py-6 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="flex items-end justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">Import Leads</h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Upload CSV or XLSX to import leads into your database
+            </p>
+          </div>
         </div>
 
         {error && <ErrorMessage message={error} />}
 
-        <div className="rounded-lg border border-border bg-card p-4">
-          <Label htmlFor="campaign-name" className="mb-2 flex items-center gap-2 text-sm font-medium">
-            <Megaphone className="h-4 w-4 text-indigo-500" />
-            Campaign Name <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            id="campaign-name"
-            placeholder="e.g., US Tech Companies Q1 2026"
-            value={campaignName}
-            onChange={(e) => setCampaignName(e.target.value)}
+        {/* Upload + Campaign config - side by side */}
+        <div className="grid gap-4 lg:grid-cols-2">
+          <FileDropzone
+            onFileSelected={handleFileSelected}
+            onClear={handleClear}
+            currentFile={file}
+            isProcessing={status === "parsing"}
           />
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            All imported leads will be assigned to this campaign (unless the CSV already has a campaign_name column)
-          </p>
-        </div>
 
-        <FileDropzone
-          onFileSelected={handleFileSelected}
-          onClear={handleClear}
-          currentFile={file}
-          isProcessing={status === "parsing"}
-        />
+          <div className="flex flex-col justify-center rounded-lg border border-border bg-card p-4">
+            <Label
+              htmlFor="default-campaign"
+              className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              Default Campaign
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3.5 w-3.5 cursor-help text-muted-foreground/70" />
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-xs text-xs">
+                    Fallback campaign for leads without an assigned campaign. You can assign
+                    different campaigns per lead in the preview table.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </Label>
+            <Input
+              id="default-campaign"
+              placeholder="e.g., US Tech Companies Q1 2026"
+              value={defaultCampaign}
+              onChange={(e) => setDefaultCampaign(e.target.value)}
+            />
+          </div>
+        </div>
 
         {status === "parsing" && (
           <div className="flex items-center justify-center gap-3 py-8">
             <LoadingSpinner />
-            <p className="text-sm text-muted-foreground">Processando arquivo...</p>
+            <p className="text-sm text-muted-foreground">Processing file...</p>
           </div>
         )}
 
-        {(status === "preview" ||
-          status === "importing" ||
-          status === "success" ||
-          status === "error") && (
+        {showPreview && (
           <>
-            <ImportStats
-              totalRawRows={totalRawRows}
-              filteredOutRows={filteredOutRows}
-              validRows={rows.length}
-              warningCount={warningCount}
-            />
+            {/* Stats + Actions bar */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <ImportStats
+                totalRawRows={totalRawRows}
+                filteredOutRows={filteredOutRows}
+                validRows={rows.length}
+                warningCount={warningCount}
+              />
+              <div className="shrink-0">
+                <ImportActions
+                  status={status}
+                  totalRows={rows.length}
+                  importedRows={importedCount}
+                  onImport={handleImport}
+                  onReset={handleClear}
+                />
+              </div>
+            </div>
 
             {validations.length > 0 && <ValidationWarnings validations={validations} />}
 
-            <PreviewTable rows={rows} validations={validations} onRowUpdate={handleRowUpdate} />
+            {rowsWithoutCampaign > 0 && !defaultCampaign.trim() && (
+              <p className="flex items-center gap-1.5 text-sm text-orange-500 dark:text-orange-400">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                {rowsWithoutCampaign} lead{rowsWithoutCampaign > 1 ? "s" : ""} without campaign
+                select rows to assign, or set a default campaign above.
+              </p>
+            )}
 
-            <ImportActions
-              status={status}
-              totalRows={rows.length}
-              importedRows={importedCount}
-              onImport={handleImport}
-              onReset={handleClear}
+            {selectedRows.size > 0 && (
+              <CampaignAssignBar
+                selectedCount={selectedRows.size}
+                totalCount={rows.length}
+                campaignSuggestions={campaignSuggestions}
+                onAssign={handleCampaignAssign}
+                onClearSelection={handleClearSelection}
+              />
+            )}
+
+            <PreviewTable
+              rows={rows}
+              validations={validations}
+              onRowUpdate={handleRowUpdate}
+              selectedRows={selectedRows}
+              onSelectRow={handleSelectRow}
+              onSelectAll={handleSelectAll}
             />
           </>
         )}

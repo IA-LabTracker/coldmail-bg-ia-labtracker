@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Upload, Loader2, CheckCircle, RotateCcw } from "lucide-react";
 import { ImportStatus } from "@/types";
@@ -25,52 +24,40 @@ export function ImportActions({
 
   if (status === "success") {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-full bg-green-100 p-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-green-800">
-                Successfully imported {importedRows} leads
-              </p>
-              <p className="text-xs text-green-600">Data is now available in your dashboard</p>
-            </div>
-          </div>
-          <Button onClick={onReset} variant="outline" className="gap-2">
-            <RotateCcw className="h-4 w-4" />
-            Import Another
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+          <CheckCircle className="h-4 w-4" />
+          <span className="font-medium">{importedRows} leads imported</span>
+        </div>
+        <Button onClick={onReset} variant="outline" size="sm" className="gap-1.5">
+          <RotateCcw className="h-3.5 w-3.5" />
+          Import Another
+        </Button>
+      </div>
     );
   }
 
   if (status === "importing") {
     return (
-      <Card>
-        <CardContent className="space-y-3 p-4">
-          <div className="flex items-center gap-3">
-            <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-            <p className="text-sm font-medium text-gray-700">
-              Importing... {importedRows} of {totalRows} rows
-            </p>
-          </div>
-          <Progress value={progress} className="h-2" />
-          <p className="text-xs text-gray-500">{progress}% complete</p>
-        </CardContent>
-      </Card>
+      <div className="flex items-center gap-3">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        <div className="w-32">
+          <Progress value={progress} className="h-1.5" />
+        </div>
+        <span className="text-xs text-muted-foreground">
+          {importedRows}/{totalRows} ({progress}%)
+        </span>
+      </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <Button onClick={onImport} className="gap-2" size="lg">
-        <Upload className="h-4 w-4" />
+    <div className="flex items-center gap-2">
+      <Button onClick={onImport} className="gap-1.5" size="sm">
+        <Upload className="h-3.5 w-3.5" />
         Import {totalRows} Rows
       </Button>
-      <Button onClick={onReset} variant="outline" size="lg">
+      <Button onClick={onReset} variant="outline" size="sm">
         Cancel
       </Button>
     </div>

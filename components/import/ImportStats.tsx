@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
 import { FileSpreadsheet, Filter, CheckCircle, AlertTriangle } from "lucide-react";
 
 interface ImportStatsProps {
@@ -18,49 +17,39 @@ export function ImportStats({
 }: ImportStatsProps) {
   const stats = [
     {
-      label: "Total Rows",
+      label: "Total",
       value: totalRawRows,
       icon: FileSpreadsheet,
       color: "text-blue-600",
-      bg: "bg-blue-50",
     },
     {
-      label: "Filtered Out",
+      label: "Filtered",
       value: filteredOutRows,
       icon: Filter,
-      color: "text-gray-600",
-      bg: "bg-gray-50",
+      color: "text-muted-foreground",
     },
     {
-      label: "Valid for Import",
+      label: "Valid",
       value: validRows,
       icon: CheckCircle,
       color: "text-green-600",
-      bg: "bg-green-50",
     },
     {
       label: "Warnings",
       value: warningCount,
       icon: AlertTriangle,
-      color: warningCount > 0 ? "text-yellow-600" : "text-gray-400",
-      bg: warningCount > 0 ? "bg-yellow-50" : "bg-gray-50",
+      color: warningCount > 0 ? "text-yellow-600" : "text-muted-foreground",
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="flex flex-wrap items-center gap-5">
       {stats.map((stat) => (
-        <Card key={stat.label}>
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className={`rounded-lg ${stat.bg} p-2`}>
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-gray-900">{stat.value}</p>
-              <p className="text-xs text-gray-500">{stat.label}</p>
-            </div>
-          </CardContent>
-        </Card>
+        <div key={stat.label} className="flex items-center gap-2">
+          <stat.icon className={`h-4 w-4 ${stat.color}`} />
+          <span className="text-sm font-semibold text-foreground">{stat.value}</span>
+          <span className="text-xs text-muted-foreground">{stat.label}</span>
+        </div>
       ))}
     </div>
   );

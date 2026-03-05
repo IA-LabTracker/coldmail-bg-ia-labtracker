@@ -15,6 +15,7 @@ import {
   Sun,
   Moon,
   Megaphone,
+  CalendarClock,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -31,6 +32,7 @@ const navItems = [
   { href: "/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/search", label: "Search & Trigger", icon: Search },
   { href: "/linkedin-table", label: "LinkedIn", icon: Linkedin },
+  { href: "/schedules", label: "Schedules", icon: CalendarClock },
   { href: "/import", label: "Import Leads", icon: Upload },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

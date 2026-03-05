@@ -141,3 +141,31 @@ export interface LinkedInCompanyGroup {
   company: string;
   messages: LinkedInMessage[];
 }
+
+export type ScheduleStatus = "active" | "paused" | "completed" | "draft";
+export type ScheduleType = "one_time" | "recurring";
+export type WeekDay = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
+
+export interface ScheduleLeadSelection {
+  campaignName: string;
+  leadIds: string[];
+  allLeads: boolean;
+}
+
+export interface Schedule {
+  id: string;
+  user_id: string;
+  name: string;
+  type: ScheduleType;
+  status: ScheduleStatus;
+  scheduled_date: string | null;
+  scheduled_time: string;
+  recurring_days: WeekDay[];
+  lead_selections: ScheduleLeadSelection[];
+  total_leads: number;
+  leads_sent: number;
+  created_at: string;
+  updated_at: string;
+  next_run_at: string | null;
+  last_run_at: string | null;
+}

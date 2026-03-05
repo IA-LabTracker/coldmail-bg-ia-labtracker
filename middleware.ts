@@ -8,6 +8,7 @@ const PROTECTED_ROUTES = [
   "/settings",
   "/linkedin-table",
   "/import",
+  "/schedules",
 ];
 const AUTH_ROUTES = ["/login", "/signup"];
 
@@ -40,6 +41,7 @@ export const config = {
     "/settings/:path*",
     "/linkedin-table/:path*",
     "/import/:path*",
+    "/schedules/:path*",
     "/login",
     "/signup",
   ],

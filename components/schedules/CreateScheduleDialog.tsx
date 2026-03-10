@@ -9,6 +9,7 @@ import {
   ScheduleLeadSelection,
   WeekDay,
 } from "@/types";
+import { parseScheduleDateLocal } from "@/lib/scheduleDates";
 import {
   Dialog,
   DialogContent,
@@ -71,7 +72,9 @@ export function CreateScheduleDialog({
   const [name, setName] = useState(editingSchedule?.name ?? "");
   const [type, setType] = useState<ScheduleType>(editingSchedule?.type ?? "one_time");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(
-    editingSchedule?.scheduled_date ? new Date(editingSchedule.scheduled_date) : undefined
+    editingSchedule?.scheduled_date
+      ? parseScheduleDateLocal(editingSchedule.scheduled_date) ?? undefined
+      : undefined
   );
   const [scheduledTime, setScheduledTime] = useState(editingSchedule?.scheduled_time ?? "10:00");
   const [recurringDays, setRecurringDays] = useState<WeekDay[]>(
@@ -88,7 +91,9 @@ export function CreateScheduleDialog({
       setName(editingSchedule.name);
       setType(editingSchedule.type);
       setScheduledDate(
-        editingSchedule.scheduled_date ? new Date(editingSchedule.scheduled_date) : undefined
+        editingSchedule.scheduled_date
+          ? parseScheduleDateLocal(editingSchedule.scheduled_date) ?? undefined
+          : undefined
       );
       setScheduledTime(editingSchedule.scheduled_time);
       setRecurringDays(editingSchedule.recurring_days);
@@ -153,10 +158,11 @@ export function CreateScheduleDialog({
     onSave({
       name: name.trim(),
       type,
-      status: "active",
-      scheduled_date: type === "one_time" && scheduledDate
-        ? scheduledDate.toISOString()
-        : null,
+      status: editingSchedule?.status ?? "active",
+      scheduled_date:
+        type === "one_time" && scheduledDate
+          ? format(scheduledDate, "yyyy-MM-dd")
+          : null,
       scheduled_time: scheduledTime,
       recurring_days: type === "recurring" ? recurringDays : [],
       lead_selections: selections,

@@ -30,6 +30,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { formatScheduleDateLocal } from "@/lib/scheduleDates";
 
 const WEEKDAY_LABELS: Record<WeekDay, string> = {
   mon: "Monday",
@@ -107,7 +108,7 @@ export function ScheduleDetailModal({
             <div className="space-y-1">
               <p className="text-xs font-medium text-muted-foreground">Scheduled Date</p>
               <p className="text-sm text-foreground">
-                {new Date(schedule.scheduled_date).toLocaleDateString("en-US", {
+                {formatScheduleDateLocal(schedule.scheduled_date, "en-US", {
                   weekday: "long",
                   year: "numeric",
                   month: "long",

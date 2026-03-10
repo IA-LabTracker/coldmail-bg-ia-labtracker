@@ -5,6 +5,8 @@ import axios from "axios";
 import { Email } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { AlertCircle, CheckCircle, Info, Send, Trash2, X } from "lucide-react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
@@ -24,6 +26,19 @@ interface Message {
 export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActionsProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<Message | null>(null);
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduleAt, setScheduleAt] = useState<string>("");
+
+  const ensureDefaultScheduleTime = () => {
+    if (scheduleAt) return;
+    const tenMinutesLater = new Date(Date.now() + 10 * 60 * 1000);
+    const localIso = new Date(
+      tenMinutesLater.getTime() - tenMinutesLater.getTimezoneOffset() * 60 * 1000,
+    )
+      .toISOString()
+      .slice(0, 16);
+    setScheduleAt(localIso);
+  };
 
   const handleSendInitialEmail = async () => {
     const missingCampaign = selectedEmails.filter((e) => !e.campaign_name?.trim());
@@ -43,12 +58,44 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
       return;
     }
 
+    let scheduledIso: string | null = null;
+    if (scheduleEnabled) {
+      if (!scheduleAt) {
+        setMessage({
+          type: "error",
+          text: "Select a date and time to schedule the send.",
+        });
+        return;
+      }
+
+      const scheduledDate = new Date(scheduleAt);
+      if (Number.isNaN(scheduledDate.getTime())) {
+        setMessage({
+          type: "error",
+          text: "Invalid schedule date/time. Please select a valid date.",
+        });
+        return;
+      }
+
+      if (scheduledDate.getTime() <= Date.now()) {
+        setMessage({
+          type: "error",
+          text: "Scheduled time must be in the future.",
+        });
+        return;
+      }
+
+      scheduledIso = scheduledDate.toISOString();
+    }
+
     setLoading(true);
     setMessage({ type: "info", text: "Triggering initial email webhook..." });
 
     try {
       await axios.post(process.env.NEXT_PUBLIC_WEBHOOK_N8N, {
         emails: selectedEmails,
+        schedule: scheduleEnabled,
+        date: scheduledIso,
       });
 
       setMessage({
@@ -133,6 +180,30 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
               <X className="h-4 w-4" />
               Clear
             </Button>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={scheduleEnabled}
+              onCheckedChange={(checked) => {
+                setScheduleEnabled(checked);
+                if (checked) ensureDefaultScheduleTime();
+              }}
+              disabled={loading}
+            />
+            <span className="text-foreground font-medium">Schedule send</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Input
+              type="datetime-local"
+              value={scheduleAt}
+              onChange={(e) => setScheduleAt(e.target.value)}
+              disabled={!scheduleEnabled || loading}
+              className="w-[220px]"
+            />
+            <span className="text-xs text-muted-foreground">Local time</span>
           </div>
         </div>
 

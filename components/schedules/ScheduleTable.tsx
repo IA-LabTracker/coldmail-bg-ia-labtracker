@@ -29,6 +29,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { formatScheduleDateLocal } from "@/lib/scheduleDates";
 
 const WEEKDAY_LABELS: Record<WeekDay, string> = {
   mon: "Mon",
@@ -180,7 +181,7 @@ export function ScheduleTable({
                       ) : (
                         <span>
                           {schedule.scheduled_date
-                            ? new Date(schedule.scheduled_date).toLocaleDateString("en-US")
+                            ? formatScheduleDateLocal(schedule.scheduled_date, "en-US", {})
                             : "-"}
                         </span>
                       )}

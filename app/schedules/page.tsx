@@ -1,20 +1,131 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import axios from "axios";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { Email, Schedule, ScheduleStatus, ScheduleType } from "@/types";
+import { Email, Schedule, ScheduleStatus, ScheduleType, WeekDay } from "@/types";
 import { AppLayout } from "@/components/AppLayout";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { ScheduleFilters } from "@/components/schedules/ScheduleFilters";
 import { ScheduleCardList } from "@/components/schedules/ScheduleCardList";
+import { ScheduleKPICards } from "@/components/schedules/ScheduleKPICards";
 import { CreateScheduleDialog } from "@/components/schedules/CreateScheduleDialog";
 import { ScheduleDetailModal } from "@/components/schedules/ScheduleDetailModal";
 import { DeleteScheduleDialog } from "@/components/schedules/DeleteScheduleDialog";
+import { parseScheduleDateLocal } from "@/lib/scheduleDates";
 import { toast } from "sonner";
+
+const WEEKDAY_INDEX: Record<WeekDay, number> = {
+  sun: 0,
+  mon: 1,
+  tue: 2,
+  wed: 3,
+  thu: 4,
+  fri: 5,
+  sat: 6,
+};
+
+function resolveSelectedEmails(
+  emails: Email[],
+  selections: Schedule["lead_selections"],
+): Email[] {
+  const selected = new Map<string, Email>();
+
+  for (const selection of selections) {
+    const campaignName = selection.campaignName;
+    const campaignEmails = emails.filter(
+      (e) => (e.campaign_name || "No Campaign") === campaignName,
+    );
+
+    if (selection.allLeads) {
+      for (const email of campaignEmails) {
+        selected.set(email.id, email);
+      }
+      continue;
+    }
+
+    const idSet = new Set(selection.leadIds);
+    for (const email of campaignEmails) {
+      if (idSet.has(email.id)) {
+        selected.set(email.id, email);
+      }
+    }
+  }
+
+  return Array.from(selected.values());
+}
+
+function computeNextRunAt(schedule: {
+  type: ScheduleType;
+  scheduled_date: string | null;
+  scheduled_time: string;
+  recurring_days: WeekDay[];
+}): string | null {
+  const [h, m] = schedule.scheduled_time.split(":");
+  const hour = Number(h);
+  const minute = Number(m);
+
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+
+  if (schedule.type === "one_time") {
+    if (!schedule.scheduled_date) return null;
+    const base = parseScheduleDateLocal(schedule.scheduled_date);
+    if (!base) return null;
+    if (Number.isNaN(base.getTime())) return null;
+    base.setHours(hour, minute, 0, 0);
+    return base.toISOString();
+  }
+
+  if (schedule.recurring_days.length === 0) return null;
+
+  const now = new Date();
+  const targetDays = new Set(schedule.recurring_days.map((d) => WEEKDAY_INDEX[d]));
+
+  for (let offset = 0; offset < 14; offset += 1) {
+    const candidate = new Date(now);
+    candidate.setDate(now.getDate() + offset);
+    candidate.setHours(hour, minute, 0, 0);
+
+    if (!targetDays.has(candidate.getDay())) continue;
+    if (candidate.getTime() <= now.getTime()) continue;
+
+    return candidate.toISOString();
+  }
+
+  return null;
+}
+
+async function triggerScheduleWebhook(params: {
+  scheduleId: string;
+  scheduleName: string;
+  scheduleType: ScheduleType;
+  scheduledDate: string | null;
+  scheduledTime: string;
+  recurringDays: WeekDay[];
+  nextRunAt: string;
+  emails: Email[];
+}) {
+  const webhookUrl = process.env.NEXT_PUBLIC_WEBHOOK_N8N;
+  if (!webhookUrl) {
+    throw new Error("Webhook URL not configured. Set NEXT_PUBLIC_WEBHOOK_N8N.");
+  }
+
+  await axios.post(webhookUrl, {
+    schedule: true,
+    date: params.nextRunAt,
+    schedule_id: params.scheduleId,
+    schedule_name: params.scheduleName,
+    schedule_type: params.scheduleType,
+    scheduled_date: params.scheduledDate,
+    scheduled_time: params.scheduledTime,
+    recurring_days: params.recurringDays,
+    emails: params.emails,
+  });
+}
 
 export default function SchedulesPage() {
   const { user } = useAuth();
@@ -82,11 +193,34 @@ export default function SchedulesPage() {
       if (!user) return;
 
       try {
+        const selectedEmails = resolveSelectedEmails(emails, data.lead_selections);
+        if (selectedEmails.length === 0) {
+          toast.error("No leads selected for this schedule.");
+          return;
+        }
+        const nextRunAt = computeNextRunAt({
+          type: data.type,
+          scheduled_date: data.scheduled_date,
+          scheduled_time: data.scheduled_time,
+          recurring_days: data.recurring_days,
+        });
+        const isFutureRun =
+          nextRunAt && new Date(nextRunAt).getTime() > Date.now();
+
+        if (data.status === "active") {
+          if (!nextRunAt || !isFutureRun) {
+            toast.error("Invalid schedule date/time. Please choose a future time.");
+            return;
+          }
+        }
+
         if (editingSchedule) {
           const { error: updateError } = await supabase
             .from("schedules")
             .update({
               ...data,
+              total_leads: selectedEmails.length,
+              next_run_at: data.status === "active" ? nextRunAt : null,
               updated_at: new Date().toISOString(),
             })
             .eq("id", editingSchedule.id);
@@ -96,10 +230,30 @@ export default function SchedulesPage() {
           setSchedules((prev) =>
             prev.map((s) =>
               s.id === editingSchedule.id
-                ? { ...s, ...data, updated_at: new Date().toISOString() }
+                ? {
+                    ...s,
+                    ...data,
+                    total_leads: selectedEmails.length,
+                    next_run_at: data.status === "active" ? nextRunAt : null,
+                    updated_at: new Date().toISOString(),
+                  }
                 : s
             )
           );
+
+          if (data.status === "active" && nextRunAt) {
+            await triggerScheduleWebhook({
+              scheduleId: editingSchedule.id,
+              scheduleName: data.name,
+              scheduleType: data.type,
+              scheduledDate: data.scheduled_date,
+              scheduledTime: data.scheduled_time,
+              recurringDays: data.recurring_days,
+              nextRunAt,
+              emails: selectedEmails,
+            });
+          }
+
           toast.success("Schedule updated successfully");
         } else {
           const newSchedule = {
@@ -107,7 +261,8 @@ export default function SchedulesPage() {
             user_id: user.id,
             leads_sent: 0,
             last_run_at: null,
-            next_run_at: null,
+            next_run_at: data.status === "active" ? nextRunAt : null,
+            total_leads: selectedEmails.length,
           };
 
           const { data: inserted, error: insertError } = await supabase
@@ -121,6 +276,20 @@ export default function SchedulesPage() {
           if (inserted) {
             setSchedules((prev) => [inserted, ...prev]);
           }
+
+          if (inserted && data.status === "active" && nextRunAt) {
+            await triggerScheduleWebhook({
+              scheduleId: inserted.id,
+              scheduleName: data.name,
+              scheduleType: data.type,
+              scheduledDate: data.scheduled_date,
+              scheduledTime: data.scheduled_time,
+              recurringDays: data.recurring_days,
+              nextRunAt,
+              emails: selectedEmails,
+            });
+          }
+
           toast.success("Schedule created successfully");
         }
       } catch (err) {
@@ -142,9 +311,30 @@ export default function SchedulesPage() {
         schedule.status === "active" ? "paused" : "active";
 
       try {
+        const nextRunAt =
+          newStatus === "active"
+            ? computeNextRunAt({
+                type: schedule.type,
+                scheduled_date: schedule.scheduled_date,
+                scheduled_time: schedule.scheduled_time,
+                recurring_days: schedule.recurring_days,
+              })
+            : null;
+        const isFutureRun =
+          nextRunAt && new Date(nextRunAt).getTime() > Date.now();
+
+        if (newStatus === "active" && (!nextRunAt || !isFutureRun)) {
+          toast.error("Invalid schedule date/time. Please edit and pick a future time.");
+          return;
+        }
+
         const { error: updateError } = await supabase
           .from("schedules")
-          .update({ status: newStatus, updated_at: new Date().toISOString() })
+          .update({
+            status: newStatus,
+            next_run_at: newStatus === "active" ? nextRunAt : null,
+            updated_at: new Date().toISOString(),
+          })
           .eq("id", schedule.id);
 
         if (updateError) throw updateError;
@@ -152,10 +342,34 @@ export default function SchedulesPage() {
         setSchedules((prev) =>
           prev.map((s) =>
             s.id === schedule.id
-              ? { ...s, status: newStatus, updated_at: new Date().toISOString() }
+              ? {
+                  ...s,
+                  status: newStatus,
+                  next_run_at: newStatus === "active" ? nextRunAt : null,
+                  updated_at: new Date().toISOString(),
+                }
               : s
           )
         );
+
+        if (newStatus === "active" && nextRunAt) {
+          const selectedEmails = resolveSelectedEmails(emails, schedule.lead_selections);
+          if (selectedEmails.length === 0) {
+            toast.error("No leads selected for this schedule.");
+            return;
+          }
+          await triggerScheduleWebhook({
+            scheduleId: schedule.id,
+            scheduleName: schedule.name,
+            scheduleType: schedule.type,
+            scheduledDate: schedule.scheduled_date,
+            scheduledTime: schedule.scheduled_time,
+            recurringDays: schedule.recurring_days,
+            nextRunAt,
+            emails: selectedEmails,
+          });
+        }
+
         toast.success(
           newStatus === "active" ? "Schedule activated" : "Schedule paused"
         );
@@ -250,6 +464,8 @@ export default function SchedulesPage() {
           </div>
         ) : (
           <>
+            <ScheduleKPICards schedules={schedules} />
+
             <ScheduleFilters
               search={searchFilter}
               onSearchChange={setSearchFilter}

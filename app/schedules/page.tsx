@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import axios from "axios";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -29,10 +28,7 @@ const WEEKDAY_INDEX: Record<WeekDay, number> = {
   sat: 6,
 };
 
-function resolveSelectedEmails(
-  emails: Email[],
-  selections: Schedule["lead_selections"],
-): Email[] {
+function resolveSelectedEmails(emails: Email[], selections: Schedule["lead_selections"]): Email[] {
   const selected = new Map<string, Email>();
 
   for (const selection of selections) {
@@ -109,22 +105,32 @@ async function triggerScheduleWebhook(params: {
   nextRunAt: string;
   emails: Email[];
 }) {
-  const webhookUrl = process.env.NEXT_PUBLIC_WEBHOOK_N8N;
-  if (!webhookUrl) {
-    throw new Error("Webhook URL not configured. Set NEXT_PUBLIC_WEBHOOK_N8N.");
-  }
-
-  await axios.post(webhookUrl, {
-    schedule: true,
-    date: params.nextRunAt,
-    schedule_id: params.scheduleId,
-    schedule_name: params.scheduleName,
-    schedule_type: params.scheduleType,
-    scheduled_date: params.scheduledDate,
-    scheduled_time: params.scheduledTime,
-    recurring_days: params.recurringDays,
-    emails: params.emails,
+  const response = await fetch("/api/schedules/trigger", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      schedule: true,
+      date: params.nextRunAt,
+      schedule_id: params.scheduleId,
+      schedule_name: params.scheduleName,
+      schedule_type: params.scheduleType,
+      scheduled_date: params.scheduledDate,
+      scheduled_time: params.scheduledTime,
+      recurring_days: params.recurringDays,
+      emails: params.emails,
+    }),
   });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const message =
+      typeof errorData?.error === "string" && errorData.error
+        ? errorData.error
+        : "Failed to trigger webhook";
+    const details =
+      typeof errorData?.details === "string" && errorData.details ? `: ${errorData.details}` : "";
+    throw new Error(`${message}${details}`);
+  }
 }
 
 export default function SchedulesPage() {
@@ -187,8 +193,14 @@ export default function SchedulesPage() {
     async (
       data: Omit<
         Schedule,
-        "id" | "user_id" | "created_at" | "updated_at" | "leads_sent" | "last_run_at" | "next_run_at"
-      >
+        | "id"
+        | "user_id"
+        | "created_at"
+        | "updated_at"
+        | "leads_sent"
+        | "last_run_at"
+        | "next_run_at"
+      >,
     ) => {
       if (!user) return;
 
@@ -204,8 +216,7 @@ export default function SchedulesPage() {
           scheduled_time: data.scheduled_time,
           recurring_days: data.recurring_days,
         });
-        const isFutureRun =
-          nextRunAt && new Date(nextRunAt).getTime() > Date.now();
+        const isFutureRun = nextRunAt && new Date(nextRunAt).getTime() > Date.now();
 
         if (data.status === "active") {
           if (!nextRunAt || !isFutureRun) {
@@ -215,13 +226,15 @@ export default function SchedulesPage() {
         }
 
         if (editingSchedule) {
+          const previous = editingSchedule;
+          const updatedAt = new Date().toISOString();
           const { error: updateError } = await supabase
             .from("schedules")
             .update({
               ...data,
               total_leads: selectedEmails.length,
               next_run_at: data.status === "active" ? nextRunAt : null,
-              updated_at: new Date().toISOString(),
+              updated_at: updatedAt,
             })
             .eq("id", editingSchedule.id);
 
@@ -235,23 +248,50 @@ export default function SchedulesPage() {
                     ...data,
                     total_leads: selectedEmails.length,
                     next_run_at: data.status === "active" ? nextRunAt : null,
-                    updated_at: new Date().toISOString(),
+                    updated_at: updatedAt,
                   }
-                : s
-            )
+                : s,
+            ),
           );
 
           if (data.status === "active" && nextRunAt) {
-            await triggerScheduleWebhook({
-              scheduleId: editingSchedule.id,
-              scheduleName: data.name,
-              scheduleType: data.type,
-              scheduledDate: data.scheduled_date,
-              scheduledTime: data.scheduled_time,
-              recurringDays: data.recurring_days,
-              nextRunAt,
-              emails: selectedEmails,
-            });
+            try {
+              await triggerScheduleWebhook({
+                scheduleId: editingSchedule.id,
+                scheduleName: data.name,
+                scheduleType: data.type,
+                scheduledDate: data.scheduled_date,
+                scheduledTime: data.scheduled_time,
+                recurringDays: data.recurring_days,
+                nextRunAt,
+                emails: selectedEmails,
+              });
+            } catch (webhookError) {
+              const rollbackAt = new Date().toISOString();
+              await supabase
+                .from("schedules")
+                .update({
+                  name: previous.name,
+                  type: previous.type,
+                  status: previous.status,
+                  scheduled_date: previous.scheduled_date,
+                  scheduled_time: previous.scheduled_time,
+                  recurring_days: previous.recurring_days,
+                  lead_selections: previous.lead_selections,
+                  total_leads: previous.total_leads,
+                  next_run_at: previous.next_run_at,
+                  updated_at: rollbackAt,
+                })
+                .eq("id", previous.id);
+
+              setSchedules((prev) =>
+                prev.map((s) =>
+                  s.id === previous.id ? { ...previous, updated_at: rollbackAt } : s,
+                ),
+              );
+
+              throw webhookError;
+            }
           }
 
           toast.success("Schedule updated successfully");
@@ -278,39 +318,53 @@ export default function SchedulesPage() {
           }
 
           if (inserted && data.status === "active" && nextRunAt) {
-            await triggerScheduleWebhook({
-              scheduleId: inserted.id,
-              scheduleName: data.name,
-              scheduleType: data.type,
-              scheduledDate: data.scheduled_date,
-              scheduledTime: data.scheduled_time,
-              recurringDays: data.recurring_days,
-              nextRunAt,
-              emails: selectedEmails,
-            });
+            try {
+              await triggerScheduleWebhook({
+                scheduleId: inserted.id,
+                scheduleName: data.name,
+                scheduleType: data.type,
+                scheduledDate: data.scheduled_date,
+                scheduledTime: data.scheduled_time,
+                recurringDays: data.recurring_days,
+                nextRunAt,
+                emails: selectedEmails,
+              });
+            } catch (webhookError) {
+              await supabase.from("schedules").delete().eq("id", inserted.id);
+              setSchedules((prev) => prev.filter((s) => s.id !== inserted.id));
+              throw webhookError;
+            }
           }
 
           toast.success("Schedule created successfully");
         }
       } catch (err) {
-        toast.error(
-          editingSchedule
-            ? "Failed to update schedule"
-            : "Failed to create schedule"
-        );
+        const baseMessage = editingSchedule
+          ? "Failed to update schedule"
+          : "Failed to create schedule";
+        const detail = err instanceof Error && err.message ? `: ${err.message}` : "";
+        toast.error(`${baseMessage}${detail}`);
       }
 
       setEditingSchedule(null);
     },
-    [user, editingSchedule]
+    [user, editingSchedule, emails],
   );
 
   const handleToggleStatus = useCallback(
     async (schedule: Schedule) => {
-      const newStatus: ScheduleStatus =
-        schedule.status === "active" ? "paused" : "active";
+      const newStatus: ScheduleStatus = schedule.status === "active" ? "paused" : "active";
 
       try {
+        let selectedEmails: Email[] = [];
+        if (newStatus === "active") {
+          selectedEmails = resolveSelectedEmails(emails, schedule.lead_selections);
+          if (selectedEmails.length === 0) {
+            toast.error("No leads selected for this schedule.");
+            return;
+          }
+        }
+
         const nextRunAt =
           newStatus === "active"
             ? computeNextRunAt({
@@ -320,20 +374,21 @@ export default function SchedulesPage() {
                 recurring_days: schedule.recurring_days,
               })
             : null;
-        const isFutureRun =
-          nextRunAt && new Date(nextRunAt).getTime() > Date.now();
+        const isFutureRun = nextRunAt && new Date(nextRunAt).getTime() > Date.now();
 
         if (newStatus === "active" && (!nextRunAt || !isFutureRun)) {
           toast.error("Invalid schedule date/time. Please edit and pick a future time.");
           return;
         }
 
+        const previous = schedule;
+        const updatedAt = new Date().toISOString();
         const { error: updateError } = await supabase
           .from("schedules")
           .update({
             status: newStatus,
             next_run_at: newStatus === "active" ? nextRunAt : null,
-            updated_at: new Date().toISOString(),
+            updated_at: updatedAt,
           })
           .eq("id", schedule.id);
 
@@ -346,38 +401,59 @@ export default function SchedulesPage() {
                   ...s,
                   status: newStatus,
                   next_run_at: newStatus === "active" ? nextRunAt : null,
-                  updated_at: new Date().toISOString(),
+                  updated_at: updatedAt,
                 }
-              : s
-          )
+              : s,
+          ),
         );
 
         if (newStatus === "active" && nextRunAt) {
-          const selectedEmails = resolveSelectedEmails(emails, schedule.lead_selections);
-          if (selectedEmails.length === 0) {
-            toast.error("No leads selected for this schedule.");
-            return;
+          try {
+            await triggerScheduleWebhook({
+              scheduleId: schedule.id,
+              scheduleName: schedule.name,
+              scheduleType: schedule.type,
+              scheduledDate: schedule.scheduled_date,
+              scheduledTime: schedule.scheduled_time,
+              recurringDays: schedule.recurring_days,
+              nextRunAt,
+              emails: selectedEmails,
+            });
+          } catch (webhookError) {
+            const rollbackAt = new Date().toISOString();
+            await supabase
+              .from("schedules")
+              .update({
+                status: previous.status,
+                next_run_at: previous.next_run_at,
+                updated_at: rollbackAt,
+              })
+              .eq("id", previous.id);
+
+            setSchedules((prev) =>
+              prev.map((s) =>
+                s.id === previous.id
+                  ? {
+                      ...s,
+                      status: previous.status,
+                      next_run_at: previous.next_run_at,
+                      updated_at: rollbackAt,
+                    }
+                  : s,
+              ),
+            );
+
+            throw webhookError;
           }
-          await triggerScheduleWebhook({
-            scheduleId: schedule.id,
-            scheduleName: schedule.name,
-            scheduleType: schedule.type,
-            scheduledDate: schedule.scheduled_date,
-            scheduledTime: schedule.scheduled_time,
-            recurringDays: schedule.recurring_days,
-            nextRunAt,
-            emails: selectedEmails,
-          });
         }
 
-        toast.success(
-          newStatus === "active" ? "Schedule activated" : "Schedule paused"
-        );
-      } catch {
-        toast.error("Failed to update schedule status");
+        toast.success(newStatus === "active" ? "Schedule activated" : "Schedule paused");
+      } catch (err) {
+        const detail = err instanceof Error && err.message ? `: ${err.message}` : "";
+        toast.error(`Failed to update schedule status${detail}`);
       }
     },
-    []
+    [emails],
   );
 
   const handleDelete = useCallback(async () => {
@@ -433,7 +509,7 @@ export default function SchedulesPage() {
     (schedule: Schedule) => {
       handleToggleStatus(schedule);
     },
-    [handleToggleStatus]
+    [handleToggleStatus],
   );
 
   const handleTableDelete = useCallback((schedule: Schedule) => {

@@ -104,8 +104,15 @@ async function triggerScheduleWebhook(params: {
   recurringDays: WeekDay[];
   nextRunAt: string;
   emails: Email[];
+  webhookUrl?: string | null;
 }) {
-  const response = await fetch("/api/schedules/trigger", {
+  const resolvedWebhookUrl = params.webhookUrl?.trim() || process.env.NEXT_PUBLIC_WEBHOOK_N8N;
+
+  if (!resolvedWebhookUrl) {
+    throw new Error("Webhook URL not configured. Please configure it in Settings.");
+  }
+
+  const response = await fetch(resolvedWebhookUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -122,14 +129,9 @@ async function triggerScheduleWebhook(params: {
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const message =
-      typeof errorData?.error === "string" && errorData.error
-        ? errorData.error
-        : "Failed to trigger webhook";
-    const details =
-      typeof errorData?.details === "string" && errorData.details ? `: ${errorData.details}` : "";
-    throw new Error(`${message}${details}`);
+    const errorText = await response.text().catch(() => "");
+    const details = errorText ? `: ${errorText}` : "";
+    throw new Error(`Failed to trigger webhook${details}`);
   }
 }
 
@@ -139,6 +141,7 @@ export default function SchedulesPage() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [webhookUrl, setWebhookUrl] = useState<string | null>(null);
 
   const [searchFilter, setSearchFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<ScheduleStatus | "all">("all");
@@ -156,7 +159,7 @@ export default function SchedulesPage() {
     setError("");
 
     try {
-      const [emailsResult, schedulesResult] = await Promise.all([
+      const [emailsResult, schedulesResult, settingsResult] = await Promise.all([
         supabase
           .from("emails")
           .select("*")
@@ -167,6 +170,7 @@ export default function SchedulesPage() {
           .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
+        supabase.from("settings").select("webhook_url").eq("user_id", user.id).maybeSingle(),
       ]);
 
       if (emailsResult.error) throw emailsResult.error;
@@ -177,6 +181,11 @@ export default function SchedulesPage() {
         setSchedules([]);
       } else {
         setSchedules(schedulesResult.data || []);
+      }
+
+      if (!settingsResult.error) {
+        const configuredUrl = settingsResult.data?.webhook_url?.trim() || null;
+        setWebhookUrl(configuredUrl);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
@@ -225,6 +234,13 @@ export default function SchedulesPage() {
           }
         }
 
+        const resolvedWebhookUrl = webhookUrl?.trim() || process.env.NEXT_PUBLIC_WEBHOOK_N8N;
+
+        if (data.status === "active" && !resolvedWebhookUrl) {
+          toast.error("Webhook URL not configured. Please configure it in Settings.");
+          return;
+        }
+
         if (editingSchedule) {
           const previous = editingSchedule;
           const updatedAt = new Date().toISOString();
@@ -265,6 +281,7 @@ export default function SchedulesPage() {
                 recurringDays: data.recurring_days,
                 nextRunAt,
                 emails: selectedEmails,
+                webhookUrl: resolvedWebhookUrl,
               });
             } catch (webhookError) {
               const rollbackAt = new Date().toISOString();
@@ -328,6 +345,7 @@ export default function SchedulesPage() {
                 recurringDays: data.recurring_days,
                 nextRunAt,
                 emails: selectedEmails,
+                webhookUrl: resolvedWebhookUrl,
               });
             } catch (webhookError) {
               await supabase.from("schedules").delete().eq("id", inserted.id);
@@ -348,7 +366,7 @@ export default function SchedulesPage() {
 
       setEditingSchedule(null);
     },
-    [user, editingSchedule, emails],
+    [user, editingSchedule, emails, webhookUrl],
   );
 
   const handleToggleStatus = useCallback(
@@ -356,8 +374,14 @@ export default function SchedulesPage() {
       const newStatus: ScheduleStatus = schedule.status === "active" ? "paused" : "active";
 
       try {
+        const resolvedWebhookUrl = webhookUrl?.trim() || process.env.NEXT_PUBLIC_WEBHOOK_N8N;
+
         let selectedEmails: Email[] = [];
         if (newStatus === "active") {
+          if (!resolvedWebhookUrl) {
+            toast.error("Webhook URL not configured. Please configure it in Settings.");
+            return;
+          }
           selectedEmails = resolveSelectedEmails(emails, schedule.lead_selections);
           if (selectedEmails.length === 0) {
             toast.error("No leads selected for this schedule.");
@@ -418,6 +442,7 @@ export default function SchedulesPage() {
               recurringDays: schedule.recurring_days,
               nextRunAt,
               emails: selectedEmails,
+              webhookUrl: resolvedWebhookUrl,
             });
           } catch (webhookError) {
             const rollbackAt = new Date().toISOString();
@@ -453,7 +478,7 @@ export default function SchedulesPage() {
         toast.error(`Failed to update schedule status${detail}`);
       }
     },
-    [emails],
+    [emails, webhookUrl],
   );
 
   const handleDelete = useCallback(async () => {

@@ -2,16 +2,17 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { DateRange } from "react-day-picker";
+import { Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Email } from "@/types";
 import { AppLayout } from "@/components/AppLayout";
 import { CampaignKPICards } from "@/components/campaigns/CampaignKPICards";
-import { CampaignFilters } from "@/components/campaigns/CampaignFilters";
 import { CampaignTable, groupEmailsByCampaign } from "@/components/campaigns/CampaignTable";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { Input } from "@/components/ui/input";
 
 export default function CampaignsPage() {
   const { user } = useAuth();
@@ -62,14 +63,25 @@ export default function CampaignsPage() {
   return (
     <AppLayout>
       <div className="space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Campaigns</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Manage and track all your email campaigns
             </p>
           </div>
-          <DateRangePicker date={dateRangeFilter} onDateChange={setDateRangeFilter} />
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search campaigns..."
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                className="w-56 pl-9"
+              />
+            </div>
+            <DateRangePicker date={dateRangeFilter} onDateChange={setDateRangeFilter} />
+          </div>
         </div>
 
         {error && <ErrorMessage message={error} />}
@@ -81,9 +93,6 @@ export default function CampaignsPage() {
         ) : (
           <>
             <CampaignKPICards emails={filteredEmails} totalCampaigns={totalCampaigns} />
-
-            <CampaignFilters search={searchFilter} onSearchChange={setSearchFilter} />
-
             <CampaignTable emails={filteredEmails} searchFilter={searchFilter} />
           </>
         )}

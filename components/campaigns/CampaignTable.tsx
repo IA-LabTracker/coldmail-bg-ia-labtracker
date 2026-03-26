@@ -2,17 +2,17 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Send, MessageSquare, XCircle, Eye, ExternalLink } from "lucide-react";
-import { Email } from "@/types";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
+  Send,
+  MessageSquare,
+  XCircle,
+  Eye,
+  Mail,
+  ArrowRight,
+  Calendar,
+} from "lucide-react";
+import { Email } from "@/types";
+import { Badge } from "@/components/ui/badge";
 
 export interface CampaignGroup {
   campaignName: string;
@@ -79,6 +79,44 @@ export function groupEmailsByCampaign(emails: Email[]): CampaignGroup[] {
     });
 }
 
+function ReplyRateBar({ rate }: { rate: number }) {
+  const color =
+    rate >= 10
+      ? "bg-green-500"
+      : rate >= 5
+        ? "bg-yellow-500"
+        : "bg-slate-400 dark:bg-slate-600";
+
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+        <div
+          className={`h-full rounded-full transition-all ${color}`}
+          style={{ width: `${Math.min(rate, 100)}%` }}
+        />
+      </div>
+      <span
+        className={`text-xs font-semibold tabular-nums ${
+          rate >= 10
+            ? "text-green-600 dark:text-green-400"
+            : rate >= 5
+              ? "text-yellow-600 dark:text-yellow-400"
+              : "text-muted-foreground"
+        }`}
+      >
+        {rate}%
+      </span>
+    </div>
+  );
+}
+
+const metrics = [
+  { key: "sent" as const, label: "Sent", icon: Send, color: "text-blue-500", bg: "bg-blue-500/10" },
+  { key: "replied" as const, label: "Replied", icon: MessageSquare, color: "text-green-500", bg: "bg-green-500/10" },
+  { key: "bounced" as const, label: "Bounced", icon: XCircle, color: "text-red-500", bg: "bg-red-500/10" },
+  { key: "opened" as const, label: "Opened", icon: Eye, color: "text-cyan-500", bg: "bg-cyan-500/10" },
+] as const;
+
 export function CampaignTable({ emails, searchFilter }: CampaignTableProps) {
   const router = useRouter();
 
@@ -91,109 +129,79 @@ export function CampaignTable({ emails, searchFilter }: CampaignTableProps) {
 
   if (campaigns.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card py-16">
+      <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-card py-16">
+        <Mail className="mb-3 h-10 w-10 text-muted-foreground/40" />
         <p className="text-lg font-medium text-muted-foreground">No campaigns found</p>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground/70">
           Import leads or trigger a search to create campaigns
         </p>
       </div>
     );
   }
 
-  const handleNavigate = (campaignName: string) => {
-    router.push(`/campaigns/${encodeURIComponent(campaignName)}`);
-  };
-
   return (
-    <div className="overflow-x-auto rounded-lg border border-border bg-card">
-      <Table>
-        <TableHeader>
-          <TableRow className="border-b border-border bg-muted">
-            <TableHead>Campaign</TableHead>
-            <TableHead className="text-center">Emails</TableHead>
-            <TableHead className="text-center">Sent</TableHead>
-            <TableHead className="text-center">Replied</TableHead>
-            <TableHead className="text-center">Bounced</TableHead>
-            <TableHead className="text-center">Opened</TableHead>
-            <TableHead className="text-center">Reply Rate</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead className="w-16">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {campaigns.map((campaign) => {
-            const replyRateColor =
-              campaign.replyRate >= 10
-                ? "text-green-600 dark:text-green-400"
-                : campaign.replyRate >= 5
-                  ? "text-yellow-600 dark:text-yellow-400"
-                  : "text-muted-foreground";
-
-            return (
-              <TableRow
-                key={campaign.campaignName}
-                className="cursor-pointer border-b border-border transition-colors hover:bg-muted/50"
-                onClick={() => handleNavigate(campaign.campaignName)}
-              >
-                <TableCell>
-                  <span className="font-semibold text-foreground">{campaign.campaignName}</span>
-                </TableCell>
-                <TableCell className="text-center">
-                  <span className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                    <span className="h-2 w-2 rounded-full bg-slate-500" />
-                    {campaign.totalEmails} emails
-                  </span>
-                </TableCell>
-                <TableCell className="text-center">
-                  <div className="flex items-center justify-center gap-1.5">
-                    <Send className="h-3.5 w-3.5 text-blue-500" />
-                    <span className="text-foreground">{campaign.sent}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-center">
-                  <div className="flex items-center justify-center gap-1.5">
-                    <MessageSquare className="h-3.5 w-3.5 text-green-500" />
-                    <span className="text-foreground">{campaign.replied}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-center">
-                  <div className="flex items-center justify-center gap-1.5">
-                    <XCircle className="h-3.5 w-3.5 text-red-500" />
-                    <span className="text-foreground">{campaign.bounced}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-center">
-                  <div className="flex items-center justify-center gap-1.5">
-                    <Eye className="h-3.5 w-3.5 text-cyan-500" />
-                    <span className="text-foreground">{campaign.opened}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-center">
-                  <span className={`font-semibold ${replyRateColor}`}>{campaign.replyRate}%</span>
-                </TableCell>
-                <TableCell className="text-sm text-foreground">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {campaigns.map((campaign, idx) => (
+        <div
+          key={campaign.campaignName}
+          className={`
+            group cursor-pointer rounded-xl border border-border bg-card
+            p-5 transition-all duration-200
+            hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5
+            animate-fade-up stagger-${(idx % 6) + 1}
+          `}
+          onClick={() =>
+            router.push(`/campaigns/${encodeURIComponent(campaign.campaignName)}`)
+          }
+        >
+          {/* Header */}
+          <div className="mb-4 flex items-start justify-between">
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate text-base font-semibold text-foreground group-hover:text-primary transition-colors">
+                {campaign.campaignName}
+              </h3>
+              <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
                   {campaign.createdAt
-                    ? new Date(campaign.createdAt).toLocaleDateString("en-US")
-                    : "-"}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleNavigate(campaign.campaignName);
-                    }}
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+                    ? new Date(campaign.createdAt).toLocaleDateString("pt-BR")
+                    : "—"}
+                </span>
+                <Badge variant="secondary" className="px-2 py-0 text-[10px]">
+                  {campaign.totalEmails} emails
+                </Badge>
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+          </div>
+
+          {/* Reply Rate */}
+          <div className="mb-4">
+            <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
+              Reply Rate
+            </p>
+            <ReplyRateBar rate={campaign.replyRate} />
+          </div>
+
+          {/* Metrics Grid */}
+          <div className="grid grid-cols-4 gap-2">
+            {metrics.map((m) => {
+              const Icon = m.icon;
+              const value = campaign[m.key];
+              return (
+                <div
+                  key={m.key}
+                  className={`flex flex-col items-center rounded-lg ${m.bg} py-2`}
+                >
+                  <Icon className={`mb-1 h-3.5 w-3.5 ${m.color}`} />
+                  <span className="text-sm font-bold text-foreground">{value}</span>
+                  <span className="text-[10px] text-muted-foreground">{m.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

@@ -27,7 +27,6 @@ export async function POST(request: NextRequest) {
 
     // Parse body - handle both JSON and form-encoded
     const rawText = await request.text();
-    console.log("Unipile callback raw body:", rawText.substring(0, 2000));
 
     let body: Record<string, unknown>;
     const contentType = request.headers.get("content-type") || "";
@@ -43,8 +42,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Invalid body" }, { status: 400 });
       }
     }
-
-    console.log("Unipile callback body keys:", Object.keys(body));
 
     // Extract fields - handle BOTH Unipile webhook formats:
     //
@@ -62,19 +59,15 @@ export async function POST(request: NextRequest) {
 
     if (accountStatus && typeof accountStatus === "object") {
       // Format 2: Account Status Webhook
-      console.log("Unipile callback: detected AccountStatus format");
       status = normalizeStatus(accountStatus.message || "");
       account_id = accountStatus.account_id || "";
       clientId = ""; // Not included in this format - will fetch from Unipile API
     } else {
       // Format 1: notify_url callback
-      console.log("Unipile callback: detected notify_url format");
       status = (body.status as string) || "";
       account_id = (body.account_id as string) || (body.accountId as string) || "";
       clientId = (body.name as string) || (body.client_id as string) || "";
     }
-
-    console.log("Unipile callback extracted:", { status, account_id, clientId });
 
     if (!account_id) {
       console.error("Unipile callback: no account_id found");
@@ -82,7 +75,6 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedStatus = normalizeStatus(status);
-    console.log("Unipile callback: normalized status:", normalizedStatus);
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -106,7 +98,6 @@ export async function POST(request: NextRequest) {
 
       if (existingRow?.client_id) {
         clientId = existingRow.client_id;
-        console.log("Unipile callback: found client_id from DB:", clientId);
       }
     }
 
@@ -129,12 +120,6 @@ export async function POST(request: NextRequest) {
       console.error("Failed to upsert linkedin_accounts:", JSON.stringify(upsertError));
       return NextResponse.json({ error: "Failed to save account event" }, { status: 500 });
     }
-
-    console.log("Unipile callback: upserted linkedin_accounts", {
-      normalizedStatus,
-      account_id,
-      clientId,
-    });
 
     // On successful connection, also update settings
     if (normalizedStatus === "CREATION_SUCCESS" || normalizedStatus === "RECONNECTED") {

@@ -7,20 +7,15 @@ import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Settings } from "@/types";
-
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { ConnectionStep } from "@/components/linkedin/ConnectionStep";
@@ -37,18 +32,53 @@ const settingsSchema = z.object({
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
+const TEMPLATE_VARIABLES = [
+  "{{company}}",
+  "{{email}}",
+  "{{region}}",
+  "{{industry}}",
+];
+
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <h2 className="shrink-0 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+        {title}
+      </h2>
+      <div className="h-px flex-1 bg-border" />
+    </div>
+  );
+}
+
+function StatusDot({ active }: { active: boolean }) {
+  return (
+    <span
+      className={`inline-block h-1.5 w-1.5 rounded-full ${
+        active
+          ? "bg-green-500 dark:bg-green-400"
+          : "bg-gray-300 dark:bg-gray-600"
+      }`}
+    />
+  );
+}
+
 export default function SettingsPage() {
   const { user } = useAuth();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState<FeedbackMessage>(null);
-  const [linkedinAccountId, setLinkedinAccountId] = useState<string | null>(null);
+  const [linkedinAccountId, setLinkedinAccountId] = useState<string | null>(
+    null,
+  );
   const hasCheckedOAuth = useRef(false);
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
     defaultValues: { webhookUrl: "", emailTemplate: "", linkedinWebhookUrl: "" },
   });
+
+  const webhookUrl = form.watch("webhookUrl");
+  const linkedinWebhookUrl = form.watch("linkedinWebhookUrl");
 
   const fetchLinkedInAccount = useCallback(
     async (sync = false): Promise<string | null> => {
@@ -61,7 +91,9 @@ export default function SettingsPage() {
 
         if (!session?.access_token) return null;
 
-        const url = sync ? "/api/linkedin-accounts?sync=true" : "/api/linkedin-accounts";
+        const url = sync
+          ? "/api/linkedin-accounts?sync=true"
+          : "/api/linkedin-accounts";
 
         const res = await fetch(url, {
           headers: { Authorization: `Bearer ${session.access_token}` },
@@ -71,8 +103,9 @@ export default function SettingsPage() {
 
         const data = await res.json();
         const accounts = data.accounts || [];
-
-        const connected = accounts.find((a: { is_active: boolean }) => a.is_active);
+        const connected = accounts.find(
+          (a: { is_active: boolean }) => a.is_active,
+        );
 
         return connected?.account_id || null;
       } catch {
@@ -117,7 +150,8 @@ export default function SettingsPage() {
       } catch (error) {
         setFeedback({
           type: "error",
-          text: error instanceof Error ? error.message : "Failed to load settings",
+          text:
+            error instanceof Error ? error.message : "Failed to load settings",
         });
       }
 
@@ -128,7 +162,11 @@ export default function SettingsPage() {
         const returningFromOAuth = params.get("connected") === "true";
 
         if (params.has("connected")) {
-          window.history.replaceState({}, document.title, window.location.pathname);
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname,
+          );
         }
 
         const id = await fetchLinkedInAccount(returningFromOAuth);
@@ -163,9 +201,15 @@ export default function SettingsPage() {
     } catch (error) {
       setFeedback({
         type: "error",
-        text: error instanceof Error ? error.message : "Failed to save settings",
+        text:
+          error instanceof Error ? error.message : "Failed to save settings",
       });
     }
+  };
+
+  const insertVariable = (variable: string) => {
+    const current = form.getValues("emailTemplate") || "";
+    form.setValue("emailTemplate", current + variable, { shouldDirty: true });
   };
 
   if (loading) {
@@ -180,163 +224,146 @@ export default function SettingsPage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
+          <Button
+            type="submit"
+            form="settings-form"
+            disabled={form.formState.isSubmitting}
+            size="sm"
+          >
+            {form.formState.isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Save"
+            )}
+          </Button>
+        </div>
+
         {feedback && (
           <div
-            className={`flex items-center gap-3 rounded-lg border p-4 ${
+            className={`mt-4 flex items-center gap-2 rounded-lg px-4 py-3 text-sm ${
               feedback.type === "error"
-                ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950"
-                : "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950"
+                ? "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
+                : "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
             }`}
           >
-            {feedback.type === "success" && (
-              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+            {feedback.type === "success" ? (
+              <CheckCircle className="h-4 w-4 shrink-0" />
+            ) : (
+              <AlertCircle className="h-4 w-4 shrink-0" />
             )}
-            {feedback.type === "error" && (
-              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
-            )}
-            <p
-              className={
-                feedback.type === "error"
-                  ? "text-red-800 dark:text-red-300"
-                  : "text-green-800 dark:text-green-300"
-              }
-            >
-              {feedback.text}
-            </p>
+            {feedback.text}
           </div>
         )}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">Webhooks</h1>
-                <p className="mt-2 text-muted-foreground">
-                  Configure webhooks, templates and LinkedIn connection
-                </p>
+          <form
+            id="settings-form"
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="mt-8 space-y-10"
+          >
+            <section>
+              <SectionHeader title="Webhooks" />
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-lg border bg-card p-5 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <StatusDot active={!!webhookUrl} />
+                    <p className="text-sm font-medium">Lead Search</p>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    n8n &middot; Search & Trigger
+                  </p>
+                  <FormField
+                    control={form.control}
+                    name="webhookUrl"
+                    render={({ field }) => (
+                      <FormItem className="mt-3">
+                        <FormControl>
+                          <Input
+                            type="url"
+                            placeholder="https://n8n.example.com/webhook/..."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="rounded-lg border bg-card p-5 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <StatusDot active={!!linkedinWebhookUrl} />
+                    <p className="text-sm font-medium">LinkedIn Campaigns</p>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    n8n &middot; Campaign Automation
+                  </p>
+                  <FormField
+                    control={form.control}
+                    name="linkedinWebhookUrl"
+                    render={({ field }) => (
+                      <FormItem className="mt-3">
+                        <FormControl>
+                          <Input
+                            type="url"
+                            placeholder="https://n8n.example.com/webhook/..."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Save"
-                )}
-              </Button>
-            </div>
-            <Tabs defaultValue="webhook" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="webhook">n8n Webhook</TabsTrigger>
-                <TabsTrigger value="email">Email Template</TabsTrigger>
-                <TabsTrigger value="linkedin-webhook">LinkedIn Webhook</TabsTrigger>
-                <TabsTrigger value="linkedin-connection">LinkedIn Account</TabsTrigger>
-              </TabsList>
+            </section>
 
-              <TabsContent value="webhook">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>n8n Webhook Configuration</CardTitle>
-                    <CardDescription>
-                      Configure the webhook URL for n8n lead search integration
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <FormField
-                      control={form.control}
-                      name="webhookUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Webhook URL</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="url"
-                              placeholder="https://your-n8n-instance.com/webhook/..."
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Get this URL from your n8n workflow webhook node
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="email">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Email Template</CardTitle>
-                    <CardDescription>Create a default email template for campaigns</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <FormField
-                      control={form.control}
-                      name="emailTemplate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email Template</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder={`Hi {{company}},\n\nI noticed you're in the {{industry}} space. I think our solution could help...\n\nBest regards`}
-                              className="min-h-48"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Available variables: {"{{company}}"}, {"{{email}}"}, {"{{region}}"},{" "}
-                            {"{{industry}}"}
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="linkedin-webhook">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>LinkedIn Campaign Webhook</CardTitle>
-                    <CardDescription>
-                      Configure the webhook for LinkedIn campaign automation
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <FormField
-                      control={form.control}
-                      name="linkedinWebhookUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>LinkedIn Webhook URL</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="url"
-                              placeholder="https://your-n8n-instance.com/webhook/..."
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Get this URL from your n8n LinkedIn workflow webhook node
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="linkedin-connection">
+            <section>
+              <SectionHeader title="LinkedIn Account" />
+              <div className="mt-4">
                 <ConnectionStep
                   accountId={linkedinAccountId}
                   onAccountIdChange={setLinkedinAccountId}
                 />
-              </TabsContent>
-            </Tabs>
+              </div>
+            </section>
+
+            <section>
+              <SectionHeader title="Email Template" />
+              <div className="mt-4 rounded-lg border bg-card p-5">
+                <FormField
+                  control={form.control}
+                  name="emailTemplate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Textarea
+                          placeholder={`Hi {{company}},\n\nI noticed you're in the {{industry}} space...`}
+                          className="min-h-40 resize-y"
+                          {...field}
+                        />
+                      </FormControl>
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {TEMPLATE_VARIABLES.map((v) => (
+                          <button
+                            key={v}
+                            type="button"
+                            onClick={() => insertVariable(v)}
+                            className="rounded-md border bg-muted px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                          >
+                            {v}
+                          </button>
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </section>
           </form>
         </Form>
       </div>

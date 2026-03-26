@@ -67,7 +67,6 @@ export async function GET(request: NextRequest) {
 
     // Fetch all LinkedIn accounts from Unipile
     const unipileAccounts = await fetchLinkedInAccountsFromUnipile();
-    console.log("[linkedin-accounts] Unipile LinkedIn accounts:", unipileAccounts.length);
 
     // Get existing mappings from DB (which accounts are claimed by which user)
     const { data: dbAccounts } = await supabaseAdmin
@@ -104,7 +103,6 @@ export async function GET(request: NextRequest) {
       );
 
       if (!upsertError) {
-        console.log("[linkedin-accounts] Auto-claimed account:", ua.id, ua.name);
         dbAccountIds.add(ua.id);
 
         // Update settings with latest active account
@@ -132,8 +130,6 @@ export async function GET(request: NextRequest) {
           is_active: sourceStatus === "OK",
         };
       });
-
-    console.log("[linkedin-accounts] Returning", accounts.length, "accounts");
 
     return NextResponse.json({ accounts });
   } catch (err) {
@@ -195,7 +191,6 @@ export async function DELETE(request: NextRequest) {
         await axios.delete(`https://${unipileDsn}/api/v1/accounts/${account_id}`, {
           headers: { "X-API-KEY": unipileApiKey, Accept: "application/json" },
         });
-        console.log("[linkedin-accounts] Deleted from Unipile:", account_id);
       } catch (err) {
         console.error(
           "[linkedin-accounts] Unipile delete error:",
@@ -226,7 +221,6 @@ export async function DELETE(request: NextRequest) {
       .eq("user_id", user.id)
       .eq("linkedin_account_id", account_id);
 
-    console.log("[linkedin-accounts] Deleted account:", account_id);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[linkedin-accounts] DELETE error:", err);
@@ -249,14 +243,15 @@ async function fetchLinkedInAccountsFromUnipile(): Promise<UnipileAccount[]> {
     const allAccounts: UnipileAccount[] = rawData?.items || [];
 
     // Only return LinkedIn accounts
-    return allAccounts.filter(
-      (a) => a.type === "LINKEDIN" || a.type?.toUpperCase() === "LINKEDIN",
-    );
+    return allAccounts.filter((a) => a.type === "LINKEDIN" || a.type?.toUpperCase() === "LINKEDIN");
   } catch (err) {
     console.error(
       "[linkedin-accounts] Unipile API error:",
       axios.isAxiosError(err)
-        ? { status: err.response?.status, data: JSON.stringify(err.response?.data)?.substring(0, 300) }
+        ? {
+            status: err.response?.status,
+            data: JSON.stringify(err.response?.data)?.substring(0, 300),
+          }
         : err,
     );
     return [];
@@ -267,7 +262,12 @@ function mapSourceStatus(sourceStatus: string): string {
   const upper = sourceStatus.toUpperCase();
   if (upper === "OK") return "CREATION_SUCCESS";
   if (upper === "CONNECTING") return "CONNECTING";
-  if (upper === "CREDENTIALS" || upper === "STOPPED" || upper === "ERROR" || upper === "PERMISSIONS") {
+  if (
+    upper === "CREDENTIALS" ||
+    upper === "STOPPED" ||
+    upper === "ERROR" ||
+    upper === "PERMISSIONS"
+  ) {
     return "ERROR";
   }
   return "CREATION_SUCCESS";

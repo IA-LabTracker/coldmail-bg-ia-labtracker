@@ -162,7 +162,7 @@ export function EmailManagerTab({ emails, setEmails, fetchEmails, setError }: Em
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="animate-section flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Email Manager</h2>
           <p className="text-sm text-muted-foreground">Manage and track all your email outreach</p>
@@ -215,7 +215,7 @@ export function EmailManagerTab({ emails, setEmails, fetchEmails, setError }: Em
         />
       )}
 
-      <div className="rounded-lg border border-border bg-card">
+      <div className="animate-section rounded-lg border border-border bg-card" style={{ animationDelay: "200ms" }}>
         <EmailTable
           groups={visibleGroups}
           selectedIds={selectedIds}

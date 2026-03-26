@@ -58,7 +58,8 @@ const kpiConfig = [
     bg: "bg-red-500/8 dark:bg-red-500/10",
     iconBg: "bg-red-100 dark:bg-red-900/30",
     border: "border-red-200/60 dark:border-red-800/30",
-    compute: (emails: Email[]) => emails.filter((e) => e.lead_classification === "hot").length,
+    compute: (emails: Email[]) =>
+      emails.filter((e) => e.lead_classification === "hot").length,
     filterFn: (e: Email) => e.lead_classification === "hot",
   },
 ];
@@ -81,23 +82,24 @@ export function CampaignKPICards({ emails, totalCampaigns }: CampaignKPICardsPro
           <div
             key={kpi.label}
             className={`
-              card-hover sparkline-hover
+              hover-lift sparkline-hover group
               relative overflow-hidden rounded-xl border
               ${kpi.border} ${kpi.bg}
               backdrop-blur-sm
-              animate-fade-up stagger-${idx + 1}
+              animate-list-item
             `}
+            style={{ animationDelay: `${idx * 80}ms` }}
           >
             <div className="flex items-center justify-between px-4 pt-3.5">
               <div className="flex items-center gap-2.5">
-                <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${kpi.iconBg}`}>
+                <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${kpi.iconBg} transition-transform duration-300 group-hover:scale-110`}>
                   <Icon className={`h-3.5 w-3.5 ${kpi.text}`} />
                 </div>
                 <span className="text-xs font-medium text-muted-foreground">{kpi.label}</span>
               </div>
             </div>
             <div className="px-4 pt-1">
-              <span className={`text-2xl font-bold tracking-tight ${kpi.text}`}>
+              <span className={`animate-value text-2xl font-bold tracking-tight ${kpi.text}`} style={{ animationDelay: `${idx * 80 + 200}ms` }}>
                 {typeof value === "number" ? value.toLocaleString() : value}
               </span>
             </div>

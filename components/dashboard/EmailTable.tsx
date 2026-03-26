@@ -115,7 +115,7 @@ export function EmailTable({
             if (group.emails.length === 1) {
               const email = group.emails[0];
               return (
-                <TableRow key={email.id} className="border-b border-border hover:bg-muted">
+                <TableRow key={email.id} className="animate-row border-b border-border transition-colors duration-200 hover:bg-muted" style={{ animationDelay: `${Math.min(groups.indexOf(group) * 30, 300)}ms` }}>
                   <TableCell>
                     <Checkbox
                       checked={selectedIds.has(email.id)}

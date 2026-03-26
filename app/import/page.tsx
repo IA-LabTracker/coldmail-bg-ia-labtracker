@@ -1,29 +1,43 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { ImportRow, ImportValidation, ImportStatus } from "@/types";
 import { AppLayout } from "@/components/AppLayout";
-import { FileDropzone } from "@/components/import/FileDropzone";
-import { ImportStats } from "@/components/import/ImportStats";
-import { PreviewTable } from "@/components/import/PreviewTable";
-import { ValidationWarnings } from "@/components/import/ValidationWarnings";
-import { ImportActions } from "@/components/import/ImportActions";
-import { CampaignAssignBar } from "@/components/import/CampaignAssignBar";
+import { ImportPageHeader } from "@/components/import/ImportPageHeader";
+import { ImportStepper } from "@/components/import/ImportStepper";
+import { ImportStepUpload } from "@/components/import/ImportStepUpload";
+import { ImportStepReview } from "@/components/import/ImportStepReview";
+import { ImportStepConfirm } from "@/components/import/ImportStepConfirm";
+import { ImportNavigation } from "@/components/import/ImportNavigation";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { parseImportFile } from "@/lib/importParser";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { AlertCircle, Info } from "lucide-react";
 
 const BATCH_SIZE = 100;
 
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 80 : -80,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => ({
+    x: direction > 0 ? -80 : 80,
+    opacity: 0,
+  }),
+};
+
 export default function ImportPage() {
   const { user } = useAuth();
+  const [step, setStep] = useState(0);
+  const [direction, setDirection] = useState(1);
   const [file, setFile] = useState<File | null>(null);
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [validations, setValidations] = useState<ImportValidation[]>([]);
@@ -108,6 +122,8 @@ export default function ImportPage() {
     setImportedCount(0);
     setError("");
     setSelectedRows(new Set());
+    setStep(0);
+    setDirection(-1);
   }, []);
 
   const handleRowUpdate = useCallback((rowIndex: number, field: keyof ImportRow, value: string) => {
@@ -167,7 +183,7 @@ export default function ImportPage() {
 
     if (rowsWithoutCampaign > 0 && !defaultCampaign.trim()) {
       toast.error(
-        `${rowsWithoutCampaign} lead${rowsWithoutCampaign > 1 ? "s" : ""} without campaign. Assign campaigns in the table or set a default campaign.`,
+        `${rowsWithoutCampaign} lead${rowsWithoutCampaign > 1 ? "s" : ""} without campaign. Assign campaigns or set a default campaign.`,
       );
       return;
     }
@@ -216,118 +232,131 @@ export default function ImportPage() {
     }
   }, [user, rows, defaultCampaign, rowsWithoutCampaign]);
 
-  const showPreview =
-    status === "preview" || status === "importing" || status === "success" || status === "error";
+  const goNext = useCallback(() => {
+    setDirection(1);
+    setStep((s) => Math.min(s + 1, 2));
+  }, []);
+
+  const goBack = useCallback(() => {
+    setDirection(-1);
+    setStep((s) => Math.max(s - 1, 0));
+  }, []);
+
+  const canGoNext =
+    (step === 0 && rows.length > 0 && status === "preview") ||
+    (step === 1 && rows.length > 0);
 
   return (
     <AppLayout>
-      <div className="space-y-5 px-4 py-6 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="flex items-end justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">Import Leads</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              Upload CSV or XLSX to import leads into your database
-            </p>
-          </div>
-        </div>
+      <div className="flex h-full flex-col">
+        <div className="mx-auto w-full max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+          >
+            <ImportPageHeader />
+          </motion.div>
 
-        {error && <ErrorMessage message={error} />}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="mt-6"
+          >
+            <ImportStepper currentStep={step} />
+          </motion.div>
 
-        {/* Upload + Campaign config - side by side */}
-        <div className="grid gap-4 lg:grid-cols-2">
-          <FileDropzone
-            onFileSelected={handleFileSelected}
-            onClear={handleClear}
-            currentFile={file}
-            isProcessing={status === "parsing"}
-          />
-
-          <div className="flex flex-col justify-center rounded-lg border border-border bg-card p-4">
-            <Label
-              htmlFor="default-campaign"
-              className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground"
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4"
             >
-              Default Campaign
-              <TooltipProvider delayDuration={200}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="h-3.5 w-3.5 cursor-help text-muted-foreground/70" />
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="max-w-xs text-xs">
-                    Fallback campaign for leads without an assigned campaign. You can assign
-                    different campaigns per lead in the preview table.
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </Label>
-            <Input
-              id="default-campaign"
-              placeholder="e.g., US Tech Companies Q1 2026"
-              value={defaultCampaign}
-              onChange={(e) => setDefaultCampaign(e.target.value)}
-            />
-          </div>
+              <ErrorMessage message={error} />
+            </motion.div>
+          )}
         </div>
 
-        {status === "parsing" && (
-          <div className="flex items-center justify-center gap-3 py-8">
-            <LoadingSpinner />
-            <p className="text-sm text-muted-foreground">Processing file...</p>
-          </div>
-        )}
+        <div className="relative mx-auto flex w-full max-w-7xl flex-1 overflow-hidden px-4 py-6 sm:px-6 lg:px-8">
+          {status === "parsing" ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-1 items-center justify-center gap-3"
+            >
+              <LoadingSpinner />
+              <p className="text-sm text-muted-foreground">Processing file...</p>
+            </motion.div>
+          ) : (
+            <AnimatePresence mode="wait" custom={direction}>
+              <motion.div
+                key={step}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="flex w-full flex-1 flex-col"
+              >
+                {step === 0 && (
+                  <ImportStepUpload
+                    onFileSelected={handleFileSelected}
+                    onClear={handleClear}
+                    currentFile={file}
+                    isProcessing={status === ("parsing" as ImportStatus)}
+                    defaultCampaign={defaultCampaign}
+                    onDefaultCampaignChange={setDefaultCampaign}
+                  />
+                )}
 
-        {showPreview && (
-          <>
-            {/* Stats + Actions bar */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <ImportStats
-                totalRawRows={totalRawRows}
-                filteredOutRows={filteredOutRows}
-                validRows={rows.length}
-                warningCount={warningCount}
-              />
-              <div className="shrink-0">
-                <ImportActions
-                  status={status}
-                  totalRows={rows.length}
-                  importedRows={importedCount}
-                  onImport={handleImport}
-                  onReset={handleClear}
-                />
-              </div>
-            </div>
+                {step === 1 && (
+                  <ImportStepReview
+                    rows={rows}
+                    validations={validations}
+                    totalRawRows={totalRawRows}
+                    filteredOutRows={filteredOutRows}
+                    warningCount={warningCount}
+                    rowsWithoutCampaign={rowsWithoutCampaign}
+                    defaultCampaign={defaultCampaign}
+                    selectedRows={selectedRows}
+                    campaignSuggestions={campaignSuggestions}
+                    onRowUpdate={handleRowUpdate}
+                    onSelectRow={handleSelectRow}
+                    onSelectAll={handleSelectAll}
+                    onCampaignAssign={handleCampaignAssign}
+                    onClearSelection={handleClearSelection}
+                  />
+                )}
 
-            {validations.length > 0 && <ValidationWarnings validations={validations} />}
+                {step === 2 && (
+                  <ImportStepConfirm
+                    status={status}
+                    totalRows={rows.length}
+                    importedRows={importedCount}
+                    warningCount={warningCount}
+                    defaultCampaign={defaultCampaign}
+                    rowsWithoutCampaign={rowsWithoutCampaign}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          )}
+        </div>
 
-            {rowsWithoutCampaign > 0 && !defaultCampaign.trim() && (
-              <p className="flex items-center gap-1.5 text-sm text-orange-500 dark:text-orange-400">
-                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                {rowsWithoutCampaign} lead{rowsWithoutCampaign > 1 ? "s" : ""} without campaign
-                select rows to assign, or set a default campaign above.
-              </p>
-            )}
-
-            {selectedRows.size > 0 && (
-              <CampaignAssignBar
-                selectedCount={selectedRows.size}
-                totalCount={rows.length}
-                campaignSuggestions={campaignSuggestions}
-                onAssign={handleCampaignAssign}
-                onClearSelection={handleClearSelection}
-              />
-            )}
-
-            <PreviewTable
-              rows={rows}
-              validations={validations}
-              onRowUpdate={handleRowUpdate}
-              selectedRows={selectedRows}
-              onSelectRow={handleSelectRow}
-              onSelectAll={handleSelectAll}
-            />
-          </>
-        )}
+        <div className="mx-auto w-full max-w-7xl">
+          <ImportNavigation
+            currentStep={step}
+            totalRows={rows.length}
+            status={status}
+            canGoNext={canGoNext}
+            onBack={goBack}
+            onNext={goNext}
+            onImport={handleImport}
+            onReset={handleClear}
+          />
+        </div>
       </div>
     </AppLayout>
   );

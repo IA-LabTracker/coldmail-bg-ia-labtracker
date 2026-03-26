@@ -98,7 +98,7 @@ export function CompanyGroupRow({
   return (
     <>
       <TableRow
-        className="border-b border-border hover:bg-muted cursor-pointer"
+        className="animate-row border-b border-border transition-colors duration-200 hover:bg-muted cursor-pointer"
         onClick={onToggleExpand}
       >
         <TableCell onClick={(e) => e.stopPropagation()}>

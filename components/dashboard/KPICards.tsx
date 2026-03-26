@@ -105,25 +105,26 @@ export function KPICards({ emails, activeFilter, onFilterChange }: KPICardsProps
           <div
             key={kpi.label}
             className={`
-              card-hover sparkline-hover
+              hover-lift sparkline-hover
               relative cursor-pointer overflow-hidden rounded-xl border
               ${kpi.border} ${kpi.bg}
-              backdrop-blur-sm transition-all
+              backdrop-blur-sm transition-all duration-300
               ${isActive ? `ring-2 ${kpi.ringColor}` : ""}
-              animate-fade-up stagger-${idx + 1}
+              animate-list-item
             `}
+            style={{ animationDelay: `${idx * 80}ms` }}
             onClick={() => onFilterChange(isActive ? null : kpi.filter)}
           >
             <div className="flex items-center justify-between px-4 pt-3.5">
               <div className="flex items-center gap-2.5">
-                <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${kpi.iconBg}`}>
+                <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${kpi.iconBg} transition-transform duration-300 group-hover:scale-110`}>
                   <Icon className={`h-3.5 w-3.5 ${kpi.text}`} />
                 </div>
                 <span className="text-xs font-medium text-muted-foreground">{kpi.label}</span>
               </div>
             </div>
             <div className="px-4 pt-1">
-              <span className={`text-2xl font-bold tracking-tight ${kpi.text}`}>
+              <span className={`animate-value text-2xl font-bold tracking-tight ${kpi.text}`} style={{ animationDelay: `${idx * 80 + 200}ms` }}>
                 {value.toLocaleString()}
               </span>
             </div>

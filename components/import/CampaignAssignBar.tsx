@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CheckSquare, X } from "lucide-react";
 
 interface CampaignAssignBarProps {
   selectedCount: number;
@@ -38,12 +39,15 @@ export function CampaignAssignBar({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-3 border-b border-border pb-4">
-      <span className="text-sm text-muted-foreground">
-        <strong className="text-foreground">{selectedCount}</strong> of {totalCount} selected
-      </span>
+    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+      <div className="flex items-center gap-2">
+        <CheckSquare className="h-4 w-4 text-primary" />
+        <span className="text-sm text-foreground">
+          <strong>{selectedCount}</strong> of {totalCount} selected
+        </span>
+      </div>
 
-      <span className="text-xs text-muted-foreground">|</span>
+      <div className="h-4 w-px bg-border" />
 
       {mode === "select" && campaignSuggestions.length > 0 ? (
         <Select
@@ -100,9 +104,10 @@ export function CampaignAssignBar({
 
       <button
         onClick={onClearSelection}
-        className="ml-auto text-xs text-muted-foreground underline-offset-2 hover:underline"
+        className="ml-auto flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
       >
-        Clear selection
+        <X className="h-3 w-3" />
+        Clear
       </button>
     </div>
   );

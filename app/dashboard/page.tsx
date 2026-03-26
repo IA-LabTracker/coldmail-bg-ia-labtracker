@@ -46,7 +46,7 @@ export default function DashboardPage() {
   return (
     <AppLayout>
       <div className="space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between">
+        <div className="animate-section flex items-center justify-between">
           <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
         </div>
 
@@ -57,7 +57,7 @@ export default function DashboardPage() {
             <LoadingSpinner />
           </div>
         ) : (
-          <Tabs defaultValue="analytics" className="w-full">
+          <Tabs defaultValue="analytics" className="animate-section w-full" style={{ animationDelay: "100ms" }}>
             <TabsList className="mb-6 grid w-full max-w-md grid-cols-2">
               <TabsTrigger value="analytics" className="gap-2">
                 <BarChart3 className="h-4 w-4" />

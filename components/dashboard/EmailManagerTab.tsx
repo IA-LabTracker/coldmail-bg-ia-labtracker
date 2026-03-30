@@ -7,6 +7,7 @@ import { KPICards, KPIFilter } from "@/components/dashboard/KPICards";
 import { EmailFilters } from "@/components/dashboard/EmailFilters";
 import { EmailTable } from "@/components/dashboard/EmailTable";
 import { EmailDetailModal } from "@/components/dashboard/EmailDetailModal";
+import { CreateLeadDialog } from "@/components/dashboard/CreateLeadDialog";
 import { BulkActions } from "@/components/dashboard/BulkActions";
 import { useEmailSelection } from "@/hooks/useEmailSelection";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
@@ -14,6 +15,8 @@ import { groupEmailsByCompany } from "@/lib/groupEmailsByCompany";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { AlertModal } from "@/components/shared/AlertModal";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface EmailManagerTabProps {
@@ -30,6 +33,12 @@ export function EmailManagerTab({ emails, setEmails, fetchEmails, setError }: Em
   const [deleteTarget, setDeleteTarget] = useState<Email | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [createLeadOpen, setCreateLeadOpen] = useState(false);
+
+  const campaignNames = useMemo(() => {
+    const names = new Set(emails.map((e) => e.campaign_name).filter(Boolean));
+    return Array.from(names).sort();
+  }, [emails]);
 
   const [searchFilter, setSearchFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -167,7 +176,13 @@ export function EmailManagerTab({ emails, setEmails, fetchEmails, setError }: Em
           <h2 className="text-lg font-semibold text-foreground">Email Manager</h2>
           <p className="text-sm text-muted-foreground">Manage and track all your email outreach</p>
         </div>
-        <DateRangePicker date={dateRangeFilter} onDateChange={setDateRangeFilter} />
+        <div className="flex items-center gap-2">
+          <DateRangePicker date={dateRangeFilter} onDateChange={setDateRangeFilter} />
+          <Button onClick={() => setCreateLeadOpen(true)} size="sm" className="gap-1.5">
+            <Plus className="h-4 w-4" />
+            New Lead
+          </Button>
+        </div>
       </div>
 
       <KPICards
@@ -280,6 +295,13 @@ export function EmailManagerTab({ emails, setEmails, fetchEmails, setError }: Em
           </AlertModal.Action>
         </AlertModal.Footer>
       </AlertModal>
+
+      <CreateLeadDialog
+        open={createLeadOpen}
+        onOpenChange={setCreateLeadOpen}
+        onCreated={fetchEmails}
+        campaignNames={campaignNames}
+      />
     </div>
   );
 }

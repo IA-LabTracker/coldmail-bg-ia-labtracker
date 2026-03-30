@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface FunnelStep {
@@ -18,16 +19,17 @@ interface ConversionFunnelProps {
   hot: number;
 }
 
-export function ConversionFunnel({ researched, sent, opened, replied, hot }: ConversionFunnelProps) {
-  const steps: FunnelStep[] = [
-    { label: "Researched", value: researched, color: "text-slate-400", bgColor: "bg-slate-500", glowColor: "rgba(100, 116, 139, 0.15)" },
-    { label: "Sent", value: sent, color: "text-violet-400", bgColor: "bg-violet-500", glowColor: "rgba(139, 92, 246, 0.15)" },
-    { label: "Opened", value: opened, color: "text-sky-400", bgColor: "bg-sky-500", glowColor: "rgba(14, 165, 233, 0.2)" },
-    { label: "Replied", value: replied, color: "text-green-400", bgColor: "bg-green-500", glowColor: "rgba(34, 197, 94, 0.2)" },
-    { label: "Hot Leads", value: hot, color: "text-amber-400", bgColor: "bg-amber-500", glowColor: "rgba(245, 158, 11, 0.2)" },
-  ];
-
-  const maxValue = Math.max(...steps.map((s) => s.value), 1);
+export const ConversionFunnel = memo(function ConversionFunnel({ researched, sent, opened, replied, hot }: ConversionFunnelProps) {
+  const { steps, maxValue } = useMemo(() => {
+    const s: FunnelStep[] = [
+      { label: "Researched", value: researched, color: "text-slate-400", bgColor: "bg-slate-500", glowColor: "rgba(100, 116, 139, 0.15)" },
+      { label: "Sent", value: sent, color: "text-violet-400", bgColor: "bg-violet-500", glowColor: "rgba(139, 92, 246, 0.15)" },
+      { label: "Opened", value: opened, color: "text-sky-400", bgColor: "bg-sky-500", glowColor: "rgba(14, 165, 233, 0.2)" },
+      { label: "Replied", value: replied, color: "text-green-400", bgColor: "bg-green-500", glowColor: "rgba(34, 197, 94, 0.2)" },
+      { label: "Hot Leads", value: hot, color: "text-amber-400", bgColor: "bg-amber-500", glowColor: "rgba(245, 158, 11, 0.2)" },
+    ];
+    return { steps: s, maxValue: Math.max(...s.map((step) => step.value), 1) };
+  }, [researched, sent, opened, replied, hot]);
 
   return (
     <Card>
@@ -78,4 +80,4 @@ export function ConversionFunnel({ researched, sent, opened, replied, hot }: Con
       </CardContent>
     </Card>
   );
-}
+});

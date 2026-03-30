@@ -26,15 +26,8 @@ export function AnalyticsDashboard({ emails }: AnalyticsDashboardProps) {
     campaignMetrics,
     topCompanies,
     overallMetrics,
+    funnelData,
   } = useAnalyticsData(emails);
-
-  const funnelData = {
-    researched: emails.filter((e) => e.status === "researched").length,
-    sent: emails.filter((e) => e.status === "sent").length,
-    opened: emails.filter((e) => e.status === "opened").length,
-    replied: emails.filter((e) => e.status === "replied").length,
-    hot: emails.filter((e) => e.lead_classification === "hot").length,
-  };
 
   return (
     <div className="space-y-4">
@@ -70,15 +63,7 @@ export function AnalyticsDashboard({ emails }: AnalyticsDashboardProps) {
                   strokeWidth={5}
                 />
                 <ProgressRing
-                  value={
-                    overallMetrics.total > 0
-                      ? Math.round(
-                          (emails.filter((e) => e.lead_classification === "hot").length /
-                            overallMetrics.total) *
-                            100,
-                        )
-                      : 0
-                  }
+                  value={overallMetrics.hotRate}
                   color="#f59e0b"
                   label="Hot Rate"
                   size={72}

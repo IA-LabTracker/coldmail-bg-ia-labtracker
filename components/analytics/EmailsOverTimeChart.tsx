@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   Area,
   AreaChart,
@@ -25,7 +26,7 @@ const areaConfig = [
   { key: "researched", label: "Researched", color: "#64748b", opacity: 0.06 },
 ];
 
-export function EmailsOverTimeChart({ data, periodDays = 30 }: EmailsOverTimeChartProps) {
+export const EmailsOverTimeChart = memo(function EmailsOverTimeChart({ data, periodDays = 30 }: EmailsOverTimeChartProps) {
   return (
     <Card className="card-hover flex h-full flex-col">
       <CardHeader className="pb-2">
@@ -96,4 +97,4 @@ export function EmailsOverTimeChart({ data, periodDays = 30 }: EmailsOverTimeCha
       </CardContent>
     </Card>
   );
-}
+});

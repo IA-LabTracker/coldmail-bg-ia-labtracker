@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useMemo } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClassificationDistribution } from "@/hooks/useAnalyticsData";
@@ -8,8 +9,8 @@ interface ClassificationPieChartProps {
   data: ClassificationDistribution[];
 }
 
-export function ClassificationPieChart({ data }: ClassificationPieChartProps) {
-  const total = data.reduce((sum, d) => sum + d.value, 0);
+export const ClassificationPieChart = memo(function ClassificationPieChart({ data }: ClassificationPieChartProps) {
+  const total = useMemo(() => data.reduce((sum, d) => sum + d.value, 0), [data]);
 
   return (
     <Card className="card-hover h-full">
@@ -71,4 +72,4 @@ export function ClassificationPieChart({ data }: ClassificationPieChartProps) {
       </CardContent>
     </Card>
   );
-}
+});

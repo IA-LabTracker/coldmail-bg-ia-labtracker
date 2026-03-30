@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   Bar,
   BarChart,
@@ -17,7 +18,7 @@ interface CampaignBarChartProps {
   data: CampaignMetrics[];
 }
 
-export function CampaignBarChart({ data }: CampaignBarChartProps) {
+export const CampaignBarChart = memo(function CampaignBarChart({ data }: CampaignBarChartProps) {
   return (
     <Card className="card-hover h-full">
       <CardHeader className="pb-2">
@@ -77,4 +78,4 @@ export function CampaignBarChart({ data }: CampaignBarChartProps) {
       </CardContent>
     </Card>
   );
-}
+});

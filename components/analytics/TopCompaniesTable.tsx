@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -27,7 +28,7 @@ const statusLabel: Record<string, string> = {
   cold: "Cold",
 };
 
-export function TopCompaniesTable({ data }: TopCompaniesTableProps) {
+export const TopCompaniesTable = memo(function TopCompaniesTable({ data }: TopCompaniesTableProps) {
   return (
     <Card className="card-hover h-full">
       <CardHeader className="pb-2">
@@ -94,4 +95,4 @@ export function TopCompaniesTable({ data }: TopCompaniesTableProps) {
       </CardContent>
     </Card>
   );
-}
+});

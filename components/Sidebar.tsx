@@ -17,6 +17,7 @@ import {
   Megaphone,
   CalendarClock,
   Mail,
+  CreditCard,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -95,6 +96,18 @@ export function Sidebar() {
           <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
           {theme === "dark" ? "Light Mode" : "Dark Mode"}
         </button>
+
+        <Link
+          href="/pricing"
+          className={`mb-2 flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors ${
+            pathname === "/pricing"
+              ? "bg-sidebar-accent text-sidebar-foreground"
+              : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          }`}
+        >
+          <CreditCard className="h-5 w-5" />
+          Pricing
+        </Link>
 
         <AlertDialog>
           <AlertDialogTrigger asChild>

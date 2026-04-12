@@ -3,6 +3,7 @@
 import {
   Calendar,
   Clock,
+  Mail,
   Repeat,
   Users,
   Megaphone,
@@ -10,7 +11,7 @@ import {
   Pause,
   Trash2,
 } from "lucide-react";
-import { Schedule, WeekDay } from "@/types";
+import { Schedule, SenderEmail, WeekDay } from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -44,6 +45,7 @@ const WEEKDAY_LABELS: Record<WeekDay, string> = {
 
 interface ScheduleDetailModalProps {
   schedule: Schedule | null;
+  senderEmails: SenderEmail[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onEdit: () => void;
@@ -53,6 +55,7 @@ interface ScheduleDetailModalProps {
 
 export function ScheduleDetailModal({
   schedule,
+  senderEmails,
   open,
   onOpenChange,
   onEdit,
@@ -60,6 +63,10 @@ export function ScheduleDetailModal({
   onDelete,
 }: ScheduleDetailModalProps) {
   if (!schedule) return null;
+
+  const resolvedSenderEmail = schedule.sender_email_id
+    ? senderEmails.find((se) => se.id === schedule.sender_email_id)
+    : null;
 
   const progressPercent =
     schedule.total_leads > 0
@@ -101,6 +108,25 @@ export function ScheduleDetailModal({
                 <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                 {schedule.scheduled_time}
               </div>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground">Sender Email</p>
+            <div className="flex items-center gap-1.5 text-sm text-foreground">
+              <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+              {resolvedSenderEmail ? (
+                <span>
+                  {resolvedSenderEmail.email_address}
+                  {resolvedSenderEmail.display_name && (
+                    <span className="text-muted-foreground ml-1">
+                      ({resolvedSenderEmail.display_name})
+                    </span>
+                  )}
+                </span>
+              ) : (
+                <span className="text-muted-foreground">Not configured</span>
+              )}
             </div>
           </div>
 

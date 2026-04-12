@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { Email, Schedule, ScheduleStatus, ScheduleType, WeekDay } from "@/types";
+import { Email, Schedule, SenderEmail, ScheduleStatus, ScheduleType, WeekDay } from "@/types";
 import { AppLayout } from "@/components/AppLayout";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
@@ -105,6 +105,7 @@ async function triggerScheduleWebhook(params: {
   nextRunAt: string;
   emails: Email[];
   webhookUrl?: string | null;
+  senderEmail?: SenderEmail | null;
 }) {
   const resolvedWebhookUrl = params.webhookUrl?.trim() || process.env.NEXT_PUBLIC_WEBHOOK_N8N;
 
@@ -124,6 +125,16 @@ async function triggerScheduleWebhook(params: {
       scheduled_date: params.scheduledDate,
       scheduled_time: params.scheduledTime,
       recurring_days: params.recurringDays,
+      sender_email: params.senderEmail
+        ? {
+            id: params.senderEmail.id,
+            email_address: params.senderEmail.email_address,
+            display_name: params.senderEmail.display_name,
+            domain: params.senderEmail.domain,
+            provider: params.senderEmail.provider,
+            provider_id: params.senderEmail.provider_id,
+          }
+        : null,
       emails: params.emails,
     }),
   });
@@ -138,6 +149,7 @@ async function triggerScheduleWebhook(params: {
 export default function SchedulesPage() {
   const { user } = useAuth();
   const [emails, setEmails] = useState<Email[]>([]);
+  const [senderEmails, setSenderEmails] = useState<SenderEmail[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -159,7 +171,7 @@ export default function SchedulesPage() {
     setError("");
 
     try {
-      const [emailsResult, schedulesResult, settingsResult] = await Promise.all([
+      const [emailsResult, schedulesResult, settingsResult, senderEmailsResult] = await Promise.all([
         supabase
           .from("emails")
           .select("*")
@@ -171,6 +183,12 @@ export default function SchedulesPage() {
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         supabase.from("settings").select("webhook_url").eq("user_id", user.id).maybeSingle(),
+        supabase
+          .from("sender_emails")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("is_default", { ascending: false })
+          .order("created_at", { ascending: false }),
       ]);
 
       if (emailsResult.error) throw emailsResult.error;
@@ -181,6 +199,10 @@ export default function SchedulesPage() {
         setSchedules([]);
       } else {
         setSchedules(schedulesResult.data || []);
+      }
+
+      if (!senderEmailsResult.error) {
+        setSenderEmails(senderEmailsResult.data || []);
       }
 
       if (!settingsResult.error) {
@@ -219,6 +241,9 @@ export default function SchedulesPage() {
           toast.error("No leads selected for this schedule.");
           return;
         }
+        const resolvedSenderEmail = data.sender_email_id
+          ? senderEmails.find((se) => se.id === data.sender_email_id) ?? null
+          : null;
         const nextRunAt = computeNextRunAt({
           type: data.type,
           scheduled_date: data.scheduled_date,
@@ -282,6 +307,7 @@ export default function SchedulesPage() {
                 nextRunAt,
                 emails: selectedEmails,
                 webhookUrl: resolvedWebhookUrl,
+                senderEmail: resolvedSenderEmail,
               });
             } catch (webhookError) {
               const rollbackAt = new Date().toISOString();
@@ -346,6 +372,7 @@ export default function SchedulesPage() {
                 nextRunAt,
                 emails: selectedEmails,
                 webhookUrl: resolvedWebhookUrl,
+                senderEmail: resolvedSenderEmail,
               });
             } catch (webhookError) {
               await supabase.from("schedules").delete().eq("id", inserted.id);
@@ -366,7 +393,7 @@ export default function SchedulesPage() {
 
       setEditingSchedule(null);
     },
-    [user, editingSchedule, emails, webhookUrl],
+    [user, editingSchedule, emails, senderEmails, webhookUrl],
   );
 
   const handleToggleStatus = useCallback(
@@ -432,6 +459,9 @@ export default function SchedulesPage() {
         );
 
         if (newStatus === "active" && nextRunAt) {
+          const toggleSenderEmail = schedule.sender_email_id
+            ? senderEmails.find((se) => se.id === schedule.sender_email_id) ?? null
+            : null;
           try {
             await triggerScheduleWebhook({
               scheduleId: schedule.id,
@@ -443,6 +473,7 @@ export default function SchedulesPage() {
               nextRunAt,
               emails: selectedEmails,
               webhookUrl: resolvedWebhookUrl,
+              senderEmail: toggleSenderEmail,
             });
           } catch (webhookError) {
             const rollbackAt = new Date().toISOString();
@@ -478,7 +509,7 @@ export default function SchedulesPage() {
         toast.error(`Failed to update schedule status${detail}`);
       }
     },
-    [emails, webhookUrl],
+    [emails, senderEmails, webhookUrl],
   );
 
   const handleDelete = useCallback(async () => {
@@ -593,12 +624,14 @@ export default function SchedulesPage() {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         emails={emails}
+        senderEmails={senderEmails}
         editingSchedule={editingSchedule}
         onSave={handleSaveSchedule}
       />
 
       <ScheduleDetailModal
         schedule={detailSchedule}
+        senderEmails={senderEmails}
         open={detailOpen}
         onOpenChange={setDetailOpen}
         onEdit={handleEditFromDetail}

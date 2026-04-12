@@ -35,9 +35,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { AlertCircle, Loader2, Building2, User, MapPin, Send, MessageSquare } from "lucide-react";
+import { SenderEmail } from "@/types";
+import { SenderEmailSelect } from "@/components/sender-emails/SenderEmailSelect";
 
 interface EmailDetailModalProps {
   email: Email | null;
+  senderEmails?: SenderEmail[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate: () => void;
@@ -79,7 +82,7 @@ const editSchema = z.object({
 
 type EditFormValues = z.infer<typeof editSchema>;
 
-export function EmailDetailModal({ email, open, onOpenChange, onUpdate }: EmailDetailModalProps) {
+export function EmailDetailModal({ email, senderEmails = [], open, onOpenChange, onUpdate }: EmailDetailModalProps) {
   const form = useForm<EditFormValues>({
     resolver: zodResolver(editSchema),
     defaultValues: getDefaults(email),
@@ -456,9 +459,21 @@ export function EmailDetailModal({ email, open, onOpenChange, onUpdate }: EmailD
                         <FormLabel className="text-xs text-muted-foreground">
                           Sender Email
                         </FormLabel>
-                        <FormControl>
-                          <Input placeholder="sender@example.com" {...field} />
-                        </FormControl>
+                        {senderEmails.length > 0 ? (
+                          <SenderEmailSelect
+                            senderEmails={senderEmails}
+                            value={senderEmails.find((se) => se.email_address === field.value)?.id ?? null}
+                            onChange={(id) => {
+                              const selected = senderEmails.find((se) => se.id === id);
+                              field.onChange(selected?.email_address ?? "");
+                            }}
+                            placeholder="Select sender email"
+                          />
+                        ) : (
+                          <FormControl>
+                            <Input placeholder="sender@example.com" {...field} />
+                          </FormControl>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}

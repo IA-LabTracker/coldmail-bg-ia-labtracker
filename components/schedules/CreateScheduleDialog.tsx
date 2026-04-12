@@ -7,6 +7,7 @@ import {
   Schedule,
   ScheduleType,
   ScheduleLeadSelection,
+  SenderEmail,
   WeekDay,
 } from "@/types";
 import { parseScheduleDateLocal } from "@/lib/scheduleDates";
@@ -31,11 +32,13 @@ import {
 import { cn } from "@/lib/utils";
 import { DaySelector } from "./DaySelector";
 import { CampaignLeadPicker } from "./CampaignLeadPicker";
+import { SenderEmailSelect } from "@/components/sender-emails/SenderEmailSelect";
 
 interface CreateScheduleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   emails: Email[];
+  senderEmails: SenderEmail[];
   editingSchedule: Schedule | null;
   onSave: (data: Omit<Schedule, "id" | "user_id" | "created_at" | "updated_at" | "leads_sent" | "last_run_at" | "next_run_at">) => void;
 }
@@ -66,6 +69,7 @@ export function CreateScheduleDialog({
   open,
   onOpenChange,
   emails,
+  senderEmails,
   editingSchedule,
   onSave,
 }: CreateScheduleDialogProps) {
@@ -79,6 +83,9 @@ export function CreateScheduleDialog({
   const [scheduledTime, setScheduledTime] = useState(editingSchedule?.scheduled_time ?? "10:00");
   const [recurringDays, setRecurringDays] = useState<WeekDay[]>(
     editingSchedule?.recurring_days ?? []
+  );
+  const [senderEmailId, setSenderEmailId] = useState<string | null>(
+    editingSchedule?.sender_email_id ?? null
   );
   const [selections, setSelections] = useState<ScheduleLeadSelection[]>(
     editingSchedule?.lead_selections ?? []
@@ -97,6 +104,7 @@ export function CreateScheduleDialog({
       );
       setScheduledTime(editingSchedule.scheduled_time);
       setRecurringDays(editingSchedule.recurring_days);
+      setSenderEmailId(editingSchedule.sender_email_id ?? null);
       setSelections(editingSchedule.lead_selections);
     }
   }, [open, editingSchedule]);
@@ -107,6 +115,7 @@ export function CreateScheduleDialog({
     setScheduledDate(undefined);
     setScheduledTime("10:00");
     setRecurringDays([]);
+    setSenderEmailId(null);
     setSelections([]);
     setLeadSearch("");
     setExpandedCampaigns(new Set());
@@ -165,6 +174,7 @@ export function CreateScheduleDialog({
           : null,
       scheduled_time: scheduledTime,
       recurring_days: type === "recurring" ? recurringDays : [],
+      sender_email_id: senderEmailId,
       lead_selections: selections,
       total_leads: totalSelectedLeads,
     });
@@ -348,6 +358,21 @@ export function CreateScheduleDialog({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Sender Email</Label>
+            <SenderEmailSelect
+              senderEmails={senderEmails}
+              value={senderEmailId}
+              onChange={setSenderEmailId}
+              placeholder="Select sender email for this schedule"
+            />
+            {senderEmails.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                No sender emails configured. Add one in the Sender Emails page.
+              </p>
+            )}
           </div>
 
           <CampaignLeadPicker

@@ -33,12 +33,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { AlertCircle, Loader2, User, MapPin, Send, Building2 } from "lucide-react";
+import { SenderEmail } from "@/types";
+import { SenderEmailSelect } from "@/components/sender-emails/SenderEmailSelect";
 
 interface CreateLeadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: () => void;
   campaignNames?: string[];
+  senderEmails?: SenderEmail[];
 }
 
 const createLeadSchema = z.object({
@@ -94,6 +97,7 @@ export function CreateLeadDialog({
   onOpenChange,
   onCreated,
   campaignNames = [],
+  senderEmails = [],
 }: CreateLeadDialogProps) {
   const { user } = useAuth();
 
@@ -562,9 +566,21 @@ export function CreateLeadDialog({
                         <FormLabel className="text-xs text-muted-foreground">
                           Sender Email
                         </FormLabel>
-                        <FormControl>
-                          <Input placeholder="sender@example.com" {...field} />
-                        </FormControl>
+                        {senderEmails.length > 0 ? (
+                          <SenderEmailSelect
+                            senderEmails={senderEmails}
+                            value={senderEmails.find((se) => se.email_address === field.value)?.id ?? null}
+                            onChange={(id) => {
+                              const selected = senderEmails.find((se) => se.id === id);
+                              field.onChange(selected?.email_address ?? "");
+                            }}
+                            placeholder="Select sender email"
+                          />
+                        ) : (
+                          <FormControl>
+                            <Input placeholder="sender@example.com" {...field} />
+                          </FormControl>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}

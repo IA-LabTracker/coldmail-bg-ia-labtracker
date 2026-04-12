@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { DateRange } from "react-day-picker";
-import { Email } from "@/types";
+import { Email, SenderEmail } from "@/types";
+import { useSenderEmails } from "@/hooks/useSenderEmails";
 import { KPICards, KPIFilter } from "@/components/dashboard/KPICards";
 import { EmailFilters } from "@/components/dashboard/EmailFilters";
 import { EmailTable } from "@/components/dashboard/EmailTable";
@@ -27,6 +28,7 @@ interface EmailManagerTabProps {
 }
 
 export function EmailManagerTab({ emails, setEmails, fetchEmails, setError }: EmailManagerTabProps) {
+  const { senderEmails } = useSenderEmails();
   const [selectedDetailEmail, setSelectedDetailEmail] = useState<Email | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [expandedCompanies, setExpandedCompanies] = useState<Set<string>>(new Set());
@@ -253,6 +255,7 @@ export function EmailManagerTab({ emails, setEmails, fetchEmails, setError }: Em
 
       <EmailDetailModal
         email={selectedDetailEmail}
+        senderEmails={senderEmails}
         open={detailModalOpen}
         onOpenChange={setDetailModalOpen}
         onUpdate={fetchEmails}
@@ -301,6 +304,7 @@ export function EmailManagerTab({ emails, setEmails, fetchEmails, setError }: Em
         onOpenChange={setCreateLeadOpen}
         onCreated={fetchEmails}
         campaignNames={campaignNames}
+        senderEmails={senderEmails}
       />
     </div>
   );

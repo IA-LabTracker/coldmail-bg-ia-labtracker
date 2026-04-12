@@ -1,6 +1,25 @@
 export type EmailStatus = "sent" | "replied" | "bounced" | "researched" | "opened";
 export type LeadClassification = "hot" | "warm" | "cold";
 
+export type SenderEmailProvider = "manual" | "resend" | "zapmail" | "ses" | "mailgun" | "smtp";
+export type SenderEmailStatus = "pending" | "active" | "error" | "suspended";
+
+export interface SenderEmail {
+  id: string;
+  user_id: string;
+  email_address: string;
+  display_name: string;
+  domain: string;
+  is_default: boolean;
+  provider: SenderEmailProvider;
+  provider_id: string | null;
+  status: SenderEmailStatus;
+  provider_metadata: Record<string, unknown>;
+  last_synced_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Email {
   id: string;
   user_id: string;
@@ -162,6 +181,7 @@ export interface Schedule {
   scheduled_time: string;
   recurring_days: WeekDay[];
   lead_selections: ScheduleLeadSelection[];
+  sender_email_id: string | null;
   total_leads: number;
   leads_sent: number;
   created_at: string;

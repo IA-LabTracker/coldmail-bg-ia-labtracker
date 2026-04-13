@@ -19,6 +19,7 @@ import {
   CreditCard,
   UserCircle,
 } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,15 +57,7 @@ export function Sidebar() {
   return (
     <aside className="flex h-screen w-64 flex-col bg-sidebar">
       <div className="flex items-center justify-between px-6 py-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-accent">
-            <LayoutDashboard className="h-5 w-5 text-sidebar-foreground" />
-          </div>
-          <div>
-            <h1 className="text-base font-bold text-sidebar-foreground">Cold Email Pro</h1>
-            <p className="text-xs text-sidebar-foreground/60">by IA LabTracker</p>
-          </div>
-        </div>
+        <Logo />
         <button
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
           className="flex h-8 w-8 items-center justify-center rounded-md text-sidebar-foreground/50 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"

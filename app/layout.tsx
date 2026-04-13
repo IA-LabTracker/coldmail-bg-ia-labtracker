@@ -9,22 +9,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Cold Email Pro",
-  description: "B2B cold email and LinkedIn automation platform",
-  openGraph: {
-    images: [
-      {
-        url: "https://bolt.new/static/og_default.png",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    images: [
-      {
-        url: "https://bolt.new/static/og_default.png",
-      },
-    ],
-  },
+  description: "B2B cold email and LinkedIn automation platform by IA LabTracker",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

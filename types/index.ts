@@ -1,3 +1,26 @@
+export interface Profile {
+  id: string;
+  full_name: string;
+  avatar_url: string | null;
+  phone: string | null;
+  company_name: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Subscription {
+  id: string;
+  user_id: string;
+  plan: "starter" | "professional";
+  billing_cycle: "monthly" | "yearly";
+  status: "active" | "trialing" | "canceled" | "past_due";
+  current_period_start: string | null;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export type EmailStatus = "sent" | "replied" | "bounced" | "researched" | "opened";
 export type LeadClassification = "hot" | "warm" | "cold";
 

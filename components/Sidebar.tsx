@@ -12,12 +12,12 @@ import {
   Settings,
   Upload,
   LogOut,
-  Sun,
-  Moon,
+  SunMoon,
   Megaphone,
   CalendarClock,
   Mail,
   CreditCard,
+  UserCircle,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -44,7 +44,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
 
   const handleSignOut = async () => {
     await signOut();
@@ -55,14 +55,23 @@ export function Sidebar() {
 
   return (
     <aside className="flex h-screen w-64 flex-col bg-sidebar">
-      <div className="flex items-center gap-3 px-6 py-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-accent">
-          <LayoutDashboard className="h-5 w-5 text-sidebar-foreground" />
+      <div className="flex items-center justify-between px-6 py-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-accent">
+            <LayoutDashboard className="h-5 w-5 text-sidebar-foreground" />
+          </div>
+          <div>
+            <h1 className="text-base font-bold text-sidebar-foreground">Cold Email Pro</h1>
+            <p className="text-xs text-sidebar-foreground/60">by IA LabTracker</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-base font-bold text-sidebar-foreground">Cold Email Pro</h1>
-          <p className="text-xs text-sidebar-foreground/60">by IA LabTracker</p>
-        </div>
+        <button
+          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          className="flex h-8 w-8 items-center justify-center rounded-md text-sidebar-foreground/50 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          title={resolvedTheme === "dark" ? "Light Mode" : "Dark Mode"}
+        >
+          <SunMoon className="h-4 w-4" />
+        </button>
       </div>
 
       <nav className="flex-1 py-2">
@@ -88,14 +97,17 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-sidebar-border p-4">
-        <button
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="mb-2 flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+        <Link
+          href="/profile"
+          className={`mb-2 flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors ${
+            pathname === "/profile"
+              ? "bg-sidebar-accent text-sidebar-foreground"
+              : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          }`}
         >
-          <Sun className="h-5 w-5 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
-          {theme === "dark" ? "Light Mode" : "Dark Mode"}
-        </button>
+          <UserCircle className="h-5 w-5" />
+          My Profile
+        </Link>
 
         <Link
           href="/pricing"

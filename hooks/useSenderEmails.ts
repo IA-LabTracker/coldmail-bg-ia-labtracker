@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { SenderEmail, SenderEmailProvider } from "@/types";
+import { SenderEmail, SenderEmailProvider, SenderEmailPlatform } from "@/types";
 import { toast } from "sonner";
 
 function extractDomain(email: string): string {
@@ -16,6 +16,8 @@ export interface CreateSenderEmailInput {
   display_name: string;
   provider?: SenderEmailProvider;
   provider_id?: string;
+  platform?: SenderEmailPlatform;
+  daily_limit?: number;
   provider_metadata?: Record<string, unknown>;
 }
 
@@ -24,6 +26,8 @@ export interface UpdateSenderEmailInput {
   display_name?: string;
   provider?: SenderEmailProvider;
   provider_id?: string | null;
+  platform?: SenderEmailPlatform;
+  daily_limit?: number;
   status?: string;
   provider_metadata?: Record<string, unknown>;
 }
@@ -75,6 +79,8 @@ export function useSenderEmails() {
             is_default: isFirst,
             provider: input.provider ?? "manual",
             provider_id: input.provider_id ?? null,
+            platform: input.platform ?? "none",
+            daily_limit: input.daily_limit ?? 0,
             status: "active",
             provider_metadata: input.provider_metadata ?? {},
           })
@@ -120,6 +126,12 @@ export function useSenderEmails() {
         }
         if (updates.provider_id !== undefined) {
           payload.provider_id = updates.provider_id;
+        }
+        if (updates.platform !== undefined) {
+          payload.platform = updates.platform;
+        }
+        if (updates.daily_limit !== undefined) {
+          payload.daily_limit = updates.daily_limit;
         }
         if (updates.status !== undefined) {
           payload.status = updates.status;

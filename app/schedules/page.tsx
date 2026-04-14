@@ -117,6 +117,26 @@ async function triggerScheduleWebhook(params: {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      // New dispatches[] format
+      dispatches: [
+        {
+          sender_email: params.senderEmail
+            ? {
+                id: params.senderEmail.id,
+                email_address: params.senderEmail.email_address,
+                display_name: params.senderEmail.display_name,
+                domain: params.senderEmail.domain,
+                provider: params.senderEmail.provider,
+                provider_id: params.senderEmail.provider_id,
+                platform: params.senderEmail.platform,
+              }
+            : null,
+          platform: params.senderEmail?.platform ?? "none",
+          emails: params.emails,
+        },
+      ],
+      total_leads: params.emails.length,
+      // Legacy + schedule metadata
       schedule: true,
       date: params.nextRunAt,
       schedule_id: params.scheduleId,
@@ -133,8 +153,10 @@ async function triggerScheduleWebhook(params: {
             domain: params.senderEmail.domain,
             provider: params.senderEmail.provider,
             provider_id: params.senderEmail.provider_id,
+            platform: params.senderEmail.platform,
           }
         : null,
+      platform: params.senderEmail?.platform ?? "none",
       emails: params.emails,
     }),
   });

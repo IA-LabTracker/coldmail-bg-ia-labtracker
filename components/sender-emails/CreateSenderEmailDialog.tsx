@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { SenderEmail, SenderEmailProvider } from "@/types";
+import { SenderEmail, SenderEmailProvider, SenderEmailPlatform } from "@/types";
 import { CreateSenderEmailInput, UpdateSenderEmailInput } from "@/hooks/useSenderEmails";
 import {
   Dialog,
@@ -40,6 +40,13 @@ const PROVIDER_OPTIONS: { value: SenderEmailProvider; label: string }[] = [
   { value: "smtp", label: "Custom SMTP" },
 ];
 
+const PLATFORM_OPTIONS: { value: SenderEmailPlatform; label: string }[] = [
+  { value: "none", label: "None" },
+  { value: "smartlead", label: "SmartLead" },
+  { value: "resend", label: "Resend" },
+  { value: "zapmail", label: "Zapmail" },
+];
+
 export function CreateSenderEmailDialog({
   open,
   onOpenChange,
@@ -50,6 +57,8 @@ export function CreateSenderEmailDialog({
   const [emailAddress, setEmailAddress] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [provider, setProvider] = useState<SenderEmailProvider>("manual");
+  const [platform, setPlatform] = useState<SenderEmailPlatform>("none");
+  const [dailyLimit, setDailyLimit] = useState(0);
   const [providerId, setProviderId] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -58,11 +67,15 @@ export function CreateSenderEmailDialog({
       setEmailAddress(editingEmail.email_address);
       setDisplayName(editingEmail.display_name);
       setProvider(editingEmail.provider);
+      setPlatform(editingEmail.platform ?? "none");
+      setDailyLimit(editingEmail.daily_limit ?? 0);
       setProviderId(editingEmail.provider_id ?? "");
     } else if (open) {
       setEmailAddress("");
       setDisplayName("");
       setProvider("manual");
+      setPlatform("none");
+      setDailyLimit(0);
       setProviderId("");
     }
   }, [open, editingEmail]);
@@ -79,6 +92,8 @@ export function CreateSenderEmailDialog({
         email_address: emailAddress,
         display_name: displayName,
         provider,
+        platform,
+        daily_limit: dailyLimit,
         provider_id: providerId.trim() || null,
       });
     } else {
@@ -86,6 +101,8 @@ export function CreateSenderEmailDialog({
         email_address: emailAddress,
         display_name: displayName,
         provider,
+        platform,
+        daily_limit: dailyLimit,
         provider_id: providerId.trim() || undefined,
       });
       success = !!result;
@@ -171,6 +188,42 @@ export function CreateSenderEmailDialog({
             </Select>
             <p className="text-[11px] text-muted-foreground/60">
               Where this email is hosted. Used to route dispatches correctly.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Dispatch Platform</Label>
+            <Select value={platform} onValueChange={(v) => setPlatform(v as SenderEmailPlatform)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PLATFORM_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground/60">
+              The platform where this email will be allocated for dispatch.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="sender-daily-limit" className="text-xs text-muted-foreground">
+              Daily send limit
+            </Label>
+            <Input
+              id="sender-daily-limit"
+              type="number"
+              min={0}
+              placeholder="0"
+              value={dailyLimit || ""}
+              onChange={(e) => setDailyLimit(parseInt(e.target.value) || 0)}
+            />
+            <p className="text-[11px] text-muted-foreground/60">
+              Max emails per day. 0 = unlimited.
             </p>
           </div>
 

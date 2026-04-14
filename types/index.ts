@@ -26,6 +26,7 @@ export type LeadClassification = "hot" | "warm" | "cold";
 
 export type SenderEmailProvider = "manual" | "resend" | "zapmail" | "ses" | "mailgun" | "smtp";
 export type SenderEmailStatus = "pending" | "active" | "error" | "suspended";
+export type SenderEmailPlatform = "none" | "auto" | "smartlead" | "resend" | "zapmail";
 
 export interface SenderEmail {
   id: string;
@@ -37,6 +38,8 @@ export interface SenderEmail {
   provider: SenderEmailProvider;
   provider_id: string | null;
   status: SenderEmailStatus;
+  platform: SenderEmailPlatform;
+  daily_limit: number;
   provider_metadata: Record<string, unknown>;
   last_synced_at: string | null;
   created_at: string;
@@ -78,6 +81,8 @@ export interface Email {
   our_last_reply?: string;
   time_we_got_reply?: string;
   reply_time?: string;
+  sender_email_id?: string | null;
+  dispatch_platform?: string | null;
 }
 
 export interface Settings {

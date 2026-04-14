@@ -16,6 +16,7 @@ interface SenderEmailSelectProps {
   placeholder?: string;
   disabled?: boolean;
   allowClear?: boolean;
+  allowAutoRoute?: boolean;
 }
 
 const PROVIDER_LABELS: Record<string, string> = {
@@ -27,6 +28,12 @@ const PROVIDER_LABELS: Record<string, string> = {
   smtp: "SMTP",
 };
 
+const PLATFORM_LABELS: Record<string, string> = {
+  smartlead: "SmartLead",
+  resend: "Resend",
+  zapmail: "Zapmail",
+};
+
 export function SenderEmailSelect({
   senderEmails,
   value,
@@ -34,19 +41,30 @@ export function SenderEmailSelect({
   placeholder = "Select sender email",
   disabled = false,
   allowClear = true,
+  allowAutoRoute = false,
 }: SenderEmailSelectProps) {
   const activeEmails = senderEmails.filter((se) => se.status === "active");
 
   return (
     <Select
       value={value || "__none__"}
-      onValueChange={(val) => onChange(val === "__none__" ? null : val)}
+      onValueChange={(val) => {
+        if (val === "__none__") onChange(null);
+        else if (val === "__auto__") onChange("__auto__");
+        else onChange(val);
+      }}
       disabled={disabled}
     >
       <SelectTrigger className="w-full">
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
+        {allowAutoRoute && (
+          <SelectItem value="__auto__">
+            <span className="font-medium">Auto-route</span>
+            <span className="ml-1.5 text-muted-foreground">distribute by quota</span>
+          </SelectItem>
+        )}
         {allowClear && (
           <SelectItem value="__none__">
             <span className="text-muted-foreground">No sender email</span>
@@ -58,6 +76,11 @@ export function SenderEmailSelect({
             {se.provider !== "manual" && (
               <span className="ml-1.5 text-muted-foreground">
                 via {PROVIDER_LABELS[se.provider] ?? se.provider}
+              </span>
+            )}
+            {se.platform && se.platform !== "none" && (
+              <span className="ml-1.5 text-muted-foreground">
+                → {PLATFORM_LABELS[se.platform] ?? se.platform}
               </span>
             )}
             {se.is_default && (

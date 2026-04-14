@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
-import { Email } from "@/types";
+import { Email, SenderEmail } from "@/types";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import { autoRouteLeads } from "@/lib/autoRouting";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { SenderEmailSelect } from "@/components/sender-emails/SenderEmailSelect";
 import { AlertCircle, CheckCircle, Info, Send, Trash2, X } from "lucide-react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
@@ -24,10 +28,31 @@ interface Message {
 }
 
 export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActionsProps) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<Message | null>(null);
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
   const [scheduleAt, setScheduleAt] = useState<string>("");
+  const [senderEmails, setSenderEmails] = useState<SenderEmail[]>([]);
+  const [senderEmailId, setSenderEmailId] = useState<string | null>(null);
+
+  // Fetch sender emails
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("sender_emails")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("is_default", { ascending: false })
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (data) {
+          setSenderEmails(data);
+          const def = data.find((se) => se.is_default);
+          if (def) setSenderEmailId(def.id);
+        }
+      });
+  }, [user]);
 
   const ensureDefaultScheduleTime = () => {
     if (scheduleAt) return;
@@ -61,49 +86,126 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
     let scheduledIso: string | null = null;
     if (scheduleEnabled) {
       if (!scheduleAt) {
-        setMessage({
-          type: "error",
-          text: "Select a date and time to schedule the send.",
-        });
+        setMessage({ type: "error", text: "Select a date and time to schedule the send." });
         return;
       }
-
       const scheduledDate = new Date(scheduleAt);
       if (Number.isNaN(scheduledDate.getTime())) {
-        setMessage({
-          type: "error",
-          text: "Invalid schedule date/time. Please select a valid date.",
-        });
+        setMessage({ type: "error", text: "Invalid schedule date/time." });
         return;
       }
-
       if (scheduledDate.getTime() <= Date.now()) {
-        setMessage({
-          type: "error",
-          text: "Scheduled time must be in the future.",
-        });
+        setMessage({ type: "error", text: "Scheduled time must be in the future." });
         return;
       }
-
       scheduledIso = scheduledDate.toISOString();
     }
 
+    // Deduplicate by email address — safety net
+    const seen = new Set<string>();
+    const uniqueEmails = selectedEmails.filter((e) => {
+      const key = e.email.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
     setLoading(true);
-    setMessage({ type: "info", text: "Triggering initial email webhook..." });
+    setMessage({ type: "info", text: "Preparing dispatch..." });
 
     try {
+      const isAutoRoute = senderEmailId === "__auto__";
+
+      let dispatches: {
+        sender_email: Record<string, unknown> | null;
+        platform: string;
+        emails: Email[];
+      }[];
+
+      if (isAutoRoute && user) {
+        // Auto-routing: distribute leads across senders with remaining quota
+        const groups = await autoRouteLeads(user.id, senderEmails, uniqueEmails);
+        if (groups.length === 0) {
+          setMessage({
+            type: "error",
+            text: "No sender emails with remaining daily quota. Increase limits or add more senders.",
+          });
+          setLoading(false);
+          return;
+        }
+        dispatches = groups.map((g) => ({
+          sender_email: {
+            id: g.senderEmail.id,
+            email_address: g.senderEmail.email_address,
+            display_name: g.senderEmail.display_name,
+            domain: g.senderEmail.domain,
+            provider: g.senderEmail.provider,
+            provider_id: g.senderEmail.provider_id,
+            platform: g.senderEmail.platform,
+          },
+          platform: g.platform,
+          emails: g.emails,
+        }));
+      } else {
+        // Single sender mode
+        const selectedSender = senderEmails.find((se) => se.id === senderEmailId) ?? null;
+        const senderPayload = selectedSender
+          ? {
+              id: selectedSender.id,
+              email_address: selectedSender.email_address,
+              display_name: selectedSender.display_name,
+              domain: selectedSender.domain,
+              provider: selectedSender.provider,
+              provider_id: selectedSender.provider_id,
+              platform: selectedSender.platform,
+            }
+          : null;
+        dispatches = [
+          {
+            sender_email: senderPayload,
+            platform: selectedSender?.platform ?? "none",
+            emails: uniqueEmails,
+          },
+        ];
+      }
+
+      setMessage({ type: "info", text: "Triggering dispatch..." });
+
+      // Build payload
+      const firstDispatch = dispatches[0];
       await axios.post(process.env.NEXT_PUBLIC_WEBHOOK_N8N, {
-        emails: selectedEmails,
+        dispatches,
+        total_leads: uniqueEmails.length,
+        // Legacy compat (first dispatch group)
+        emails: firstDispatch.emails,
+        sender_email: firstDispatch.sender_email,
+        platform: firstDispatch.platform,
         schedule: scheduleEnabled,
         date: scheduledIso,
       });
 
-      setMessage({
-        type: "success",
-        text: `Webhook triggered for ${selectedEmails.length} recipient${selectedEmails.length > 1 ? "s" : ""}.`,
-      });
+      // Post-dispatch: update leads in DB per dispatch group
+      for (const group of dispatches) {
+        if (!group.sender_email) continue;
+        const leadIds = group.emails.map((e) => e.id);
+        const senderId = group.sender_email.id as string;
+        const senderAddr = group.sender_email.email_address as string;
+        await supabase
+          .from("emails")
+          .update({
+            sender_email_id: senderId,
+            sender_email: senderAddr,
+            dispatch_platform: group.platform !== "none" ? group.platform : null,
+          })
+          .in("id", leadIds);
+      }
 
-      // Auto clear after success
+      const summary = isAutoRoute
+        ? `Auto-routed ${uniqueEmails.length} lead${uniqueEmails.length > 1 ? "s" : ""} across ${dispatches.length} sender${dispatches.length > 1 ? "s" : ""}`
+        : `Dispatch triggered for ${uniqueEmails.length} recipient${uniqueEmails.length > 1 ? "s" : ""}${firstDispatch.platform !== "none" ? ` via ${firstDispatch.platform}` : ""}`;
+
+      setMessage({ type: "success", text: summary });
+
       setTimeout(() => {
         onClear();
         setMessage(null);
@@ -130,17 +232,21 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
   };
 
   const messageBgs: Record<MessageType, string> = {
-    success: "bg-green-50 border-green-100 text-green-800",
-    error: "bg-red-50 border-red-100 text-red-800",
-    info: "bg-blue-50 border-blue-100 text-blue-800",
+    success:
+      "bg-green-50 border-green-100 text-green-800 dark:bg-green-950/30 dark:border-green-900 dark:text-green-300",
+    error:
+      "bg-red-50 border-red-100 text-red-800 dark:bg-red-950/30 dark:border-red-900 dark:text-red-300",
+    info: "bg-blue-50 border-blue-100 text-blue-800 dark:bg-blue-950/30 dark:border-blue-900 dark:text-blue-300",
   };
 
+  const selectedSender = senderEmails.find((se) => se.id === senderEmailId);
+
   return (
-    <Card className="bg-card border border-border shadow-sm">
+    <Card className="border border-border bg-card shadow-sm">
       <div className="flex flex-col gap-3 p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-blue-50 text-blue-700 font-semibold flex items-center justify-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 font-semibold text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
               {selectedEmails.length}
             </div>
             <div>
@@ -164,7 +270,7 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
               disabled={loading}
               variant="outline"
               size="sm"
-              className="gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+              className="gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
             >
               <Trash2 className="h-4 w-4" />
               Delete Selected
@@ -175,7 +281,7 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
               disabled={loading}
               variant="ghost"
               size="sm"
-              className="gap-2 text-muted-foreground hover:text-foreground hover:bg-muted"
+              className="gap-2 text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               <X className="h-4 w-4" />
               Clear
@@ -183,7 +289,33 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+        {/* Sender email + platform + schedule row */}
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/40 px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">From:</span>
+            <div className="w-[260px]">
+              <SenderEmailSelect
+                senderEmails={senderEmails}
+                value={senderEmailId}
+                onChange={setSenderEmailId}
+                placeholder="Select sender"
+                disabled={loading}
+                allowAutoRoute
+              />
+            </div>
+            {senderEmailId === "__auto__" ? (
+              <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
+                Auto
+              </span>
+            ) : selectedSender?.platform && selectedSender.platform !== "none" ? (
+              <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                {selectedSender.platform}
+              </span>
+            ) : null}
+          </div>
+
+          <div className="mx-1 h-5 w-px bg-border" />
+
           <div className="flex items-center gap-2">
             <Switch
               checked={scheduleEnabled}
@@ -193,18 +325,20 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
               }}
               disabled={loading}
             />
-            <span className="text-foreground font-medium">Schedule send</span>
+            <span className="text-xs font-medium text-foreground">Schedule</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Input
-              type="datetime-local"
-              value={scheduleAt}
-              onChange={(e) => setScheduleAt(e.target.value)}
-              disabled={!scheduleEnabled || loading}
-              className="w-[220px]"
-            />
-            <span className="text-xs text-muted-foreground">Local time</span>
-          </div>
+          {scheduleEnabled && (
+            <div className="flex items-center gap-2">
+              <Input
+                type="datetime-local"
+                value={scheduleAt}
+                onChange={(e) => setScheduleAt(e.target.value)}
+                disabled={!scheduleEnabled || loading}
+                className="w-[200px]"
+              />
+              <span className="text-[10px] text-muted-foreground">Local time</span>
+            </div>
+          )}
         </div>
 
         {message && (

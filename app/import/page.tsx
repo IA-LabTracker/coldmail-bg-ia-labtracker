@@ -217,7 +217,12 @@ export default function ImportPage() {
           lead_category: row.lead_category || null,
         }));
 
-        const { error: insertError } = await supabase.from("emails").insert(batch);
+        const { error: insertError } = await supabase
+          .from("emails")
+          .upsert(batch, {
+            onConflict: "user_id,email",
+            ignoreDuplicates: false,
+          });
         if (insertError) throw insertError;
 
         totalInserted += batch.length;
@@ -225,7 +230,7 @@ export default function ImportPage() {
       }
 
       setStatus("success");
-      toast.success(`Successfully imported ${totalInserted} leads`);
+      toast.success(`Successfully imported ${totalInserted} leads (duplicates updated)`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to import data");
       setStatus("error");

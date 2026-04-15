@@ -12,11 +12,24 @@ import { BarChart3, TableProperties } from "lucide-react";
 import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
 import { EmailManagerTab } from "@/components/dashboard/EmailManagerTab";
 
+const DASHBOARD_TAB_KEY = "coldmail:dashboard-tab";
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const [emails, setEmails] = useState<Email[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(DASHBOARD_TAB_KEY) || "analytics";
+    }
+    return "analytics";
+  });
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    localStorage.setItem(DASHBOARD_TAB_KEY, value);
+  };
 
   const fetchEmails = useCallback(async () => {
     if (!user) return;
@@ -57,7 +70,7 @@ export default function DashboardPage() {
             <LoadingSpinner />
           </div>
         ) : (
-          <Tabs defaultValue="analytics" className="animate-section w-full" style={{ animationDelay: "100ms" }}>
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="animate-section w-full" style={{ animationDelay: "100ms" }}>
             <TabsList className="mb-6 grid w-full max-w-md grid-cols-2">
               <TabsTrigger value="analytics" className="gap-2">
                 <BarChart3 className="h-4 w-4" />

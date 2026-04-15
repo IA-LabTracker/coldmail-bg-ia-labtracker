@@ -30,6 +30,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+export const SIDEBAR_LAST_PAGE_KEY = "coldmail:last-page";
+
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/campaigns", label: "Campaigns", icon: Megaphone },
@@ -76,6 +78,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => localStorage.setItem(SIDEBAR_LAST_PAGE_KEY, item.href)}
               className={`flex items-center gap-3 px-6 py-2.5 text-sm font-medium transition-colors ${
                 isActive
                   ? "bg-sidebar-accent text-sidebar-foreground"
@@ -92,6 +95,7 @@ export function Sidebar() {
       <div className="border-t border-sidebar-border p-4">
         <Link
           href="/profile"
+          onClick={() => localStorage.setItem(SIDEBAR_LAST_PAGE_KEY, "/profile")}
           className={`mb-2 flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors ${
             pathname === "/profile"
               ? "bg-sidebar-accent text-sidebar-foreground"
@@ -104,6 +108,7 @@ export function Sidebar() {
 
         <Link
           href="/pricing"
+          onClick={() => localStorage.setItem(SIDEBAR_LAST_PAGE_KEY, "/pricing")}
           className={`mb-2 flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors ${
             pathname === "/pricing"
               ? "bg-sidebar-accent text-sidebar-foreground"

@@ -1,8 +1,9 @@
 "use client";
-// comentario teste
+
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { SIDEBAR_LAST_PAGE_KEY } from "@/components/Sidebar";
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -11,7 +12,8 @@ export default function Home() {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        router.push("/dashboard");
+        const lastPage = localStorage.getItem(SIDEBAR_LAST_PAGE_KEY) || "/dashboard";
+        router.push(lastPage);
       } else {
         router.push("/login");
       }

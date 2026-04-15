@@ -23,6 +23,7 @@ const areaConfig = [
   { key: "replied", label: "Replied", color: "#22c55e", opacity: 0.15 },
   { key: "opened", label: "Opened", color: "#0ea5e9", opacity: 0.12 },
   { key: "sent", label: "Sent", color: "#8b5cf6", opacity: 0.10 },
+  { key: "bounced", label: "Bounced", color: "#ef4444", opacity: 0.08 },
   { key: "researched", label: "Researched", color: "#64748b", opacity: 0.06 },
 ];
 

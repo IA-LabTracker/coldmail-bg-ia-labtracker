@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { SenderEmailMultiSelect } from "@/components/sender-emails/SenderEmailMultiSelect";
+import { PlatformIndicator } from "@/components/sender-emails/PlatformIndicator";
 import { AlertCircle, CheckCircle, Info, Send, Trash2, X } from "lucide-react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
@@ -314,14 +315,9 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
               />
             </div>
             {selectedPlatforms.length > 0 && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2.5">
                 {selectedPlatforms.map((p) => (
-                  <span
-                    key={p}
-                    className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
-                  >
-                    {p}
-                  </span>
+                  <PlatformIndicator key={p} platform={p} />
                 ))}
               </div>
             )}

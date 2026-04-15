@@ -18,12 +18,7 @@ import { SenderEmailDispatchBar } from "@/components/sender-emails/SenderEmailDi
 import { useEmailSelection } from "@/hooks/useEmailSelection";
 import { ArrowLeft, Mail, Send, MessageSquare, Flame, Eye, XCircle, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const PLATFORM_LABELS: Record<string, string> = {
-  smartlead: "SmartLead",
-  resend: "Resend",
-  zapmail: "Zapmail",
-};
+import { PlatformIndicator } from "@/components/sender-emails/PlatformIndicator";
 
 export default function SenderEmailDetailPage() {
   const params = useParams();
@@ -232,9 +227,9 @@ export default function SenderEmailDetailPage() {
     },
   ];
 
-  const platform =
+  const platformKey =
     senderEmail?.platform && senderEmail.platform !== "none"
-      ? (PLATFORM_LABELS[senderEmail.platform] ?? senderEmail.platform)
+      ? senderEmail.platform
       : null;
 
   return (
@@ -252,10 +247,8 @@ export default function SenderEmailDetailPage() {
                 <h1 className="text-3xl font-bold text-foreground">
                   {senderEmail?.email_address ?? "Loading..."}
                 </h1>
-                {platform && (
-                  <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                    {platform}
-                  </span>
+                {platformKey && (
+                  <PlatformIndicator platform={platformKey} size="md" />
                 )}
               </div>
               <p className="mt-1 text-sm text-muted-foreground">

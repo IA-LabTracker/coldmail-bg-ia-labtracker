@@ -40,17 +40,7 @@ const avatarColors = [
   "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
 ];
 
-const PLATFORM_LABELS: Record<string, string> = {
-  smartlead: "SmartLead",
-  resend: "Resend",
-  zapmail: "Zapmail",
-};
-
-const PLATFORM_STYLES: Record<string, string> = {
-  smartlead: "bg-violet-50 border-violet-200 text-violet-700 dark:bg-violet-950/30 dark:border-violet-800/40 dark:text-violet-400",
-  resend: "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950/30 dark:border-blue-800/40 dark:text-blue-400",
-  zapmail: "bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-950/30 dark:border-amber-800/40 dark:text-amber-400",
-};
+import { PlatformIndicator } from "@/components/sender-emails/PlatformIndicator";
 
 const STATUS_STYLES: Record<SenderEmailStatus, { dot: string; text: string; bg: string }> = {
   active: {
@@ -152,14 +142,8 @@ export function SenderEmailListItem({
           )}
         </p>
         {/* Platform + Status badges */}
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {platform && (
-            <span
-              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${PLATFORM_STYLES[platform] ?? ""}`}
-            >
-              {PLATFORM_LABELS[platform] ?? platform}
-            </span>
-          )}
+        <div className="mt-2 flex flex-wrap items-center gap-2.5">
+          {platform && <PlatformIndicator platform={platform} />}
           <span
             className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium ${status.bg} ${status.text}`}
           >

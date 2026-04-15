@@ -21,8 +21,10 @@ export function AnalyticsKPICards({ sparklines }: AnalyticsKPICardsProps) {
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
       {sparklines.map((kpi, idx) => {
         const color = kpiColors[idx];
-        const isPositive = kpi.changePercent > 0;
         const isNeutral = kpi.changePercent === 0;
+        const wentUp = kpi.changePercent > 0;
+        // "isGood" considers polarity: for Bounced, going DOWN is good
+        const isGood = kpi.positiveIsGood ? wentUp : !wentUp;
         const gradientId = `kpi-grad-${idx}`;
 
         return (
@@ -37,16 +39,16 @@ export function AnalyticsKPICards({ sparklines }: AnalyticsKPICardsProps) {
           >
             {/* Top section: label + trend */}
             <div className="flex items-center justify-between px-4 pt-3.5">
-              <span className="text-xs font-medium text-muted-foreground">{kpi.label}</span>
+              <span className="text-xs font-medium text-muted-foreground">{kpi.label} <span className="text-[10px] opacity-60">30d</span></span>
               {!isNeutral && (
                 <div
                   className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                    isPositive
+                    isGood
                       ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                       : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                   }`}
                 >
-                  {isPositive ? (
+                  {wentUp ? (
                     <TrendingUp className="h-2.5 w-2.5" />
                   ) : (
                     <TrendingDown className="h-2.5 w-2.5" />
@@ -63,10 +65,15 @@ export function AnalyticsKPICards({ sparklines }: AnalyticsKPICardsProps) {
             </div>
 
             {/* Value */}
-            <div className="px-4 pt-1">
+            <div className="px-4 pt-1 flex items-baseline gap-1.5">
               <span className={`text-2xl font-bold tracking-tight ${color.text} animate-count-up`}>
                 {kpi.value.toLocaleString()}
               </span>
+              {kpi.allTime !== kpi.value && (
+                <span className="text-[10px] text-muted-foreground">
+                  / {kpi.allTime.toLocaleString()} total
+                </span>
+              )}
             </div>
 
             {/* Sparkline */}

@@ -3,6 +3,7 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import { SenderEmail } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PlatformIndicator } from "@/components/sender-emails/PlatformIndicator";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -195,9 +196,11 @@ export function SenderEmailMultiSelect({
                       onCheckedChange={() => togglePlatform(emails)}
                       className="h-3.5 w-3.5"
                     />
-                    <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                      {PLATFORM_LABELS[platform] ?? platform}
-                    </span>
+                    {platform !== "none" ? (
+                      <PlatformIndicator platform={platform} size="md" />
+                    ) : (
+                      <span className="text-xs font-medium text-muted-foreground">Outros</span>
+                    )}
                     <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">
                       {platformIds.filter((id) => selectedIds.includes(id)).length}/{emails.length}
                     </span>

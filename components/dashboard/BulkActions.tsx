@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { SenderEmailSelect } from "@/components/sender-emails/SenderEmailSelect";
+import { SenderEmailMultiSelect } from "@/components/sender-emails/SenderEmailMultiSelect";
 import { AlertCircle, CheckCircle, Info, Send, Trash2, X } from "lucide-react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
@@ -34,7 +34,7 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
   const [scheduleAt, setScheduleAt] = useState<string>("");
   const [senderEmails, setSenderEmails] = useState<SenderEmail[]>([]);
-  const [senderEmailId, setSenderEmailId] = useState<string | null>(null);
+  const [senderEmailIds, setSenderEmailIds] = useState<string[]>([]);
 
   // Fetch sender emails
   useEffect(() => {
@@ -49,7 +49,7 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
         if (data) {
           setSenderEmails(data);
           const def = data.find((se) => se.is_default);
-          if (def) setSenderEmailId(def.id);
+          if (def) setSenderEmailIds([def.id]);
         }
       });
   }, [user]);
@@ -110,11 +110,16 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
       return true;
     });
 
+    if (senderEmailIds.length === 0) {
+      setMessage({ type: "error", text: "Selecione pelo menos um e-mail de remetente." });
+      return;
+    }
+
     setLoading(true);
     setMessage({ type: "info", text: "Preparing dispatch..." });
 
     try {
-      const isAutoRoute = senderEmailId === "__auto__";
+      const selectedSenders = senderEmails.filter((se) => senderEmailIds.includes(se.id));
 
       let dispatches: {
         sender_email: Record<string, unknown> | null;
@@ -122,9 +127,9 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
         emails: Email[];
       }[];
 
-      if (isAutoRoute && user) {
-        // Auto-routing: distribute leads across senders with remaining quota
-        const groups = await autoRouteLeads(user.id, senderEmails, uniqueEmails);
+      if (selectedSenders.length > 1) {
+        // Multiple senders: auto-route only among selected senders
+        const groups = user ? await autoRouteLeads(user.id, selectedSenders, uniqueEmails) : [];
         if (groups.length === 0) {
           setMessage({
             type: "error",
@@ -148,7 +153,7 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
         }));
       } else {
         // Single sender mode
-        const selectedSender = senderEmails.find((se) => se.id === senderEmailId) ?? null;
+        const selectedSender = selectedSenders[0] ?? null;
         const senderPayload = selectedSender
           ? {
               id: selectedSender.id,
@@ -200,9 +205,10 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
           .in("id", leadIds);
       }
 
-      const summary = isAutoRoute
-        ? `Auto-routed ${uniqueEmails.length} lead${uniqueEmails.length > 1 ? "s" : ""} across ${dispatches.length} sender${dispatches.length > 1 ? "s" : ""}`
-        : `Dispatch triggered for ${uniqueEmails.length} recipient${uniqueEmails.length > 1 ? "s" : ""}${firstDispatch.platform !== "none" ? ` via ${firstDispatch.platform}` : ""}`;
+      const summary =
+        dispatches.length > 1
+          ? `Dispatched ${uniqueEmails.length} lead${uniqueEmails.length > 1 ? "s" : ""} across ${dispatches.length} sender${dispatches.length > 1 ? "s" : ""}`
+          : `Dispatch triggered for ${uniqueEmails.length} recipient${uniqueEmails.length > 1 ? "s" : ""}${firstDispatch.platform !== "none" ? ` via ${firstDispatch.platform}` : ""}`;
 
       setMessage({ type: "success", text: summary });
 
@@ -239,7 +245,12 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
     info: "bg-blue-50 border-blue-100 text-blue-800 dark:bg-blue-950/30 dark:border-blue-900 dark:text-blue-300",
   };
 
-  const selectedSender = senderEmails.find((se) => se.id === senderEmailId);
+  const selectedSenders = senderEmails.filter((se) => senderEmailIds.includes(se.id));
+
+  // Collect unique platforms from selection
+  const selectedPlatforms = Array.from(
+    new Set(selectedSenders.map((se) => se.platform).filter((p) => p && p !== "none")),
+  );
 
   return (
     <Card className="border border-border bg-card shadow-sm">
@@ -293,25 +304,27 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
         <div className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-muted/40 px-3 py-2.5">
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground">From:</span>
-            <div className="w-[260px]">
-              <SenderEmailSelect
+            <div className="w-[300px]">
+              <SenderEmailMultiSelect
                 senderEmails={senderEmails}
-                value={senderEmailId}
-                onChange={setSenderEmailId}
-                placeholder="Select sender"
+                selectedIds={senderEmailIds}
+                onChange={setSenderEmailIds}
+                placeholder="Selecionar remetentes"
                 disabled={loading}
-                allowAutoRoute
               />
             </div>
-            {senderEmailId === "__auto__" ? (
-              <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
-                Auto
-              </span>
-            ) : selectedSender?.platform && selectedSender.platform !== "none" ? (
-              <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-                {selectedSender.platform}
-              </span>
-            ) : null}
+            {selectedPlatforms.length > 0 && (
+              <div className="flex items-center gap-1">
+                {selectedPlatforms.map((p) => (
+                  <span
+                    key={p}
+                    className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
+                  >
+                    {p}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="mx-1 h-5 w-px bg-border" />

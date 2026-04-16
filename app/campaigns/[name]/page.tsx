@@ -16,8 +16,10 @@ import { EmailFilters } from "@/components/dashboard/EmailFilters";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { useEmailSelection } from "@/hooks/useEmailSelection";
 import { BulkActions } from "@/components/dashboard/BulkActions";
-import { ArrowLeft, Mail, Send, MessageSquare, Flame, Eye, XCircle, Building } from "lucide-react";
+import { ArrowLeft, Mail, Send, MessageSquare, Flame, Eye, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MiniSparkline } from "@/components/shared/MiniSparkline";
+import { generateSparkline } from "@/lib/sparkline";
 
 export default function CampaignDetailPage() {
   const params = useParams();
@@ -115,6 +117,7 @@ export default function CampaignDetailPage() {
 
   // KPI calculations
   const totalEmails = emails.length;
+  const uniqueCompanies = new Set(emails.map((e) => e.company)).size;
   const sentCount = emails.filter((e) => e.status === "sent").length;
   const repliedCount = emails.filter((e) => e.status === "replied").length;
   const bouncedCount = emails.filter((e) => e.status === "bounced").length;
@@ -164,71 +167,105 @@ export default function CampaignDetailPage() {
     }
   }, [selectedIds, clearSelection]);
 
-  const kpis = [
-    {
-      label: "Total Emails",
-      value: totalEmails,
-      icon: Mail,
-      iconColor: "text-blue-500",
-      valueColor: "text-blue-600 dark:text-blue-400",
-      borderColor: "bg-blue-500/70",
-      filterValue: "",
-    },
-    {
-      label: "Companies Contacted",
-      value: sentCount,
-      icon: Building,
-      iconColor: "text-purple-500",
-      valueColor: "text-purple-600 dark:text-purple-400",
-      borderColor: "bg-purple-500/70",
-      filterValue: "sent",
-    },
-    {
-      label: "Replied",
-      value: repliedCount,
-      icon: MessageSquare,
-      iconColor: "text-green-500",
-      valueColor: "text-green-600 dark:text-green-400",
-      borderColor: "bg-green-500/70",
-      filterValue: "replied",
-    },
-    {
-      label: "Bounced",
-      value: bouncedCount,
-      icon: XCircle,
-      iconColor: "text-red-500",
-      valueColor: "text-red-600 dark:text-red-400",
-      borderColor: "bg-red-500/70",
-      filterValue: "bounced",
-    },
-    {
-      label: "Opened",
-      value: openedCount,
-      icon: Eye,
-      iconColor: "text-cyan-500",
-      valueColor: "text-cyan-600 dark:text-cyan-400",
-      borderColor: "bg-cyan-500/70",
-      filterValue: "opened",
-    },
-    {
-      label: "Reply Rate",
-      value: `${replyRate}%`,
-      icon: MessageSquare,
-      iconColor: "text-emerald-500",
-      valueColor: "text-emerald-600 dark:text-emerald-400",
-      borderColor: "bg-emerald-500/70",
-      filterValue: "",
-    },
-    {
-      label: "Hot Leads",
-      value: hotLeads,
-      icon: Flame,
-      iconColor: "text-orange-500",
-      valueColor: "text-orange-600 dark:text-orange-400",
-      borderColor: "bg-orange-500/70",
-      filterValue: "",
-    },
-  ];
+  // Campaign initial for avatar
+  const campaignInitial = campaignName.charAt(0).toUpperCase();
+
+  const kpis = useMemo(
+    () => [
+      {
+        label: "Total",
+        value: totalEmails,
+        icon: Mail,
+        color: "#3b82f6",
+        text: "text-blue-600 dark:text-blue-400",
+        bg: "bg-blue-500/8 dark:bg-blue-500/10",
+        iconBg: "bg-blue-100 dark:bg-blue-900/30",
+        border: "border-blue-200/60 dark:border-blue-800/30",
+        filterValue: "",
+        filterFn: () => true,
+      },
+      {
+        label: "Sent",
+        value: sentCount,
+        icon: Send,
+        color: "#8b5cf6",
+        text: "text-violet-600 dark:text-violet-400",
+        bg: "bg-violet-500/8 dark:bg-violet-500/10",
+        iconBg: "bg-violet-100 dark:bg-violet-900/30",
+        border: "border-violet-200/60 dark:border-violet-800/30",
+        filterValue: "sent",
+        filterFn: (e: Email) => e.status === "sent",
+      },
+      {
+        label: "Replied",
+        value: repliedCount,
+        icon: MessageSquare,
+        color: "#22c55e",
+        text: "text-green-600 dark:text-green-400",
+        bg: "bg-green-500/8 dark:bg-green-500/10",
+        iconBg: "bg-green-100 dark:bg-green-900/30",
+        border: "border-green-200/60 dark:border-green-800/30",
+        filterValue: "replied",
+        filterFn: (e: Email) => e.status === "replied",
+      },
+      {
+        label: "Bounced",
+        value: bouncedCount,
+        icon: XCircle,
+        color: "#ef4444",
+        text: "text-red-600 dark:text-red-400",
+        bg: "bg-red-500/8 dark:bg-red-500/10",
+        iconBg: "bg-red-100 dark:bg-red-900/30",
+        border: "border-red-200/60 dark:border-red-800/30",
+        filterValue: "bounced",
+        filterFn: (e: Email) => e.status === "bounced",
+      },
+      {
+        label: "Opened",
+        value: openedCount,
+        icon: Eye,
+        color: "#06b6d4",
+        text: "text-cyan-600 dark:text-cyan-400",
+        bg: "bg-cyan-500/8 dark:bg-cyan-500/10",
+        iconBg: "bg-cyan-100 dark:bg-cyan-900/30",
+        border: "border-cyan-200/60 dark:border-cyan-800/30",
+        filterValue: "opened",
+        filterFn: (e: Email) => e.status === "opened",
+      },
+      {
+        label: "Reply Rate",
+        value: `${replyRate}%`,
+        icon: MessageSquare,
+        color: "#10b981",
+        text: "text-emerald-600 dark:text-emerald-400",
+        bg: "bg-emerald-500/8 dark:bg-emerald-500/10",
+        iconBg: "bg-emerald-100 dark:bg-emerald-900/30",
+        border: "border-emerald-200/60 dark:border-emerald-800/30",
+        filterValue: "",
+        filterFn: (e: Email) => e.status === "replied",
+      },
+      {
+        label: "Hot Leads",
+        value: hotLeads,
+        icon: Flame,
+        color: "#f97316",
+        text: "text-orange-600 dark:text-orange-400",
+        bg: "bg-orange-500/8 dark:bg-orange-500/10",
+        iconBg: "bg-orange-100 dark:bg-orange-900/30",
+        border: "border-orange-200/60 dark:border-orange-800/30",
+        filterValue: "",
+        filterFn: (e: Email) => e.lead_classification === "hot",
+      },
+    ],
+    [totalEmails, sentCount, repliedCount, bouncedCount, openedCount, replyRate, hotLeads],
+  );
+
+  const sparklines = useMemo(() => {
+    return kpis.map((kpi) => {
+      const filtered = emails.filter(kpi.filterFn);
+      return generateSparkline(filtered, (e) => e.date_sent || e.created_at);
+    });
+  }, [emails, kpis]);
 
   return (
     <AppLayout>
@@ -236,15 +273,24 @@ export default function CampaignDetailPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => router.push("/campaigns")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={() => router.push("/campaigns")}
+            >
+              <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">{campaignName}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {totalEmails} email{totalEmails !== 1 ? "s" : ""} in this campaign
-              </p>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-lg font-bold text-primary">
+              {campaignInitial}
+            </div>
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-semibold text-foreground">{campaignName}</h1>
+              <div className="mt-0.5 flex items-center gap-2 text-sm text-muted-foreground">
+                <span>{uniqueCompanies} companies</span>
+                <span className="text-border">·</span>
+                <span>{totalEmails} leads</span>
+              </div>
             </div>
           </div>
           <DateRangePicker date={dateRangeFilter} onDateChange={setDateRangeFilter} />
@@ -254,29 +300,25 @@ export default function CampaignDetailPage() {
 
         {loading ? (
           <div className="space-y-6">
-            {/* KPI Cards */}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
+            {/* KPI Skeletons */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
               {Array.from({ length: 7 }).map((_, i) => (
                 <div key={i} className="overflow-hidden rounded-xl border border-border bg-card">
-                  <div className="px-4 pb-3 pt-4">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <Skeleton className="h-3 w-16" />
-                        <Skeleton className="h-7 w-10" />
-                      </div>
-                      <Skeleton className="h-4 w-4" />
-                    </div>
+                  <div className="flex items-center gap-2.5 px-4 pt-3.5">
+                    <Skeleton className="h-7 w-7 rounded-lg" />
+                    <Skeleton className="h-3 w-14" />
                   </div>
-                  <Skeleton className="h-0.5 w-full" />
+                  <div className="px-4 pt-2">
+                    <Skeleton className="h-7 w-10" />
+                  </div>
+                  <Skeleton className="mt-2 h-8 w-full" />
                 </div>
               ))}
             </div>
 
-            {/* Filters */}
-            <Skeleton className="h-12 w-full rounded-lg" />
+            <Skeleton className="h-10 w-full rounded-lg" />
 
-            {/* Table */}
-            <div className="rounded-lg border border-border bg-card">
+            <div className="rounded-xl border border-border bg-card">
               <div className="border-b border-border px-4 py-3">
                 <div className="flex items-center gap-4">
                   <Skeleton className="h-4 w-4" />
@@ -302,16 +344,22 @@ export default function CampaignDetailPage() {
         ) : (
           <>
             {/* KPI Cards */}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
-              {kpis.map((kpi) => {
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+              {kpis.map((kpi, idx) => {
                 const Icon = kpi.icon;
                 const isActive = statusFilter === kpi.filterValue && kpi.filterValue !== "";
                 return (
                   <div
                     key={kpi.label}
-                    className={`relative cursor-pointer overflow-hidden rounded-xl border border-border bg-card transition-all hover:shadow-md ${
-                      isActive ? "ring-2 ring-primary" : ""
-                    }`}
+                    className={`
+                      hover-lift sparkline-hover group
+                      relative cursor-pointer overflow-hidden rounded-xl border
+                      ${kpi.border} ${kpi.bg}
+                      backdrop-blur-sm
+                      animate-list-item
+                      ${isActive ? "ring-2 ring-primary/30" : ""}
+                    `}
+                    style={{ animationDelay: `${idx * 80}ms` }}
                     onClick={() => {
                       if (kpi.filterValue) {
                         setStatusFilter(isActive ? "" : kpi.filterValue);
@@ -320,18 +368,29 @@ export default function CampaignDetailPage() {
                       }
                     }}
                   >
-                    <div className="px-4 pb-3 pt-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                            {kpi.label}
-                          </p>
-                          <p className={`mt-1 text-2xl font-bold ${kpi.valueColor}`}>{kpi.value}</p>
+                    <div className="flex items-center justify-between px-4 pt-3.5">
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className={`flex h-7 w-7 items-center justify-center rounded-lg ${kpi.iconBg} transition-transform duration-300 group-hover:scale-110`}
+                        >
+                          <Icon className={`h-3.5 w-3.5 ${kpi.text}`} />
                         </div>
-                        <Icon className={`h-4 w-4 ${kpi.iconColor}`} />
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {kpi.label}
+                        </span>
                       </div>
                     </div>
-                    <div className={`h-0.5 w-full ${kpi.borderColor}`} />
+                    <div className="px-4 pt-1">
+                      <span
+                        className={`animate-value text-2xl font-bold tracking-tight ${kpi.text}`}
+                        style={{ animationDelay: `${idx * 80 + 200}ms` }}
+                      >
+                        {typeof kpi.value === "number" ? kpi.value.toLocaleString() : kpi.value}
+                      </span>
+                    </div>
+                    <div className="mt-1 h-8 px-1">
+                      <MiniSparkline data={sparklines[idx]} color={kpi.color} height={28} />
+                    </div>
                   </div>
                 );
               })}

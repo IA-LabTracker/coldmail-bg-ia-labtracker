@@ -74,6 +74,7 @@ export function EmailFiltersInputs({
           <SelectItem value="sent">Sent</SelectItem>
           <SelectItem value="replied">Replied</SelectItem>
           <SelectItem value="bounced">Bounced</SelectItem>
+          <SelectItem value="scheduled">Scheduled</SelectItem>
         </SelectContent>
       </Select>
 
@@ -105,6 +106,7 @@ export function EmailFiltersInputs({
           <SelectItem value="follow_1">Follow 1</SelectItem>
           <SelectItem value="follow_2">Follow 2</SelectItem>
           <SelectItem value="follow_3">Follow 3</SelectItem>
+          <SelectItem value="finished">Finished</SelectItem>
         </SelectContent>
       </Select>
 

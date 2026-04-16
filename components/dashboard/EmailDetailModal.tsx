@@ -51,6 +51,7 @@ const statusColors: Record<string, { bg: string; text: string }> = {
   replied: { bg: "bg-green-100", text: "text-green-800" },
   bounced: { bg: "bg-red-100", text: "text-red-800" },
   researched: { bg: "bg-yellow-100", text: "text-yellow-800" },
+  scheduled: { bg: "bg-amber-100", text: "text-amber-800" },
 };
 
 const classificationColors: Record<string, string> = {
@@ -323,6 +324,7 @@ export function EmailDetailModal({ email, senderEmails = [], open, onOpenChange,
                               <SelectItem value="follow_1">follow_1</SelectItem>
                               <SelectItem value="follow_2">follow_2</SelectItem>
                               <SelectItem value="follow_3">follow_3</SelectItem>
+                              <SelectItem value="finished">finished</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

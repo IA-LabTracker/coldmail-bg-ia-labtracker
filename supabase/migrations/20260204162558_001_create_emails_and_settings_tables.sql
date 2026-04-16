@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS emails (
   region text NOT NULL,
   industry text NOT NULL,
   keywords text [] DEFAULT '{}',
-  status text DEFAULT 'sent' CHECK (status IN ('sent', 'replied', 'bounced', 'opened', 'researched')),
+  status text DEFAULT 'sent' CHECK (status IN ('sent', 'replied', 'bounced', 'opened', 'researched', 'scheduled')),
   response_content text DEFAULT '',
   lead_classification text DEFAULT 'cold' CHECK (lead_classification IN ('hot', 'warm', 'cold')),
   client_status text DEFAULT '',

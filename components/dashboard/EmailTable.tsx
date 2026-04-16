@@ -20,6 +20,7 @@ export const statusColors: Record<string, { dot: string; text: string }> = {
   sent: { dot: "bg-blue-500", text: "text-blue-700 dark:text-blue-400" },
   replied: { dot: "bg-green-500", text: "text-green-700 dark:text-green-400" },
   bounced: { dot: "bg-red-500", text: "text-red-700 dark:text-red-400" },
+  scheduled: { dot: "bg-amber-500", text: "text-amber-700 dark:text-amber-400" },
 };
 
 export const classificationColors: Record<string, { dot: string; text: string }> = {
@@ -33,6 +34,7 @@ const clientStatusColors: Record<string, { dot: string; text: string }> = {
   follow_1: { dot: "bg-orange-500", text: "text-orange-700 dark:text-orange-400" },
   follow_2: { dot: "bg-amber-500", text: "text-amber-700 dark:text-amber-400" },
   follow_3: { dot: "bg-purple-500", text: "text-purple-700 dark:text-purple-400" },
+  finished: { dot: "bg-emerald-500", text: "text-emerald-700 dark:text-emerald-400" },
 };
 
 export function getClientStatusColor(clientStatus: string) {

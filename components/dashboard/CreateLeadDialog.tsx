@@ -367,6 +367,7 @@ export function CreateLeadDialog({
                               <SelectItem value="replied">Replied</SelectItem>
                               <SelectItem value="bounced">Bounced</SelectItem>
                               <SelectItem value="opened">Opened</SelectItem>
+                              <SelectItem value="scheduled">Scheduled</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -451,6 +452,7 @@ export function CreateLeadDialog({
                               <SelectItem value="follow_1">follow_1</SelectItem>
                               <SelectItem value="follow_2">follow_2</SelectItem>
                               <SelectItem value="follow_3">follow_3</SelectItem>
+                              <SelectItem value="finished">finished</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

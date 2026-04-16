@@ -85,6 +85,7 @@ const STATUS_COLORS: Record<string, string> = {
   opened: "hsl(199, 89%, 48%)",
   researched: "hsl(215, 16%, 47%)",
   bounced: "hsl(0, 70%, 55%)",
+  scheduled: "hsl(38, 92%, 50%)",
 };
 
 const CLASSIFICATION_COLORS: Record<string, string> = {

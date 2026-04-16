@@ -21,7 +21,7 @@ export interface Subscription {
   updated_at: string;
 }
 
-export type EmailStatus = "sent" | "replied" | "bounced" | "researched" | "opened";
+export type EmailStatus = "sent" | "replied" | "bounced" | "researched" | "opened" | "scheduled";
 export type LeadClassification = "hot" | "warm" | "cold";
 
 export type SenderEmailProvider = "manual" | "resend" | "zapmail" | "ses" | "mailgun" | "smtp";

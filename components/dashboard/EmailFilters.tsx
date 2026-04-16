@@ -34,6 +34,7 @@ const filterCategories: {
       { label: "Sent", value: "sent" },
       { label: "Replied", value: "replied" },
       { label: "Bounced", value: "bounced" },
+      { label: "Scheduled", value: "scheduled" },
     ],
   },
   {
@@ -53,6 +54,7 @@ const filterCategories: {
       { label: "Follow 1", value: "follow_1" },
       { label: "Follow 2", value: "follow_2" },
       { label: "Follow 3", value: "follow_3" },
+      { label: "Finished", value: "finished" },
     ],
   },
 ];

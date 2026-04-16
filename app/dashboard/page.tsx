@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Email } from "@/types";
 import { AppLayout } from "@/components/AppLayout";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, TableProperties } from "lucide-react";
@@ -66,8 +66,47 @@ export default function DashboardPage() {
         {error && <ErrorMessage message={error} />}
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <LoadingSpinner />
+          <div className="space-y-6">
+            {/* Tabs skeleton */}
+            <Skeleton className="h-10 w-80 max-w-md" />
+
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="overflow-hidden rounded-xl border border-border/50 bg-card">
+                  <div className="px-4 pt-3.5">
+                    <div className="flex items-center gap-2.5">
+                      <Skeleton className="h-7 w-7 rounded-lg" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                  </div>
+                  <div className="px-4 pt-2">
+                    <Skeleton className="h-7 w-14" />
+                  </div>
+                  <div className="px-1 pt-2 pb-0.5">
+                    <Skeleton className="h-8 w-full rounded-md" />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Charts bento grid */}
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-12 lg:col-span-4 space-y-4">
+                <Skeleton className="h-52 w-full rounded-xl" />
+                <Skeleton className="h-56 w-full rounded-xl" />
+              </div>
+              <div className="col-span-12 lg:col-span-8">
+                <Skeleton className="h-[27.5rem] w-full rounded-xl" />
+              </div>
+            </div>
+
+            {/* Bottom charts */}
+            <div className="grid grid-cols-12 gap-4">
+              <Skeleton className="col-span-12 md:col-span-6 lg:col-span-3 h-60 rounded-xl" />
+              <Skeleton className="col-span-12 md:col-span-6 lg:col-span-3 h-60 rounded-xl" />
+              <Skeleton className="col-span-12 lg:col-span-6 h-60 rounded-xl" />
+            </div>
           </div>
         ) : (
           <Tabs value={activeTab} onValueChange={handleTabChange} className="animate-section w-full" style={{ animationDelay: "100ms" }}>

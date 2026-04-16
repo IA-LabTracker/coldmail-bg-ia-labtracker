@@ -13,7 +13,7 @@ import { ImportStepReview } from "@/components/import/ImportStepReview";
 import { ImportStepConfirm } from "@/components/import/ImportStepConfirm";
 import { ImportNavigation } from "@/components/import/ImportNavigation";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { parseImportFile } from "@/lib/importParser";
 import { toast } from "sonner";
 
@@ -288,10 +288,31 @@ export default function ImportPage() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex flex-1 items-center justify-center gap-3"
+              className="flex flex-1 flex-col items-center justify-center gap-6 max-w-2xl mx-auto w-full"
             >
-              <LoadingSpinner />
-              <p className="text-sm text-muted-foreground">Processing file...</p>
+              <div className="w-full space-y-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <Skeleton className="h-5 w-5 rounded" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+                <Skeleton className="h-2 w-full rounded-full" />
+                <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-4 w-4" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 flex-1" />
+                  </div>
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Skeleton className="h-4 w-4" />
+                      <Skeleton className="h-3 w-20" />
+                      <Skeleton className="h-3 w-32" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground animate-pulse">Processing file...</p>
             </motion.div>
           ) : (
             <AnimatePresence mode="wait" custom={direction}>

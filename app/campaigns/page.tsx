@@ -9,7 +9,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { CampaignKPICards } from "@/components/campaigns/CampaignKPICards";
 import { CampaignList, groupEmailsByCampaign } from "@/components/campaigns/CampaignList";
 import { CampaignPageHeader } from "@/components/campaigns/CampaignPageHeader";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 
 export default function CampaignsPage() {
@@ -75,8 +75,33 @@ export default function CampaignsPage() {
         {error && <ErrorMessage message={error} />}
 
         {loading ? (
-          <div className="flex justify-center py-16">
-            <LoadingSpinner />
+          <div className="space-y-6">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-28 w-full rounded-lg" />
+              ))}
+            </div>
+
+            {/* Campaign list */}
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="rounded-xl border border-border bg-card p-5">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <Skeleton className="h-5 w-40" />
+                      <Skeleton className="h-3 w-60" />
+                    </div>
+                    <Skeleton className="h-8 w-20 rounded-md" />
+                  </div>
+                  <div className="mt-4 flex gap-6">
+                    {Array.from({ length: 5 }).map((_, j) => (
+                      <Skeleton key={j} className="h-3 w-16" />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <>

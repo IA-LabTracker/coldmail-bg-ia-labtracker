@@ -8,7 +8,7 @@ import { LinkedInTable } from "@/components/linkedin-table/LinkedInTable";
 import { LinkedInDetailModal } from "@/components/linkedin-table/LinkedInDetailModal";
 import { LinkedInBulkBar } from "@/components/linkedin-table/LinkedInBulkBar";
 import { LinkedInDeleteModals } from "@/components/linkedin-table/LinkedInDeleteModals";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { useLinkedInMessages } from "@/hooks/useLinkedInMessages";
@@ -86,8 +86,44 @@ export default function LinkedInTablePage() {
         {error && <ErrorMessage message={error} />}
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <LoadingSpinner />
+          <div className="space-y-6">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-24 w-full rounded-xl" />
+              ))}
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-wrap gap-3">
+              <Skeleton className="h-10 w-64 rounded-md" />
+              <Skeleton className="h-10 w-32 rounded-md" />
+              <Skeleton className="h-10 w-32 rounded-md" />
+            </div>
+
+            {/* Table */}
+            <div className="rounded-lg border border-border bg-card">
+              <div className="border-b border-border px-4 py-3">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-4 w-4" />
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              </div>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="border-b border-border px-4 py-3.5">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-4 w-4" />
+                    <Skeleton className="h-4 w-36" />
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <>
@@ -122,8 +158,15 @@ export default function LinkedInTablePage() {
                 isAllSelected={allSelected}
               />
               {hasMore && (
-                <div ref={sentinelRef} className="flex justify-center py-4">
-                  <LoadingSpinner />
+                <div ref={sentinelRef} className="space-y-1 px-4 py-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-4 py-2">
+                      <Skeleton className="h-4 w-4" />
+                      <Skeleton className="h-4 w-36" />
+                      <Skeleton className="h-4 w-48" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

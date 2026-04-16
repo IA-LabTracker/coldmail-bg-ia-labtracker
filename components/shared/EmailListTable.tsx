@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import {
   statusColors,
@@ -189,8 +189,15 @@ export function EmailListTable({
       </Table>
 
       {hasMore && (
-        <div ref={sentinelRef} className="flex justify-center py-4">
-          <LoadingSpinner />
+        <div ref={sentinelRef} className="space-y-1 px-4 py-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-4 py-2">
+              <Skeleton className="h-4 w-4" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          ))}
         </div>
       )}
     </div>

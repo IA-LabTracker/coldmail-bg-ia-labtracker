@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -52,8 +52,46 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <AppLayout>
-        <div className="flex justify-center py-12">
-          <LoadingSpinner />
+        <div className="relative min-h-screen">
+          {/* Cover */}
+          <Skeleton className="h-44 w-full rounded-none" />
+
+          <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+            {/* Avatar + name */}
+            <div className="-mt-16 flex items-end gap-6">
+              <Skeleton className="h-32 w-32 rounded-full border-4 border-background" />
+              <div className="mb-1.5 space-y-2">
+                <Skeleton className="h-7 w-48" />
+                <Skeleton className="h-4 w-36" />
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="mt-8 grid grid-cols-4 divide-x divide-border rounded-lg border border-border">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex flex-col items-center py-5">
+                  <Skeleton className="h-6 w-10" />
+                  <Skeleton className="mt-1.5 h-3 w-16" />
+                </div>
+              ))}
+            </div>
+
+            {/* Tabs */}
+            <div className="mt-8">
+              <Skeleton className="mb-6 h-10 w-80" />
+              <div className="rounded-lg border border-border p-6">
+                <Skeleton className="mb-6 h-4 w-40" />
+                <div className="grid gap-5 sm:grid-cols-2">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-10 w-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </AppLayout>
     );

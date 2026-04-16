@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useRef } from "react";
 import axios from "axios";
-import { Email, SenderEmail, SenderEmailPlatform } from "@/types";
+import { Email, SenderEmail } from "@/types";
 import { supabase } from "@/lib/supabase";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PlatformIndicator } from "@/components/sender-emails/PlatformIndicator";
@@ -17,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Send, Loader2, Shuffle, Mail } from "lucide-react";
+import { Send, Loader2, Shuffle, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -29,13 +29,17 @@ interface DispatchDialogProps {
   onDispatchComplete: () => void;
 }
 
-// lead ID → platform key
 type PlatformAssignment = Record<string, string>;
 
-interface PlatformGroup {
+interface DomainGroup {
+  domain: string;
+  senders: SenderEmail[];
+}
+
+interface PlatformData {
   platform: string;
   senders: SenderEmail[];
-  totalDailyLimit: number;
+  domains: DomainGroup[];
 }
 
 export function DispatchDialog({
@@ -47,12 +51,16 @@ export function DispatchDialog({
 }: DispatchDialogProps) {
   const [assignments, setAssignments] = useState<PlatformAssignment>({});
   const [checked, setChecked] = useState<Set<string>>(new Set());
+  // Set of sender IDs that are enabled for dispatch
+  const [enabledSenders, setEnabledSenders] = useState<Set<string>>(new Set());
+  // Which platform cards are expanded
+  const [expandedPlatforms, setExpandedPlatforms] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
   const [scheduleAt, setScheduleAt] = useState("");
 
-  // Available platforms (grouped from active senders)
-  const platforms = useMemo<PlatformGroup[]>(() => {
+  // Build platform groups with domain sub-groups
+  const platforms = useMemo<PlatformData[]>(() => {
     const map = new Map<string, SenderEmail[]>();
     for (const se of senderEmails) {
       if (se.status !== "active" || !se.platform || se.platform === "none") continue;
@@ -61,13 +69,33 @@ export function DispatchDialog({
       map.set(se.platform, list);
     }
     return Array.from(map.entries())
-      .map(([platform, senders]) => ({
-        platform,
-        senders,
-        totalDailyLimit: senders.reduce((sum, s) => sum + (s.daily_limit > 0 ? s.daily_limit : 0), 0),
-      }))
+      .map(([platform, senders]) => {
+        // Group senders by domain
+        const domainMap = new Map<string, SenderEmail[]>();
+        for (const s of senders) {
+          const d = s.domain || s.email_address.split("@")[1] || "other";
+          const list = domainMap.get(d) ?? [];
+          list.push(s);
+          domainMap.set(d, list);
+        }
+        const domains = Array.from(domainMap.entries())
+          .map(([domain, ds]) => ({ domain, senders: ds }))
+          .sort((a, b) => b.senders.length - a.senders.length);
+
+        return { platform, senders, domains };
+      })
       .sort((a, b) => b.senders.length - a.senders.length);
   }, [senderEmails]);
+
+  // Enabled senders per platform (for summary & dispatch)
+  const enabledByPlatform = useMemo(() => {
+    const map = new Map<string, SenderEmail[]>();
+    for (const pg of platforms) {
+      const enabled = pg.senders.filter((s) => enabledSenders.has(s.id));
+      if (enabled.length > 0) map.set(pg.platform, enabled);
+    }
+    return map;
+  }, [platforms, enabledSenders]);
 
   // Deduplicated leads
   const leads = useMemo(() => {
@@ -80,7 +108,7 @@ export function DispatchDialog({
     });
   }, [selectedEmails]);
 
-  // --- Selection (shift-click) ---
+  // --- Lead selection (shift-click) ---
   const lastClickedRef = useRef<number | null>(null);
   const allChecked = checked.size === leads.length && leads.length > 0;
   const someChecked = checked.size > 0 && !allChecked;
@@ -114,6 +142,43 @@ export function DispatchDialog({
     lastClickedRef.current = null;
   }, [allChecked, leads]);
 
+  // --- Sender enable/disable helpers ---
+  const toggleSender = useCallback((id: string) => {
+    setEnabledSenders((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleDomain = useCallback((senders: SenderEmail[]) => {
+    const ids = senders.map((s) => s.id);
+    const allEnabled = ids.every((id) => enabledSenders.has(id));
+    setEnabledSenders((prev) => {
+      const next = new Set(prev);
+      if (allEnabled) {
+        ids.forEach((id) => next.delete(id));
+      } else {
+        ids.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  }, [enabledSenders]);
+
+  const togglePlatformSenders = useCallback((pg: PlatformData) => {
+    const ids = pg.senders.map((s) => s.id);
+    const allEnabled = ids.every((id) => enabledSenders.has(id));
+    setEnabledSenders((prev) => {
+      const next = new Set(prev);
+      if (allEnabled) {
+        ids.forEach((id) => next.delete(id));
+      } else {
+        ids.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  }, [enabledSenders]);
+
   // --- Platform assignment helpers ---
   const assignPlatformToChecked = useCallback(
     (platform: string) => {
@@ -138,17 +203,20 @@ export function DispatchDialog({
   );
 
   const distributeAcrossPlatforms = useCallback(() => {
-    if (platforms.length === 0) return;
+    const availablePlatforms = platforms.filter((pg) =>
+      pg.senders.some((s) => enabledSenders.has(s.id)),
+    );
+    if (availablePlatforms.length === 0) return;
     const target = checked.size > 0 ? leads.filter((l) => checked.has(l.id)) : leads;
     setAssignments((prev) => {
       const next = { ...prev };
       target.forEach((lead, i) => {
-        next[lead.id] = platforms[i % platforms.length].platform;
+        next[lead.id] = availablePlatforms[i % availablePlatforms.length].platform;
       });
       return next;
     });
     setChecked(new Set());
-  }, [platforms, leads, checked]);
+  }, [platforms, leads, checked, enabledSenders]);
 
   // --- Summary ---
   const summary = useMemo(() => {
@@ -190,7 +258,6 @@ export function DispatchDialog({
 
     setLoading(true);
     try {
-      // Group leads by platform, then build dispatches with round-robin senders
       const platformLeads = new Map<string, Email[]>();
       for (const lead of leads) {
         const p = assignments[lead.id];
@@ -206,17 +273,17 @@ export function DispatchDialog({
       }> = [];
 
       for (const [platformKey, pLeads] of Array.from(platformLeads.entries())) {
-        const pg = platforms.find((p) => p.platform === platformKey);
-        if (!pg || pg.senders.length === 0) continue;
+        // Only use ENABLED senders for this platform
+        const activeSenders = enabledByPlatform.get(platformKey) ?? [];
+        if (activeSenders.length === 0) continue;
 
-        // Round-robin leads across senders within the platform
         const senderBuckets = new Map<string, { sender: SenderEmail; emails: Email[] }>();
-        for (const s of pg.senders) {
+        for (const s of activeSenders) {
           senderBuckets.set(s.id, { sender: s, emails: [] });
         }
 
         pLeads.forEach((lead, i) => {
-          const sender = pg.senders[i % pg.senders.length];
+          const sender = activeSenders[i % activeSenders.length];
           senderBuckets.get(sender.id)!.emails.push(lead);
         });
 
@@ -236,6 +303,12 @@ export function DispatchDialog({
             emails: bucket.emails,
           });
         }
+      }
+
+      if (dispatches.length === 0) {
+        toast.error("Nenhum remetente habilitado para as plataformas selecionadas.");
+        setLoading(false);
+        return;
       }
 
       const first = dispatches[0];
@@ -261,11 +334,10 @@ export function DispatchDialog({
           .in("id", ids);
       }
 
-      const platformCount = platformLeads.size;
       toast.success(
-        platformCount > 1
-          ? `${leads.length} leads distribuídos entre ${platformCount} plataformas`
-          : `${leads.length} leads enviados via ${first.platform}`,
+        dispatches.length > 1
+          ? `${leads.length} leads distribuídos entre ${dispatches.length} remetentes`
+          : `${leads.length} leads enviados via ${first.sender_email.email_address}`,
       );
       onOpenChange(false);
       onDispatchComplete();
@@ -280,10 +352,21 @@ export function DispatchDialog({
   const handleOpenChange = (v: boolean) => {
     if (v) {
       setChecked(new Set());
+      // Enable all senders by default
+      const allIds = new Set(platforms.flatMap((pg) => pg.senders.map((s) => s.id)));
+      setEnabledSenders(allIds);
+      // Expand all platforms
+      setExpandedPlatforms(new Set(platforms.map((pg) => pg.platform)));
+      // Auto-assign
       if (platforms.length === 1) {
         assignAllToPlatform(platforms[0].platform);
       } else if (platforms.length > 1) {
-        distributeAcrossPlatforms();
+        // Distribute round-robin
+        const map: PlatformAssignment = {};
+        leads.forEach((lead, i) => {
+          map[lead.id] = platforms[i % platforms.length].platform;
+        });
+        setAssignments(map);
       } else {
         setAssignments({});
       }
@@ -293,65 +376,130 @@ export function DispatchDialog({
     onOpenChange(v);
   };
 
+  const toggleExpanded = useCallback((platform: string) => {
+    setExpandedPlatforms((prev) => {
+      const next = new Set(prev);
+      if (next.has(platform)) next.delete(platform); else next.add(platform);
+      return next;
+    });
+  }, []);
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col gap-3">
         <DialogHeader>
           <DialogTitle>Configurar disparo</DialogTitle>
           <DialogDescription>
-            Atribua leads a plataformas. Os e-mails de remetente rotacionam automaticamente dentro de cada plataforma.
+            Escolha quais remetentes usar em cada plataforma, depois atribua os leads.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Platform cards — show available platforms with sender count */}
-        <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(platforms.length, 3)}, 1fr)` }}>
+        {/* Platform cards with sender selection */}
+        <div className="space-y-2 max-h-[200px] overflow-y-auto">
           {platforms.map((pg) => {
-            const assignedCount = Array.from(summary.groups.entries())
-              .filter(([k]) => k === pg.platform)
-              .reduce((s, [, c]) => s + c, 0);
+            const enabledCount = pg.senders.filter((s) => enabledSenders.has(s.id)).length;
+            const allEnabled = enabledCount === pg.senders.length;
+            const someEnabled = enabledCount > 0 && !allEnabled;
+            const isExpanded = expandedPlatforms.has(pg.platform);
+            const assignedCount = summary.groups.get(pg.platform) ?? 0;
+            const enabledLimit = pg.senders
+              .filter((s) => enabledSenders.has(s.id))
+              .reduce((sum, s) => sum + (s.daily_limit > 0 ? s.daily_limit : 0), 0);
 
             return (
-              <div
-                key={pg.platform}
-                className={cn(
-                  "rounded-lg border p-3 transition-colors cursor-pointer",
-                  assignedCount > 0
-                    ? "border-primary/40 bg-primary/5"
-                    : "border-border bg-card hover:border-border/80",
-                )}
-                onClick={() => {
-                  if (checked.size > 0) assignPlatformToChecked(pg.platform);
-                  else assignAllToPlatform(pg.platform);
-                }}
-              >
-                <div className="flex items-center justify-between">
+              <div key={pg.platform} className="rounded-lg border border-border overflow-hidden">
+                {/* Platform header */}
+                <div
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-colors",
+                    assignedCount > 0 ? "bg-primary/5" : "bg-card hover:bg-muted/30",
+                  )}
+                  onClick={() => toggleExpanded(pg.platform)}
+                >
+                  <Checkbox
+                    checked={allEnabled ? true : someEnabled ? "indeterminate" : false}
+                    onCheckedChange={() => togglePlatformSenders(pg)}
+                    className="h-3.5 w-3.5"
+                    onClick={(e) => e.stopPropagation()}
+                  />
                   <PlatformIndicator platform={pg.platform} size="md" />
-                  {assignedCount > 0 && (
-                    <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-primary-foreground">
-                      {assignedCount}
-                    </span>
-                  )}
-                </div>
-                <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Mail className="h-3 w-3" />
-                    {pg.senders.length} remetente{pg.senders.length > 1 ? "s" : ""}
+                  <span className="text-[11px] text-muted-foreground">
+                    {enabledCount}/{pg.senders.length} emails
                   </span>
-                  {pg.totalDailyLimit > 0 && (
-                    <span>{pg.totalDailyLimit}/dia</span>
-                  )}
-                </div>
-                <div className="mt-1.5 flex flex-wrap gap-1">
-                  {pg.senders.map((se) => (
-                    <span
-                      key={se.id}
-                      className="truncate rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
-                      title={se.email_address}
-                    >
-                      {se.email_address.split("@")[0]}
+                  {enabledLimit > 0 && (
+                    <span className="text-[11px] text-muted-foreground">
+                      · {enabledLimit}/dia
                     </span>
-                  ))}
+                  )}
+                  {assignedCount > 0 && (
+                    <span className="ml-auto rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-primary-foreground">
+                      {assignedCount} leads
+                    </span>
+                  )}
+                  <ChevronDown
+                    className={cn(
+                      "h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform",
+                      isExpanded && "rotate-180",
+                      assignedCount > 0 && "ml-0",
+                      assignedCount === 0 && "ml-auto",
+                    )}
+                  />
                 </div>
+
+                {/* Expanded: senders grouped by domain */}
+                {isExpanded && (
+                  <div className="border-t border-border bg-muted/10 px-3 py-2 space-y-2">
+                    {pg.domains.map((dg) => {
+                      const domainAllEnabled = dg.senders.every((s) => enabledSenders.has(s.id));
+                      const domainSomeEnabled = !domainAllEnabled && dg.senders.some((s) => enabledSenders.has(s.id));
+
+                      return (
+                        <div key={dg.domain}>
+                          {/* Domain header */}
+                          <div
+                            className="flex items-center gap-2 cursor-pointer mb-1"
+                            onClick={() => toggleDomain(dg.senders)}
+                          >
+                            <Checkbox
+                              checked={domainAllEnabled ? true : domainSomeEnabled ? "indeterminate" : false}
+                              onCheckedChange={() => toggleDomain(dg.senders)}
+                              className="h-3 w-3"
+                            />
+                            <span className="text-[11px] font-semibold text-muted-foreground">
+                              @{dg.domain}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground/60">
+                              {dg.senders.filter((s) => enabledSenders.has(s.id)).length}/{dg.senders.length}
+                            </span>
+                          </div>
+
+                          {/* Sender emails */}
+                          <div className="flex flex-wrap gap-1 pl-5">
+                            {dg.senders.map((se) => {
+                              const isOn = enabledSenders.has(se.id);
+                              return (
+                                <button
+                                  key={se.id}
+                                  type="button"
+                                  className={cn(
+                                    "rounded px-1.5 py-0.5 text-[11px] transition-colors border",
+                                    isOn
+                                      ? "border-primary/30 bg-primary/10 text-foreground"
+                                      : "border-transparent bg-muted/50 text-muted-foreground/50 line-through",
+                                  )}
+                                  onClick={() => toggleSender(se.id)}
+                                  title={`${se.email_address}${se.daily_limit > 0 ? ` · ${se.daily_limit}/dia` : ""}`}
+                                >
+                                  {se.email_address.split("@")[0]}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -372,6 +520,7 @@ export function DispatchDialog({
                   size="sm"
                   className="h-7 gap-1.5 text-xs"
                   onClick={() => assignPlatformToChecked(pg.platform)}
+                  disabled={!enabledByPlatform.has(pg.platform)}
                 >
                   <PlatformIndicator platform={pg.platform} />
                 </Button>
@@ -385,7 +534,7 @@ export function DispatchDialog({
                 size="sm"
                 className="h-7 gap-1.5 text-xs"
                 onClick={distributeAcrossPlatforms}
-                disabled={platforms.length === 0}
+                disabled={enabledByPlatform.size === 0}
               >
                 <Shuffle className="h-3 w-3" />
                 Distribuir
@@ -397,6 +546,7 @@ export function DispatchDialog({
                   size="sm"
                   className="h-7 gap-1.5 text-xs"
                   onClick={() => assignAllToPlatform(pg.platform)}
+                  disabled={!enabledByPlatform.has(pg.platform)}
                 >
                   Todos →
                   <PlatformIndicator platform={pg.platform} />
@@ -408,7 +558,6 @@ export function DispatchDialog({
 
         {/* Lead list */}
         <div className="flex-1 overflow-y-auto min-h-0 -mx-6 px-6">
-          {/* Header */}
           <div className="flex items-center gap-3 border-b border-border px-3 pb-2 mb-1 sticky top-0 bg-dialog z-10">
             <Checkbox
               checked={allChecked ? true : someChecked ? "indeterminate" : false}
@@ -445,7 +594,6 @@ export function DispatchDialog({
                     onCheckedChange={() => handleToggle(lead.id, false)}
                     className="h-3.5 w-3.5"
                   />
-
                   <div
                     className="min-w-0 flex-1 cursor-pointer select-none"
                     onClick={(e) => handleToggle(lead.id, e.shiftKey)}
@@ -463,18 +611,17 @@ export function DispatchDialog({
                       )}
                     </p>
                   </div>
-
-                  {/* Platform indicator (click to cycle) */}
                   <div className="w-[140px] shrink-0 flex justify-end">
                     {assignedPlatform ? (
                       <button
                         type="button"
                         className="flex items-center gap-1.5 rounded-md border border-border bg-card px-2 py-1 text-xs transition-colors hover:bg-muted"
                         onClick={() => {
-                          // Cycle to next platform
-                          const currentIdx = platforms.findIndex((p) => p.platform === assignedPlatform);
-                          const nextIdx = (currentIdx + 1) % platforms.length;
-                          setAssignments((prev) => ({ ...prev, [lead.id]: platforms[nextIdx].platform }));
+                          const available = platforms.filter((p) => enabledByPlatform.has(p.platform));
+                          if (available.length === 0) return;
+                          const idx = available.findIndex((p) => p.platform === assignedPlatform);
+                          const next = available[(idx + 1) % available.length].platform;
+                          setAssignments((prev) => ({ ...prev, [lead.id]: next }));
                         }}
                       >
                         <PlatformIndicator platform={assignedPlatform} />
@@ -501,14 +648,14 @@ export function DispatchDialog({
               </span>
             )}
             {Array.from(summary.groups.entries()).map(([platformKey, count]) => {
-              const pg = platforms.find((p) => p.platform === platformKey);
+              const enabled = enabledByPlatform.get(platformKey) ?? [];
               return (
                 <span key={platformKey} className="flex items-center gap-1.5 text-muted-foreground">
                   <span className="font-medium text-foreground">{count}</span>
                   →
                   <PlatformIndicator platform={platformKey} />
                   <span className="text-muted-foreground/60">
-                    ({pg?.senders.length ?? 0} email{(pg?.senders.length ?? 0) > 1 ? "s" : ""})
+                    ({enabled.length} email{enabled.length > 1 ? "s" : ""})
                   </span>
                 </span>
               );
@@ -544,30 +691,18 @@ export function DispatchDialog({
               />
             )}
           </div>
-
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
-            >
+            <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={loading}>
               Cancelar
             </Button>
             <Button
               size="sm"
               className="gap-2"
               onClick={handleDispatch}
-              disabled={loading || summary.unassigned > 0}
+              disabled={loading || summary.unassigned > 0 || enabledByPlatform.size === 0}
             >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-              {loading
-                ? "Enviando..."
-                : `Disparar ${leads.length} lead${leads.length > 1 ? "s" : ""}`}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {loading ? "Enviando..." : `Disparar ${leads.length} lead${leads.length > 1 ? "s" : ""}`}
             </Button>
           </div>
         </DialogFooter>

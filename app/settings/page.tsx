@@ -4,7 +4,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { ConnectionStep } from "@/components/linkedin/ConnectionStep";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SectionHeader } from "@/components/settings/SectionHeader";
 import { FeedbackAlert } from "@/components/settings/FeedbackAlert";
 import { WebhooksSection } from "@/components/settings/WebhooksSection";
@@ -22,8 +22,53 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <AppLayout>
-        <div className="flex justify-center py-12">
-          <LoadingSpinner />
+        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8 space-y-10">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-7 w-32" />
+            <Skeleton className="h-9 w-16 rounded-md" />
+          </div>
+
+          {/* Webhooks section */}
+          <div className="space-y-4">
+            <Skeleton className="h-5 w-24" />
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
+            </div>
+          </div>
+
+          {/* LinkedIn section */}
+          <div className="space-y-4">
+            <Skeleton className="h-5 w-36" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+          </div>
+
+          {/* Email template section */}
+          <div className="space-y-4">
+            <Skeleton className="h-5 w-32" />
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-40 w-full rounded-md" />
+              </div>
+              <div className="flex gap-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-7 w-20 rounded-full" />
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </AppLayout>
     );

@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   CheckCircle,
   AlertCircle,
@@ -250,8 +250,18 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
         )}
 
         {loadingAccounts ? (
-          <div className="flex items-center justify-center py-4">
-            <LoadingSpinner />
+          <div className="space-y-2 py-2">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="rounded-lg border border-border p-3">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-3 w-36" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : activeAccounts.length > 0 ? (
           <div className="space-y-2">
@@ -312,7 +322,7 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
                           size="sm"
                           className="text-xs text-red-500 hover:bg-red-50 hover:text-red-600"
                         >
-                          {loading ? <LoadingSpinner /> : "Remover"}
+                          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Remover"}
                         </Button>
                       )}
                     </div>
@@ -337,7 +347,7 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
             className="flex-1 gap-2"
             size="sm"
           >
-            {loading ? <LoadingSpinner /> : <LinkIcon className="h-4 w-4" />}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LinkIcon className="h-4 w-4" />}
             {activeAccounts.length > 0 ? "Conectar outra conta" : "Conectar LinkedIn"}
           </Button>
           {accounts.length > 0 && (

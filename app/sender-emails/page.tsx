@@ -2,12 +2,13 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { Plus } from "lucide-react";
-import { SenderEmail, Email } from "@/types";
+import { SenderEmail, Email, EmailTemplate } from "@/types";
 import {
   useSenderEmails,
   CreateSenderEmailInput,
   UpdateSenderEmailInput,
 } from "@/hooks/useSenderEmails";
+import { useTemplates } from "@/hooks/useTemplates";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { AppLayout } from "@/components/AppLayout";
@@ -18,8 +19,13 @@ import {
   SenderEmailGroup,
 } from "@/components/sender-emails/SenderEmailListItem";
 import { CreateSenderEmailDialog } from "@/components/sender-emails/CreateSenderEmailDialog";
+import { resolveTemplateForSender } from "@/lib/resolveTemplate";
 
-function buildSenderEmailGroups(senderEmails: SenderEmail[], emails: Email[]): SenderEmailGroup[] {
+function buildSenderEmailGroups(
+  senderEmails: SenderEmail[],
+  emails: Email[],
+  templates: EmailTemplate[],
+): SenderEmailGroup[] {
   const emailsBySender = new Map<string, Email[]>();
   for (const email of emails) {
     if (!email.sender_email_id) continue;
@@ -37,6 +43,7 @@ function buildSenderEmailGroups(senderEmails: SenderEmail[], emails: Email[]): S
       replied: seEmails.filter((e) => e.status === "replied").length,
       bounced: seEmails.filter((e) => e.status === "bounced").length,
       opened: seEmails.filter((e) => e.status === "opened").length,
+      template: resolveTemplateForSender(se.platform, templates),
     };
   });
 }
@@ -51,6 +58,7 @@ export default function SenderEmailsPage() {
     deleteSenderEmail,
     setDefault,
   } = useSenderEmails();
+  const { templates, loading: templatesLoading } = useTemplates();
 
   const [emails, setEmails] = useState<Email[]>([]);
   const [emailsLoading, setEmailsLoading] = useState(true);
@@ -72,8 +80,8 @@ export default function SenderEmailsPage() {
   }, [user]);
 
   const groups = useMemo(
-    () => buildSenderEmailGroups(senderEmails, emails),
-    [senderEmails, emails],
+    () => buildSenderEmailGroups(senderEmails, emails, templates),
+    [senderEmails, emails, templates],
   );
 
   const handleOpenCreate = useCallback(() => {
@@ -116,7 +124,7 @@ export default function SenderEmailsPage() {
   );
 
   const defaultEmail = senderEmails.find((se) => se.is_default);
-  const isLoading = loading || emailsLoading;
+  const isLoading = loading || emailsLoading || templatesLoading;
 
   // Platform stats
   const platformCounts = senderEmails.reduce(

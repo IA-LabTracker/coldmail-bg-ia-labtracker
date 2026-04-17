@@ -196,6 +196,34 @@
       0 0 0 1px hsl(var(--primary) / 0.08),
       0 4px 16px -4px hsl(var(--primary) / 0.15);
   }
+
+  /* Rendered email template HTML */
+  .template-preview-body p {
+    margin: 0 0 0.75em;
+  }
+  .template-preview-body p:last-child {
+    margin-bottom: 0;
+  }
+  .template-preview-body strong,
+  .template-preview-body b {
+    font-weight: 600;
+  }
+  .template-preview-body a {
+    color: hsl(var(--primary));
+    text-decoration: underline;
+  }
+  .template-preview-body br {
+    display: block;
+    content: "";
+  }
+  .template-preview-body ul,
+  .template-preview-body ol {
+    margin: 0 0 0.75em;
+    padding-left: 1.25em;
+  }
+  .template-preview-body li {
+    margin: 0.15em 0;
+  }
 }
 
 @keyframes fade-up {

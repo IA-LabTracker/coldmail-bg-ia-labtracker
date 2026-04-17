@@ -16,15 +16,18 @@ import { EmailFilters } from "@/components/dashboard/EmailFilters";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { SenderEmailDispatchBar } from "@/components/sender-emails/SenderEmailDispatchBar";
 import { useEmailSelection } from "@/hooks/useEmailSelection";
-import { ArrowLeft, Mail, Send, MessageSquare, Flame, Eye, XCircle, Users } from "lucide-react";
+import { useTemplates } from "@/hooks/useTemplates";
+import { ArrowLeft, Mail, Send, MessageSquare, Flame, Eye, XCircle, Users, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PlatformIndicator } from "@/components/sender-emails/PlatformIndicator";
+import { resolveTemplateForSender } from "@/lib/resolveTemplate";
 
 export default function SenderEmailDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
   const senderEmailId = params.id as string;
+  const { templates } = useTemplates();
 
   const [senderEmail, setSenderEmail] = useState<SenderEmail | null>(null);
   const [emails, setEmails] = useState<Email[]>([]);
@@ -231,6 +234,10 @@ export default function SenderEmailDetailPage() {
     senderEmail?.platform && senderEmail.platform !== "none"
       ? senderEmail.platform
       : null;
+  const resolvedTemplate = useMemo(
+    () => resolveTemplateForSender(senderEmail?.platform, templates),
+    [senderEmail?.platform, templates],
+  );
 
   return (
     <AppLayout>
@@ -262,6 +269,25 @@ export default function SenderEmailDetailPage() {
                 <span className="mx-1.5 text-border">·</span>
                 {totalEmails} lead{totalEmails !== 1 ? "s" : ""} assigned
               </p>
+              {senderEmail && (
+                <button
+                  type="button"
+                  onClick={() => router.push("/templates")}
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:border-primary/30 hover:bg-muted hover:text-foreground"
+                  title={
+                    resolvedTemplate
+                      ? `Template: ${resolvedTemplate.name}${resolvedTemplate.subject ? ` — ${resolvedTemplate.subject}` : ""}`
+                      : "No template assigned — click to create one"
+                  }
+                >
+                  <FileText className="h-3 w-3 shrink-0" />
+                  <span className="max-w-[260px] truncate">
+                    {resolvedTemplate
+                      ? `Template: ${resolvedTemplate.name}`
+                      : "No template assigned"}
+                  </span>
+                </button>
+              )}
             </div>
           </div>
           <DateRangePicker date={dateRangeFilter} onDateChange={setDateRangeFilter} />

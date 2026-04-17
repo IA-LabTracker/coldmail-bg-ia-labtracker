@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { MoreHorizontal } from "lucide-react";
-import { SenderEmail, SenderEmailStatus } from "@/types";
+import { FileText, MoreHorizontal } from "lucide-react";
+import { EmailTemplate, SenderEmail, SenderEmailStatus } from "@/types";
 import { formatDate } from "@/lib/formatDate";
 import {
   DropdownMenu,
@@ -19,6 +19,7 @@ export interface SenderEmailGroup {
   replied: number;
   bounced: number;
   opened: number;
+  template: EmailTemplate | null;
 }
 
 interface SenderEmailListItemProps {
@@ -141,7 +142,7 @@ export function SenderEmailListItem({
             </>
           )}
         </p>
-        {/* Platform + Status badges */}
+        {/* Platform + Status + Template badges */}
         <div className="mt-2 flex flex-wrap items-center gap-2.5">
           {platform && <PlatformIndicator platform={platform} />}
           <span
@@ -150,6 +151,24 @@ export function SenderEmailListItem({
             <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
             {senderEmail.status}
           </span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push("/templates");
+            }}
+            className="inline-flex max-w-[220px] items-center gap-1 rounded-md border border-border bg-muted/40 px-1.5 py-0.5 text-[11px] text-muted-foreground transition-colors hover:border-primary/30 hover:bg-muted hover:text-foreground"
+            title={
+              group.template
+                ? `Template: ${group.template.name}`
+                : "No template assigned — click to create one"
+            }
+          >
+            <FileText className="h-3 w-3 shrink-0" />
+            <span className="truncate">
+              {group.template ? group.template.name : "No template"}
+            </span>
+          </button>
         </div>
       </div>
 

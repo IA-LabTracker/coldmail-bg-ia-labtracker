@@ -355,7 +355,7 @@ export function DispatchDialog({
       // Enable all senders by default
       const allIds = new Set(platforms.flatMap((pg) => pg.senders.map((s) => s.id)));
       setEnabledSenders(allIds);
-      // Expand all platforms
+      // Expand all platforms so senders are visible immediately
       setExpandedPlatforms(new Set(platforms.map((pg) => pg.platform)));
       // Auto-assign
       if (platforms.length === 1) {
@@ -386,7 +386,7 @@ export function DispatchDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col gap-3">
+      <DialogContent className="max-w-3xl h-[90vh] flex flex-col gap-3">
         <DialogHeader>
           <DialogTitle>Configurar disparo</DialogTitle>
           <DialogDescription>
@@ -395,7 +395,7 @@ export function DispatchDialog({
         </DialogHeader>
 
         {/* Platform cards with sender selection */}
-        <div className="space-y-2 max-h-[200px] overflow-y-auto">
+        <div className="shrink-0 space-y-2 max-h-[40vh] overflow-y-auto pr-1.5 -mr-1.5">
           {platforms.map((pg) => {
             const enabledCount = pg.senders.filter((s) => enabledSenders.has(s.id)).length;
             const allEnabled = enabledCount === pg.senders.length;
@@ -411,7 +411,7 @@ export function DispatchDialog({
                 {/* Platform header */}
                 <div
                   className={cn(
-                    "flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-colors",
+                    "flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-colors",
                     assignedCount > 0 ? "bg-primary/5" : "bg-card hover:bg-muted/30",
                   )}
                   onClick={() => toggleExpanded(pg.platform)}
@@ -431,19 +431,19 @@ export function DispatchDialog({
                       · {enabledLimit}/dia
                     </span>
                   )}
-                  {assignedCount > 0 && (
-                    <span className="ml-auto rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-primary-foreground">
-                      {assignedCount} leads
-                    </span>
-                  )}
-                  <ChevronDown
-                    className={cn(
-                      "h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform",
-                      isExpanded && "rotate-180",
-                      assignedCount > 0 && "ml-0",
-                      assignedCount === 0 && "ml-auto",
+                  <div className="ml-auto flex items-center gap-2">
+                    {assignedCount > 0 && (
+                      <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-primary-foreground">
+                        {assignedCount} leads
+                      </span>
                     )}
-                  />
+                    <ChevronDown
+                      className={cn(
+                        "h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform",
+                        isExpanded && "rotate-180",
+                      )}
+                    />
+                  </div>
                 </div>
 
                 {/* Expanded: senders grouped by domain */}
@@ -482,7 +482,7 @@ export function DispatchDialog({
                                   key={se.id}
                                   type="button"
                                   className={cn(
-                                    "rounded px-1.5 py-0.5 text-[11px] transition-colors border",
+                                    "rounded px-2 py-1 text-[11px] transition-colors border",
                                     isOn
                                       ? "border-primary/30 bg-primary/10 text-foreground"
                                       : "border-transparent bg-muted/50 text-muted-foreground/50 line-through",
@@ -506,7 +506,7 @@ export function DispatchDialog({
         </div>
 
         {/* Action bar */}
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
+        <div className="shrink-0 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
           {checked.size > 0 ? (
             <>
               <span className="text-xs font-semibold text-foreground">
@@ -637,7 +637,7 @@ export function DispatchDialog({
         </div>
 
         {/* Summary */}
-        <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+        <div className="shrink-0 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
             <span className="font-medium text-foreground">
               {leads.length} lead{leads.length > 1 ? "s" : ""}

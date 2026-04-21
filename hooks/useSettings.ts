@@ -12,7 +12,6 @@ export type FeedbackMessage = { type: "success" | "error"; text: string } | null
 
 const settingsSchema = z.object({
   webhookUrl: z.string().url("Enter a valid URL").or(z.literal("")),
-  emailTemplate: z.string().optional(),
   linkedinWebhookUrl: z.string().url("Enter a valid URL").or(z.literal("")),
 });
 
@@ -28,7 +27,7 @@ export function useSettings() {
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
-    defaultValues: { webhookUrl: "", emailTemplate: "", linkedinWebhookUrl: "" },
+    defaultValues: { webhookUrl: "", linkedinWebhookUrl: "" },
   });
 
   const fetchLinkedInAccount = useCallback(
@@ -71,7 +70,6 @@ export function useSettings() {
           setSettings(data);
           form.reset({
             webhookUrl: data.webhook_url || "",
-            emailTemplate: data.email_template || "",
             linkedinWebhookUrl: data.linkedin_webhook_url || "",
           });
         } else {
@@ -115,7 +113,6 @@ export function useSettings() {
         .from("settings")
         .update({
           webhook_url: values.webhookUrl,
-          email_template: values.emailTemplate,
           linkedin_webhook_url: values.linkedinWebhookUrl,
         })
         .eq("user_id", user.id);
@@ -130,11 +127,6 @@ export function useSettings() {
     }
   };
 
-  const insertVariable = (variable: string) => {
-    const current = form.getValues("emailTemplate") || "";
-    form.setValue("emailTemplate", current + variable, { shouldDirty: true });
-  };
-
   return {
     loading,
     feedback,
@@ -142,6 +134,5 @@ export function useSettings() {
     linkedinAccountId,
     setLinkedinAccountId,
     onSubmit,
-    insertVariable,
   };
 }

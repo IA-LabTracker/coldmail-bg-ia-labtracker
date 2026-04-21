@@ -8,12 +8,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SectionHeader } from "@/components/settings/SectionHeader";
 import { FeedbackAlert } from "@/components/settings/FeedbackAlert";
 import { WebhooksSection } from "@/components/settings/WebhooksSection";
-import { EmailTemplateSection } from "@/components/settings/EmailTemplateSection";
 import { useSettings } from "@/hooks/useSettings";
 import { Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
-  const { loading, feedback, form, linkedinAccountId, setLinkedinAccountId, onSubmit, insertVariable } =
+  const { loading, feedback, form, linkedinAccountId, setLinkedinAccountId, onSubmit } =
     useSettings();
 
   const webhookUrl = form.watch("webhookUrl");
@@ -49,26 +48,6 @@ export default function SettingsPage() {
             <Skeleton className="h-5 w-36" />
             <Skeleton className="h-24 w-full rounded-xl" />
           </div>
-
-          {/* Email template section */}
-          <div className="space-y-4">
-            <Skeleton className="h-5 w-32" />
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-10 w-full rounded-md" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-40 w-full rounded-md" />
-              </div>
-              <div className="flex gap-2">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-7 w-20 rounded-full" />
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
       </AppLayout>
     );
@@ -103,8 +82,6 @@ export default function SettingsPage() {
                 />
               </div>
             </section>
-
-            <EmailTemplateSection control={form.control} onInsertVariable={insertVariable} />
           </form>
         </Form>
       </div>

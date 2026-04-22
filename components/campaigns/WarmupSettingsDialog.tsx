@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, CalendarDays, Flame, Info, Loader2, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { SenderWarmup } from "@/types";
 import {
   Dialog,
@@ -26,9 +26,8 @@ interface WarmupSettingsDialogProps {
   onSave: (values: Required<WarmupSettingsInput>) => Promise<void>;
 }
 
-// Defaults tuned to the cold-email industry rule of thumb:
-// — day 1: 5 emails, +1/day → hits 15 (optimal) around day 11
-// — gives a gentle 14-day ramp as recommended for new mailboxes
+// Defaults tuned to industry rule-of-thumb: 5 → +1/day reaches 15 (optimal)
+// around day 11, giving a gentle 14-day ramp for new mailboxes.
 const DEFAULTS: Required<WarmupSettingsInput> = {
   start_volume: 5,
   increment_per_day: 1,
@@ -38,36 +37,44 @@ const DEFAULTS: Required<WarmupSettingsInput> = {
   bounce_window_hours: 24,
 };
 
-const TONE_CLASSES: Record<"emerald" | "blue" | "amber" | "red", string> = {
-  emerald: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  blue: "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400",
-  amber: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
-  red: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400",
-};
-
 function Section({
-  icon,
   title,
   description,
   children,
 }: {
-  icon: React.ReactNode;
   title: string;
-  description: string;
+  description?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card/50 p-4">
-      <div className="mb-3 flex items-start gap-3">
-        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-background text-muted-foreground">
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <h4 className="text-sm font-semibold text-foreground">{title}</h4>
-          <p className="text-xs text-muted-foreground">{description}</p>
-        </div>
+    <section className="border-t border-border pt-5 first:border-t-0 first:pt-0">
+      <div className="mb-3">
+        <h4 className="text-sm font-medium text-foreground">{title}</h4>
+        {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
       </div>
       <div className="space-y-3">{children}</div>
+    </section>
+  );
+}
+
+function InlineToggle({
+  label,
+  description,
+  checked,
+  onCheckedChange,
+}: {
+  label: string;
+  description: string;
+  checked: boolean;
+  onCheckedChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2.5">
+      <div className="min-w-0">
+        <p className="text-sm text-foreground">{label}</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
     </div>
   );
 }
@@ -114,7 +121,15 @@ export function WarmupSettingsDialog({
 
   const risk = classifyDailyLimit(dailyLimit);
   const rampDays = daysToReach(startVolume, increment, dailyLimit);
-  const rampTooFast = Number.isFinite(rampDays) && rampDays < WARMUP_LIMITS.MIN_WARMUP_DAYS;
+  const rampTooFast =
+    Number.isFinite(rampDays) && rampDays < WARMUP_LIMITS.MIN_WARMUP_DAYS && increment > 0;
+
+  const riskLabelTone = {
+    safe: "text-muted-foreground",
+    optimal: "text-foreground",
+    risky: "text-amber-600 dark:text-amber-400",
+    very_risky: "text-red-600 dark:text-red-400",
+  }[risk.level];
 
   const handleSave = async () => {
     if (error) return;
@@ -135,21 +150,18 @@ export function WarmupSettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Configurar warm-up</DialogTitle>
-          <DialogDescription>
-            Sender: <span className="font-medium text-foreground">{senderLabel}</span>
-          </DialogDescription>
+          <DialogTitle className="text-base">Configurações de warm-up</DialogTitle>
+          <DialogDescription className="text-xs">{senderLabel}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="space-y-5 py-3">
           <Section
-            icon={<Flame className="h-4 w-4" />}
             title="Rampa de envio"
-            description="Volume aumenta gradualmente até bater a meta diária"
+            description="Volume aumenta gradualmente até a meta diária"
           >
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="start_volume" className="text-xs">
+                <Label htmlFor="start_volume" className="text-xs text-muted-foreground">
                   Volume inicial
                 </Label>
                 <Input
@@ -161,7 +173,7 @@ export function WarmupSettingsDialog({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="increment" className="text-xs">
+                <Label htmlFor="increment" className="text-xs text-muted-foreground">
                   + por dia
                 </Label>
                 <Input
@@ -173,16 +185,9 @@ export function WarmupSettingsDialog({
                 />
               </div>
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="daily_limit" className="text-xs">
-                    Meta diária
-                  </Label>
-                  <span
-                    className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${TONE_CLASSES[risk.tone]}`}
-                  >
-                    {risk.label}
-                  </span>
-                </div>
+                <Label htmlFor="daily_limit" className="text-xs text-muted-foreground">
+                  Meta diária
+                </Label>
                 <Input
                   id="daily_limit"
                   type="number"
@@ -193,93 +198,69 @@ export function WarmupSettingsDialog({
               </div>
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              {increment > 0
-                ? `Chega em ${dailyLimit}/dia em ~${rampDays} dia${rampDays === 1 ? "" : "s"}.`
-                : `Sem incremento: envia ${startVolume}/dia sempre.`}
-            </p>
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-muted-foreground">
+                {increment > 0
+                  ? `Chega em ${dailyLimit}/dia em ${rampDays} dia${rampDays === 1 ? "" : "s"}`
+                  : `Sem incremento — ${startVolume}/dia sempre`}
+              </span>
+              <span className={riskLabelTone}>{risk.label}</span>
+            </div>
 
             {risk.level === "very_risky" && (
-              <div className="flex items-start gap-2 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2">
-                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-400" />
-                <p className="text-xs text-red-700 dark:text-red-300">
-                  Acima de {WARMUP_LIMITS.MAX}/dia é muito arriscado — pode queimar a reputação
-                  do domínio rapidamente.
-                </p>
+              <div className="flex items-start gap-1.5 text-[11px] text-red-600 dark:text-red-400">
+                <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                <span>
+                  Acima de {WARMUP_LIMITS.MAX}/dia pode queimar a reputação do domínio.
+                </span>
               </div>
             )}
 
             {risk.level === "risky" && (
-              <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2">
-                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-                <p className="text-xs text-amber-700 dark:text-amber-300">
-                  Entre {WARMUP_LIMITS.OPTIMAL + 1} e {WARMUP_LIMITS.MAX}/dia é o máximo tolerável.
-                  O ótimo pra cold email é {WARMUP_LIMITS.OPTIMAL}/dia.
-                </p>
+              <div className="flex items-start gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
+                <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                <span>
+                  Entre {WARMUP_LIMITS.OPTIMAL + 1}–{WARMUP_LIMITS.MAX}/dia é o máximo tolerável.
+                  O ótimo é {WARMUP_LIMITS.OPTIMAL}/dia.
+                </span>
               </div>
             )}
 
-            {rampTooFast && increment > 0 && (
-              <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2">
-                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-                <p className="text-xs text-amber-700 dark:text-amber-300">
-                  Rampa curta ({rampDays} dia{rampDays === 1 ? "" : "s"}). Caixas novas precisam
-                  de ao menos {WARMUP_LIMITS.MIN_WARMUP_DAYS} dias de warm-up — diminua o
-                  incremento ou aumente a meta.
-                </p>
+            {rampTooFast && (
+              <div className="flex items-start gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
+                <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                <span>
+                  Rampa curta ({rampDays}d). Caixas novas precisam de pelo menos{" "}
+                  {WARMUP_LIMITS.MIN_WARMUP_DAYS} dias de warm-up.
+                </span>
               </div>
             )}
+          </Section>
 
-            <div className="flex items-start gap-2 rounded-md border border-border bg-muted/40 px-3 py-2">
-              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              <div className="space-y-0.5 text-[11px] text-muted-foreground">
-                <p>
-                  <span className="font-medium text-foreground">Até {WARMUP_LIMITS.SAFE}/dia</span> é
-                  seguro · <span className="font-medium text-foreground">{WARMUP_LIMITS.OPTIMAL}/dia</span>{" "}
-                  é o ótimo · acima de{" "}
-                  <span className="font-medium text-foreground">{WARMUP_LIMITS.MAX}/dia</span> é muito
-                  arriscado
-                </p>
-                <p>Caixas novas: mínimo {WARMUP_LIMITS.MIN_WARMUP_DAYS} dias de warm-up.</p>
-              </div>
-            </div>
+          <Section title="Agenda">
+            <InlineToggle
+              label="Apenas dias úteis"
+              description="Ignora sábados e domingos — a rampa só avança seg–sex"
+              checked={businessDaysOnly}
+              onCheckedChange={setBusinessDaysOnly}
+            />
           </Section>
 
           <Section
-            icon={<CalendarDays className="h-4 w-4" />}
-            title="Agenda"
-            description="Controle quando a rampa avança"
-          >
-            <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-background px-3 py-2.5">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">Apenas dias úteis</p>
-                <p className="text-xs text-muted-foreground">
-                  Ignora sábados e domingos — a rampa só avança seg–sex
-                </p>
-              </div>
-              <Switch checked={businessDaysOnly} onCheckedChange={setBusinessDaysOnly} />
-            </div>
-          </Section>
-
-          <Section
-            icon={<ShieldAlert className="h-4 w-4" />}
             title="Proteção automática"
             description="Pausa o warm-up se a taxa de bounce subir"
           >
-            <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-background px-3 py-2.5">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">Auto-pausa por bounce</p>
-                <p className="text-xs text-muted-foreground">
-                  Protege a reputação do domínio automaticamente
-                </p>
-              </div>
-              <Switch checked={bounceEnabled} onCheckedChange={setBounceEnabled} />
-            </div>
+            <InlineToggle
+              label="Auto-pausa por bounce"
+              description="Protege a reputação do domínio automaticamente"
+              checked={bounceEnabled}
+              onCheckedChange={setBounceEnabled}
+            />
 
             {bounceEnabled && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="bounce_pct" className="text-xs">
+                  <Label htmlFor="bounce_pct" className="text-xs text-muted-foreground">
                     Limite (%)
                   </Label>
                   <Input
@@ -293,7 +274,7 @@ export function WarmupSettingsDialog({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="bounce_hours" className="text-xs">
+                  <Label htmlFor="bounce_hours" className="text-xs text-muted-foreground">
                     Janela (horas)
                   </Label>
                   <Input
@@ -308,7 +289,14 @@ export function WarmupSettingsDialog({
             )}
           </Section>
 
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          <div className="border-t border-border pt-3 text-[11px] text-muted-foreground">
+            <span className="font-medium text-foreground">Referências:</span> até{" "}
+            {WARMUP_LIMITS.SAFE}/dia seguro · {WARMUP_LIMITS.OPTIMAL}/dia ótimo · acima de{" "}
+            {WARMUP_LIMITS.MAX}/dia arriscado · mínimo {WARMUP_LIMITS.MIN_WARMUP_DAYS} dias
+            de warm-up em caixas novas.
+          </div>
+
+          {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
         </div>
 
         <DialogFooter>

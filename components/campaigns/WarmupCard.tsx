@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CalendarOff, CheckCircle2, Flame, MoreHorizontal, RotateCcw, Settings2 } from "lucide-react";
+import { AlertTriangle, MoreHorizontal, RotateCcw, Settings2 } from "lucide-react";
 import { SenderEmail, SenderWarmup } from "@/types";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -10,14 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SenderStats, WarmupProgress } from "@/hooks/useSenderWarmups";
-import { classifyDailyLimit } from "@/lib/warmupRecommendations";
-
-const RISK_PILL_CLASSES: Record<"emerald" | "blue" | "amber" | "red", string> = {
-  emerald: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  blue: "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400",
-  amber: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
-  red: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400",
-};
+import { WARMUP_LIMITS, classifyDailyLimit } from "@/lib/warmupRecommendations";
 
 interface WarmupCardProps {
   sender: SenderEmail;
@@ -29,98 +22,57 @@ interface WarmupCardProps {
   onReset: () => void;
 }
 
-function ProgressBar({
-  value,
-  max,
-  accent,
-  muted = false,
-}: {
-  value: number;
-  max: number;
-  accent: "orange" | "blue" | "green";
-  muted?: boolean;
-}) {
-  const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
-  const barColors = muted
-    ? "bg-muted-foreground/30"
-    : {
-        orange: "bg-orange-500 dark:bg-orange-400",
-        blue: "bg-blue-500 dark:bg-blue-400",
-        green: "bg-emerald-500 dark:bg-emerald-400",
-      }[accent];
+type CardState = "off" | "active" | "rest" | "auto_paused";
 
-  return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-      <div
-        className={`h-full transition-all duration-500 ease-out ${barColors}`}
-        style={{ width: `${pct}%` }}
-      />
-    </div>
-  );
+function resolveState(
+  warmup: SenderWarmup | null,
+  progress: WarmupProgress | null,
+): CardState {
+  if (warmup?.auto_paused_reason && !warmup.enabled) return "auto_paused";
+  if (!warmup?.enabled) return "off";
+  if (progress?.isRestDay) return "rest";
+  return "active";
 }
 
-function ProgressRow({
+function StatusDot({ state }: { state: CardState }) {
+  const tone = {
+    off: "bg-muted-foreground/30",
+    active: "bg-emerald-500",
+    rest: "bg-amber-500",
+    auto_paused: "bg-red-500",
+  }[state];
+  return <span className={`inline-block h-1.5 w-1.5 rounded-full ${tone}`} />;
+}
+
+function ProgressLine({
   label,
   value,
   max,
-  accent,
   muted,
 }: {
   label: string;
   value: number;
   max: number;
-  accent: "orange" | "blue" | "green";
   muted?: boolean;
 }) {
+  const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-baseline justify-between gap-2 text-xs">
+    <div>
+      <div className="flex items-baseline justify-between text-[11px]">
         <span className="text-muted-foreground">{label}</span>
-        <span className={`font-medium tabular-nums ${muted ? "text-muted-foreground" : "text-foreground"}`}>
-          <span className="text-sm">{value}</span>
+        <span
+          className={`font-medium tabular-nums ${muted ? "text-muted-foreground" : "text-foreground"}`}
+        >
+          {value}
           <span className="text-muted-foreground"> / {max}</span>
         </span>
       </div>
-      <ProgressBar value={value} max={max} accent={accent} muted={muted} />
-    </div>
-  );
-}
-
-function BounceIndicator({
-  stats,
-  thresholdPct,
-  windowHours,
-}: {
-  stats: SenderStats;
-  thresholdPct: number | null;
-  windowHours: number;
-}) {
-  const hasThreshold = thresholdPct != null;
-  const over = hasThreshold && stats.bounceRatePct > thresholdPct;
-  const sampleTooSmall = stats.sentInWindow < 10;
-
-  let tone: "ok" | "warn" | "muted" = "ok";
-  if (sampleTooSmall) tone = "muted";
-  else if (over) tone = "warn";
-
-  const toneClass = {
-    ok: "text-emerald-600 dark:text-emerald-400",
-    warn: "text-red-600 dark:text-red-400",
-    muted: "text-muted-foreground",
-  }[tone];
-
-  const Icon = tone === "warn" ? AlertTriangle : CheckCircle2;
-
-  return (
-    <div className="flex items-center gap-2 text-xs">
-      <Icon className={`h-3.5 w-3.5 ${toneClass}`} />
-      <span className={toneClass}>
-        Bounce {stats.bounceRatePct.toFixed(1)}%
-      </span>
-      <span className="text-muted-foreground">
-        ({stats.sentInWindow} envios últimas {windowHours}h
-        {hasThreshold ? ` · limite ${thresholdPct}%` : ""})
-      </span>
+      <div className="mt-1 h-[3px] w-full overflow-hidden rounded-full bg-border/60">
+        <div
+          className={`h-full transition-all duration-500 ease-out ${muted ? "bg-muted-foreground/40" : "bg-foreground/80"}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
     </div>
   );
 }
@@ -135,10 +87,10 @@ export function WarmupCard({
   onReset,
 }: WarmupCardProps) {
   const enabled = warmup?.enabled ?? false;
-  const autoPaused = !!warmup?.auto_paused_reason && !enabled;
+  const state = resolveState(warmup, progress);
   const startVolume = warmup?.start_volume ?? 5;
-  const increment = warmup?.increment_per_day ?? 5;
-  const dailyLimit = warmup?.daily_limit ?? 50;
+  const increment = warmup?.increment_per_day ?? 1;
+  const dailyLimit = warmup?.daily_limit ?? WARMUP_LIMITS.OPTIMAL;
   const businessOnly = warmup?.business_days_only ?? true;
 
   const senderLimit = sender.daily_limit > 0 ? sender.daily_limit : dailyLimit;
@@ -146,106 +98,59 @@ export function WarmupCard({
   const sentToday = stats?.sentToday ?? 0;
   const warmupDone = stats?.warmupSentToday ?? 0;
 
+  const risk = classifyDailyLimit(dailyLimit);
+
+  const bounceRate = stats?.bounceRatePct ?? 0;
+  const bounceSample = stats?.sentInWindow ?? 0;
+  const bounceOver =
+    warmup?.bounce_threshold_pct != null &&
+    bounceSample >= 10 &&
+    bounceRate > warmup.bounce_threshold_pct;
+
   return (
-    <div
-      className={`group relative overflow-hidden rounded-xl border bg-card transition-colors ${
-        autoPaused
-          ? "border-red-500/40"
-          : enabled
-            ? "border-orange-500/30"
-            : "border-border"
-      }`}
-    >
-      {/* Auto-pause banner */}
-      {autoPaused && (
-        <div className="flex items-start gap-2 border-b border-red-500/30 bg-red-500/10 px-5 py-2.5">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
-          <div className="min-w-0 text-xs">
-            <p className="font-medium text-red-700 dark:text-red-300">
-              Pausado automaticamente
-            </p>
-            <p className="text-red-700/80 dark:text-red-300/80">{warmup?.auto_paused_reason}</p>
-          </div>
-        </div>
-      )}
+    <div className="relative flex gap-4 overflow-hidden rounded-lg border border-border bg-card p-4">
+      {/* Status strip */}
+      <div
+        className={`absolute inset-y-0 left-0 w-[2px] ${
+          state === "active"
+            ? "bg-emerald-500"
+            : state === "auto_paused"
+              ? "bg-red-500"
+              : state === "rest"
+                ? "bg-amber-500"
+                : "bg-transparent"
+        }`}
+      />
 
-      <div className="space-y-4 p-5">
-        {/* Header */}
-        <div className="flex items-start gap-4">
-          <div
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors ${
-              enabled
-                ? "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
-                : "bg-muted text-muted-foreground"
-            }`}
-          >
-            <Flame className="h-5 w-5" />
-          </div>
-
-          <div className="min-w-0 flex-1">
+      {/* Main content */}
+      <div className="flex min-w-0 flex-1 flex-col gap-3">
+        {/* Row 1: identity + actions */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="truncate text-sm font-semibold text-foreground">
+              <StatusDot state={state} />
+              <p className="truncate text-sm font-medium text-foreground">
                 {sender.email_address}
-              </h3>
+              </p>
               {sender.is_default && (
-                <span className="rounded-md border border-border bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                  padrão
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  default
                 </span>
               )}
             </div>
             {sender.display_name && (
-              <p className="truncate text-xs text-muted-foreground">{sender.display_name}</p>
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                {sender.display_name}
+              </p>
             )}
-
-            {/* Plan summary */}
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-              {enabled && progress && progress.currentDay > 0 ? (
-                progress.atTarget ? (
-                  <span className="font-medium text-foreground">No topo · {dailyLimit}/dia</span>
-                ) : (
-                  <>
-                    <span>
-                      Dia{" "}
-                      <span className="font-semibold text-foreground">{progress.currentDay}</span>
-                    </span>
-                    <span>·</span>
-                    <span>
-                      Faltam {progress.daysToTarget} dia
-                      {progress.daysToTarget === 1 ? "" : "s"} pro topo
-                    </span>
-                  </>
-                )
-              ) : (
-                <span>
-                  Início {startVolume}/dia · +{increment}/dia · topo {dailyLimit}/dia
-                </span>
-              )}
-              {(() => {
-                const risk = classifyDailyLimit(dailyLimit);
-                return (
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-medium ${RISK_PILL_CLASSES[risk.tone]}`}
-                    title={risk.description}
-                  >
-                    {risk.label}
-                  </span>
-                );
-              })()}
-              {businessOnly && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-muted/50 px-1.5 py-0.5 font-medium text-muted-foreground">
-                  <CalendarOff className="h-3 w-3" />
-                  Dias úteis
-                </span>
-              )}
-            </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-1">
             <Switch checked={enabled} onCheckedChange={onToggle} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="rounded-lg p-2 text-muted-foreground/60 hover:bg-muted hover:text-foreground"
+                  className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
                   aria-label="Warm-up actions"
                 >
                   <MoreHorizontal className="h-4 w-4" />
@@ -265,41 +170,111 @@ export function WarmupCard({
           </div>
         </div>
 
-        {/* Today's progress */}
-        {progress?.isRestDay && enabled ? (
-          <div className="flex items-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 px-3 py-2.5">
-            <CalendarOff className="h-4 w-4 text-muted-foreground" />
-            <p className="text-xs text-muted-foreground">
-              Dia de descanso — rampa retoma no próximo dia útil
-            </p>
-          </div>
+        {/* Row 2: plan summary — plain text, dot-separated */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+          {enabled && progress && progress.currentDay > 0 ? (
+            progress.atTarget ? (
+              <span>
+                Topo <span className="font-medium text-foreground">{dailyLimit}/dia</span>
+              </span>
+            ) : (
+              <>
+                <span>
+                  Dia <span className="font-medium text-foreground">{progress.currentDay}</span>
+                </span>
+                <span className="text-border">·</span>
+                <span>Meta {dailyLimit}/dia</span>
+                <span className="text-border">·</span>
+                <span>
+                  +{increment}/dia
+                </span>
+              </>
+            )
+          ) : (
+            <>
+              <span>Início {startVolume}/dia</span>
+              <span className="text-border">·</span>
+              <span>+{increment}/dia</span>
+              <span className="text-border">·</span>
+              <span>Meta {dailyLimit}/dia</span>
+            </>
+          )}
+          {businessOnly && (
+            <>
+              <span className="text-border">·</span>
+              <span>Dias úteis</span>
+            </>
+          )}
+          {risk.level === "very_risky" && (
+            <>
+              <span className="text-border">·</span>
+              <span className="text-red-600 dark:text-red-400">Muito arriscado</span>
+            </>
+          )}
+          {risk.level === "risky" && (
+            <>
+              <span className="text-border">·</span>
+              <span className="text-amber-600 dark:text-amber-400">Arriscado</span>
+            </>
+          )}
+        </div>
+
+        {/* Row 3: progress bars */}
+        {state === "rest" ? (
+          <p className="text-[11px] text-muted-foreground">
+            Dia de descanso — a rampa retoma no próximo dia útil.
+          </p>
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <ProgressRow
+            <ProgressLine
               label="Warm-up hoje"
               value={warmupDone}
               max={warmupToday}
-              accent="orange"
               muted={!enabled || warmupToday === 0}
             />
-            <ProgressRow
-              label="Envios totais hoje"
+            <ProgressLine
+              label="Envios totais"
               value={sentToday}
               max={senderLimit}
-              accent="blue"
               muted={senderLimit === 0}
             />
           </div>
         )}
 
-        {/* Bounce indicator */}
-        {stats && (
-          <div className="border-t border-border pt-3">
-            <BounceIndicator
-              stats={stats}
-              thresholdPct={warmup?.bounce_threshold_pct ?? null}
-              windowHours={warmup?.bounce_window_hours ?? 24}
-            />
+        {/* Row 4: footer */}
+        {(stats || state === "auto_paused") && (
+          <div className="flex items-center justify-between border-t border-border pt-2.5 text-[11px]">
+            {state === "auto_paused" ? (
+              <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400">
+                <AlertTriangle className="h-3 w-3" />
+                <span>Pausado automaticamente · {warmup?.auto_paused_reason}</span>
+              </div>
+            ) : stats ? (
+              <div className="flex items-center gap-3 text-muted-foreground">
+                <span>
+                  Bounce{" "}
+                  <span
+                    className={`font-medium tabular-nums ${
+                      bounceOver
+                        ? "text-red-600 dark:text-red-400"
+                        : bounceSample < 10
+                          ? "text-muted-foreground"
+                          : "text-foreground"
+                    }`}
+                  >
+                    {bounceRate.toFixed(1)}%
+                  </span>
+                </span>
+                <span className="text-border">·</span>
+                <span>{bounceSample} envios {warmup?.bounce_window_hours ?? 24}h</span>
+                {warmup?.bounce_threshold_pct != null && (
+                  <>
+                    <span className="text-border">·</span>
+                    <span>limite {warmup.bounce_threshold_pct}%</span>
+                  </>
+                )}
+              </div>
+            ) : null}
           </div>
         )}
       </div>

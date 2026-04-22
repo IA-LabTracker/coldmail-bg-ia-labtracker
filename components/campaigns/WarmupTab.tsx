@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Flame, Inbox } from "lucide-react";
 import { SenderEmail } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSenderEmails } from "@/hooks/useSenderEmails";
@@ -9,59 +8,46 @@ import { computeWarmupProgress, useSenderWarmups } from "@/hooks/useSenderWarmup
 import { WarmupCard } from "./WarmupCard";
 import { WarmupSettingsDialog } from "./WarmupSettingsDialog";
 
+function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div>
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="mt-0.5 text-sm font-medium tabular-nums text-foreground">
+        {value}
+        {sub && <span className="text-muted-foreground"> {sub}</span>}
+      </p>
+    </div>
+  );
+}
+
 function SummaryBar({
   activeCount,
   totalSenders,
   totalWarmupToday,
-  totalSentToday,
+  totalWarmupSent,
 }: {
   activeCount: number;
   totalSenders: number;
   totalWarmupToday: number;
-  totalSentToday: number;
+  totalWarmupSent: number;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-gradient-to-r from-orange-500/5 to-transparent px-5 py-3">
-      <div className="flex items-center gap-2.5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400">
-          <Flame className="h-4 w-4" />
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-foreground">Warm-up</p>
-          <p className="text-[11px] text-muted-foreground">
-            Aquecimento gradual por inbox — protege sua reputação
-          </p>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-4 text-xs">
-        <div>
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Ativos</p>
-          <p className="font-semibold text-foreground">
-            {activeCount}
-            <span className="text-muted-foreground"> / {totalSenders}</span>
-          </p>
-        </div>
-        <div>
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Hoje</p>
-          <p className="font-semibold text-foreground">
-            {totalSentToday}
-            <span className="text-muted-foreground"> / {totalWarmupToday} warm-up</span>
-          </p>
-        </div>
-      </div>
+    <div className="flex flex-wrap items-center gap-x-10 gap-y-3 border-b border-border pb-4">
+      <Stat label="Ativos" value={`${activeCount}`} sub={`/ ${totalSenders}`} />
+      <Stat
+        label="Warm-up hoje"
+        value={`${totalWarmupSent}`}
+        sub={`/ ${totalWarmupToday}`}
+      />
     </div>
   );
 }
 
 function EmptyState() {
   return (
-    <div className="animate-fade-up flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card py-16 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-muted/50">
-        <Inbox className="h-5 w-5 text-muted-foreground/50" />
-      </div>
-      <p className="mt-4 text-sm font-medium text-muted-foreground">Nenhum sender cadastrado</p>
-      <p className="mt-1 max-w-xs text-xs text-muted-foreground/70">
+    <div className="rounded-lg border border-dashed border-border py-16 text-center">
+      <p className="text-sm font-medium text-foreground">Nenhum sender cadastrado</p>
+      <p className="mt-1 text-xs text-muted-foreground">
         Warm-up roda por caixa de entrada. Adicione um sender em{" "}
         <span className="font-medium text-foreground">/sender-emails</span> pra começar.
       </p>
@@ -127,10 +113,10 @@ export function WarmupTab() {
         activeCount={activeCount}
         totalSenders={activeSenders.length}
         totalWarmupToday={totalWarmupToday}
-        totalSentToday={totalWarmupSent}
+        totalWarmupSent={totalWarmupSent}
       />
 
-      <div className="mt-4 flex flex-col gap-3">
+      <div className="mt-5 flex flex-col gap-2">
         {activeSenders.map((sender) => {
           const warmup = warmupsBySenderId.get(sender.id) ?? null;
           const progress = warmup ? computeWarmupProgress(warmup) : null;

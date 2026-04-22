@@ -21,6 +21,7 @@ interface CampaignListProps {
   emails: Email[];
   searchFilter: string;
   sortBy: "recent" | "emails" | "replies" | "rate";
+  onRefresh: () => void;
 }
 
 export function groupEmailsByCampaign(emails: Email[]): CampaignGroup[] {
@@ -82,7 +83,7 @@ function sortCampaigns(campaigns: CampaignGroup[], sortBy: string): CampaignGrou
   });
 }
 
-export function CampaignList({ emails, searchFilter, sortBy }: CampaignListProps) {
+export function CampaignList({ emails, searchFilter, sortBy, onRefresh }: CampaignListProps) {
   const campaigns = useMemo(() => {
     const grouped = groupEmailsByCampaign(emails);
     const filtered = searchFilter
@@ -110,7 +111,12 @@ export function CampaignList({ emails, searchFilter, sortBy }: CampaignListProps
   return (
     <div className="flex flex-col gap-3">
       {campaigns.map((campaign, idx) => (
-        <CampaignListItem key={campaign.campaignName} campaign={campaign} index={idx} />
+        <CampaignListItem
+          key={campaign.campaignName}
+          campaign={campaign}
+          index={idx}
+          onRenamed={onRefresh}
+        />
       ))}
     </div>
   );

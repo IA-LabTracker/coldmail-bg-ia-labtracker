@@ -46,6 +46,7 @@ export function EmailManagerTab({ emails, setEmails, fetchEmails, setError }: Em
   const [statusFilter, setStatusFilter] = useState("");
   const [classificationFilter, setClassificationFilter] = useState("");
   const [clientStepFilter, setClientStepFilter] = useState("");
+  const [campaignFilter, setCampaignFilter] = useState("");
   const [dateRangeFilter, setDateRangeFilter] = useState<DateRange | undefined>(undefined);
   const [kpiFilter, setKpiFilter] = useState<KPIFilter | null>(null);
 
@@ -85,6 +86,10 @@ export function EmailManagerTab({ emails, setEmails, fetchEmails, setError }: Em
       filtered = filtered.filter((e) => e.client_step === clientStepFilter);
     }
 
+    if (campaignFilter) {
+      filtered = filtered.filter((e) => e.campaign_name === campaignFilter);
+    }
+
     if (dateRangeFilter?.from) {
       filtered = filtered.filter((e) => {
         const createdAt = e.created_at ? new Date(e.created_at) : null;
@@ -96,7 +101,7 @@ export function EmailManagerTab({ emails, setEmails, fetchEmails, setError }: Em
     }
 
     return filtered;
-  }, [emails, searchFilter, statusFilter, classificationFilter, clientStepFilter, dateRangeFilter]);
+  }, [emails, searchFilter, statusFilter, classificationFilter, clientStepFilter, campaignFilter, dateRangeFilter]);
 
   const companyGroups = useMemo(() => groupEmailsByCompany(filteredEmails), [filteredEmails]);
   const { visibleItems: visibleGroups, hasMore, sentinelRef } = useInfiniteScroll(companyGroups);
@@ -221,6 +226,9 @@ export function EmailManagerTab({ emails, setEmails, fetchEmails, setError }: Em
           }}
           clientStep={clientStepFilter}
           onClientStepChange={setClientStepFilter}
+          campaign={campaignFilter}
+          onCampaignChange={setCampaignFilter}
+          campaignOptions={campaignNames}
         />
       </div>
 

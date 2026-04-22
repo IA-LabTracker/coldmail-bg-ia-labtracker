@@ -9,6 +9,8 @@ import { AppLayout } from "@/components/AppLayout";
 import { CampaignKPICards } from "@/components/campaigns/CampaignKPICards";
 import { CampaignList, groupEmailsByCampaign } from "@/components/campaigns/CampaignList";
 import { CampaignPageHeader } from "@/components/campaigns/CampaignPageHeader";
+import { WarmupTab } from "@/components/campaigns/WarmupTab";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 
@@ -20,6 +22,7 @@ export default function CampaignsPage() {
   const [searchFilter, setSearchFilter] = useState("");
   const [dateRangeFilter, setDateRangeFilter] = useState<DateRange | undefined>(undefined);
   const [sortBy, setSortBy] = useState<"recent" | "emails" | "replies" | "rate">("recent");
+  const [tab, setTab] = useState<"list" | "warmup">("list");
 
   const fetchEmails = useCallback(async () => {
     if (!user) return;
@@ -27,14 +30,22 @@ export default function CampaignsPage() {
     setError("");
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from("emails")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      const PAGE_SIZE = 1000;
+      const all: Email[] = [];
+      for (let offset = 0; ; offset += PAGE_SIZE) {
+        const { data, error: fetchError } = await supabase
+          .from("emails")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .range(offset, offset + PAGE_SIZE - 1);
 
-      if (fetchError) throw fetchError;
-      setEmails(data || []);
+        if (fetchError) throw fetchError;
+        const page = data ?? [];
+        all.push(...page);
+        if (page.length < PAGE_SIZE) break;
+      }
+      setEmails(all);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load campaigns");
     } finally {
@@ -104,14 +115,26 @@ export default function CampaignsPage() {
             </div>
           </div>
         ) : (
-          <>
-            <CampaignKPICards emails={filteredEmails} totalCampaigns={totalCampaigns} />
-            <CampaignList
-              emails={filteredEmails}
-              searchFilter={searchFilter}
-              sortBy={sortBy}
-            />
-          </>
+          <Tabs value={tab} onValueChange={(v) => setTab(v as "list" | "warmup")}>
+            <TabsList>
+              <TabsTrigger value="list">Campanhas</TabsTrigger>
+              <TabsTrigger value="warmup">Warm-up</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="list" className="mt-6 space-y-6">
+              <CampaignKPICards emails={filteredEmails} totalCampaigns={totalCampaigns} />
+              <CampaignList
+                emails={filteredEmails}
+                searchFilter={searchFilter}
+                sortBy={sortBy}
+                onRefresh={fetchEmails}
+              />
+            </TabsContent>
+
+            <TabsContent value="warmup" className="mt-6">
+              <WarmupTab emails={filteredEmails} />
+            </TabsContent>
+          </Tabs>
         )}
       </div>
     </AppLayout>

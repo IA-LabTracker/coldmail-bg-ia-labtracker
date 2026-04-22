@@ -68,6 +68,9 @@ interface EmailFiltersProps {
   onClassificationChange: (value: string) => void;
   clientStep: string;
   onClientStepChange: (value: string) => void;
+  campaign?: string;
+  onCampaignChange?: (value: string) => void;
+  campaignOptions?: string[];
 }
 
 export function EmailFilters({
@@ -79,14 +82,33 @@ export function EmailFilters({
   onClassificationChange,
   clientStep,
   onClientStepChange,
+  campaign,
+  onCampaignChange,
+  campaignOptions,
 }: EmailFiltersProps) {
+  const showCampaign = !!onCampaignChange && !!campaignOptions?.length;
+
+  const categories = showCampaign
+    ? [
+        ...filterCategories,
+        {
+          key: "campaign",
+          label: "Campaign",
+          options: campaignOptions!.map((c) => ({ label: c, value: c })),
+        },
+      ]
+    : filterCategories;
+
   const filterHandlers: Record<string, { value: string; onChange: (v: string) => void }> = {
     status: { value: status, onChange: onStatusChange },
     classification: { value: classification, onChange: onClassificationChange },
     clientStep: { value: clientStep, onChange: onClientStepChange },
+    ...(showCampaign
+      ? { campaign: { value: campaign ?? "", onChange: onCampaignChange! } }
+      : {}),
   };
 
-  const activeFilters = filterCategories
+  const activeFilters = categories
     .filter((cat) => !!filterHandlers[cat.key].value)
     .map((cat) => {
       const activeValue = filterHandlers[cat.key].value;
@@ -134,7 +156,7 @@ export function EmailFilters({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-48">
-          {filterCategories.map((category) => {
+          {categories.map((category) => {
             const handler = filterHandlers[category.key];
             return (
               <DropdownMenuSub key={category.key}>
@@ -183,6 +205,7 @@ export function EmailFilters({
                   onStatusChange("");
                   onClassificationChange("");
                   onClientStepChange("");
+                  onCampaignChange?.("");
                 }}
                 className="cursor-pointer text-muted-foreground"
               >

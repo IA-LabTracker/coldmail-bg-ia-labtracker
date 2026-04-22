@@ -37,14 +37,22 @@ export default function DashboardPage() {
     setError("");
 
     try {
-      const { data, error: fetchError } = await supabase
-        .from("emails")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("date_sent", { ascending: false });
+      const PAGE_SIZE = 1000;
+      const all: Email[] = [];
+      for (let offset = 0; ; offset += PAGE_SIZE) {
+        const { data, error: fetchError } = await supabase
+          .from("emails")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .range(offset, offset + PAGE_SIZE - 1);
 
-      if (fetchError) throw fetchError;
-      setEmails(data || []);
+        if (fetchError) throw fetchError;
+        const page = data ?? [];
+        all.push(...page);
+        if (page.length < PAGE_SIZE) break;
+      }
+      setEmails(all);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load emails");
     } finally {

@@ -132,7 +132,7 @@ export default function CampaignsPage() {
             </TabsContent>
 
             <TabsContent value="warmup" className="mt-6">
-              <WarmupTab emails={filteredEmails} />
+              <WarmupTab />
             </TabsContent>
           </Tabs>
         )}

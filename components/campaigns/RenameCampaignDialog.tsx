@@ -75,12 +75,6 @@ export function RenameCampaignDialog({
       return;
     }
 
-    await supabase
-      .from("campaign_warmups")
-      .update({ campaign_name: trimmed })
-      .eq("user_id", user.id)
-      .eq("campaign_name", currentName);
-
     toast.success("Campanha renomeada");
     onRenamed(trimmed);
     onOpenChange(false);

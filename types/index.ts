@@ -100,16 +100,21 @@ export interface EmailTemplate {
   updated_at: string;
 }
 
-export interface CampaignWarmup {
+export interface SenderWarmup {
   id: string;
   user_id: string;
-  campaign_name: string;
+  sender_email_id: string;
   enabled: boolean;
   start_volume: number;
   increment_per_day: number;
   daily_limit: number;
+  business_days_only: boolean;
+  bounce_threshold_pct: number | null;
+  bounce_window_hours: number;
   started_at: string | null;
   paused_at: string | null;
+  auto_paused_at: string | null;
+  auto_paused_reason: string | null;
   created_at: string;
   updated_at: string;
 }

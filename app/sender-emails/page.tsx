@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { Plus } from "lucide-react";
+import { Loader2, Plus, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import { SenderEmail, Email, EmailTemplate } from "@/types";
 import {
   useSenderEmails,
@@ -57,6 +58,7 @@ export default function SenderEmailsPage() {
     updateSenderEmail,
     deleteSenderEmail,
     setDefault,
+    refetch,
   } = useSenderEmails();
   const { templates, loading: templatesLoading } = useTemplates();
 
@@ -64,6 +66,42 @@ export default function SenderEmailsPage() {
   const [emailsLoading, setEmailsLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEmail, setEditingEmail] = useState<SenderEmail | null>(null);
+  const [zapmailSyncing, setZapmailSyncing] = useState(false);
+
+  const handleZapmailSync = useCallback(async () => {
+    setZapmailSyncing(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error("Sessão expirada");
+        return;
+      }
+
+      const res = await fetch("/api/zapmail/sync", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const body = await res.json();
+
+      if (!res.ok) {
+        toast.error(body.error || "Falha ao sincronizar Zapmail");
+        return;
+      }
+
+      toast.success(
+        body.total === 0
+          ? "Nenhum mailbox encontrado no Zapmail"
+          : `${body.total} mailbox${body.total === 1 ? "" : "es"} sincronizado${body.total === 1 ? "" : "s"}`,
+      );
+      await refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao sincronizar");
+    } finally {
+      setZapmailSyncing(false);
+    }
+  }, [refetch]);
 
   // Fetch all emails for metrics
   useEffect(() => {
@@ -147,10 +185,25 @@ export default function SenderEmailsPage() {
               Manage the addresses used to dispatch your campaigns
             </p>
           </div>
-          <Button onClick={handleOpenCreate} size="sm">
-            <Plus className="mr-1.5 h-3.5 w-3.5" />
-            Add email
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleZapmailSync}
+              variant="outline"
+              size="sm"
+              disabled={zapmailSyncing}
+            >
+              {zapmailSyncing ? (
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+              )}
+              Sincronizar Zapmail
+            </Button>
+            <Button onClick={handleOpenCreate} size="sm">
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
+              Add email
+            </Button>
+          </div>
         </div>
 
         {/* Summary bar */}

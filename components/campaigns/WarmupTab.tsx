@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { SenderEmail } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSenderEmails } from "@/hooks/useSenderEmails";
@@ -57,9 +58,44 @@ function EmptyState() {
 
 export function WarmupTab() {
   const { senderEmails, loading: loadingSenders } = useSenderEmails();
-  const { warmupsBySenderId, stats, loading: loadingWarmups, setEnabled, updateSettings, resetProgress } =
-    useSenderWarmups();
+  const {
+    warmups,
+    warmupsBySenderId,
+    stats,
+    loading: loadingWarmups,
+    setEnabled,
+    updateSettings,
+    resetProgress,
+    markToppedOut,
+  } = useSenderWarmups();
   const [settingsFor, setSettingsFor] = useState<string | null>(null);
+
+  // Fire toast when a warm-up reaches daily_limit for the first time.
+  // Idempotent via topped_out_at in DB. First mount silently backfills
+  // already-topped senders (no toast) to avoid a flood on feature rollout.
+  const didInitialScan = useRef(false);
+  useEffect(() => {
+    if (loadingSenders || loadingWarmups) return;
+    if (warmups.length === 0) return;
+
+    for (const w of warmups) {
+      if (!w.enabled || w.topped_out_at) continue;
+      const progress = computeWarmupProgress(w);
+      if (!progress.atTarget) continue;
+
+      const sender = senderEmails.find((s) => s.id === w.sender_email_id);
+      markToppedOut(w.sender_email_id);
+
+      if (didInitialScan.current && sender) {
+        toast.success(
+          `${sender.email_address} chegou em ${w.daily_limit}/dia — agora é cruise.`,
+          { duration: 6000 },
+        );
+      }
+    }
+
+    didInitialScan.current = true;
+  }, [warmups, senderEmails, loadingSenders, loadingWarmups, markToppedOut]);
 
   const activeSenders = useMemo(
     () => senderEmails.filter((s) => s.status !== "suspended"),

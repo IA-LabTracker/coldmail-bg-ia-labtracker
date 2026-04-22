@@ -362,6 +362,7 @@ export function useSenderWarmups(windowHoursDefault = 24) {
           paused_at: null,
           auto_paused_at: null,
           auto_paused_reason: null,
+          topped_out_at: null,
           updated_at: now,
         })
         .eq("id", existing.id)
@@ -381,12 +382,37 @@ export function useSenderWarmups(windowHoursDefault = 24) {
                 paused_at: null,
                 auto_paused_at: null,
                 auto_paused_reason: null,
+                topped_out_at: null,
                 updated_at: now,
               }
             : w,
         ),
       );
       toast.success("Progresso reiniciado");
+    },
+    [user, warmups],
+  );
+
+  const markToppedOut = useCallback(
+    async (senderEmailId: string) => {
+      if (!user) return;
+      const existing = warmups.find((w) => w.sender_email_id === senderEmailId);
+      if (!existing || existing.topped_out_at) return;
+      const now = new Date().toISOString();
+
+      const { error } = await supabase
+        .from("sender_warmups")
+        .update({ topped_out_at: now, updated_at: now })
+        .eq("id", existing.id)
+        .eq("user_id", user.id);
+
+      if (error) return;
+
+      setWarmups((prev) =>
+        prev.map((w) =>
+          w.id === existing.id ? { ...w, topped_out_at: now, updated_at: now } : w,
+        ),
+      );
     },
     [user, warmups],
   );
@@ -454,6 +480,7 @@ export function useSenderWarmups(windowHoursDefault = 24) {
     setEnabled,
     updateSettings,
     resetProgress,
+    markToppedOut,
     refetch: fetchWarmups,
     refetchStats: fetchStats,
   };

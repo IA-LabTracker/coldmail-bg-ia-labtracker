@@ -115,6 +115,7 @@ export interface SenderWarmup {
   paused_at: string | null;
   auto_paused_at: string | null;
   auto_paused_reason: string | null;
+  topped_out_at: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -12,6 +12,15 @@ import {
 import { SenderStats, WarmupProgress } from "@/hooks/useSenderWarmups";
 import { WARMUP_LIMITS, classifyDailyLimit } from "@/lib/warmupRecommendations";
 
+function relativeFromNow(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  const days = Math.floor(ms / 86_400_000);
+  if (days >= 1) return `há ${days}d`;
+  const hours = Math.floor(ms / 3_600_000);
+  if (hours >= 1) return `há ${hours}h`;
+  return "agora";
+}
+
 interface WarmupCardProps {
   sender: SenderEmail;
   warmup: SenderWarmup | null;
@@ -174,9 +183,17 @@ export function WarmupCard({
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
           {enabled && progress && progress.currentDay > 0 ? (
             progress.atTarget ? (
-              <span>
-                Topo <span className="font-medium text-foreground">{dailyLimit}/dia</span>
-              </span>
+              <>
+                <span>
+                  Topo <span className="font-medium text-foreground">{dailyLimit}/dia</span>
+                </span>
+                {warmup?.topped_out_at && (
+                  <>
+                    <span className="text-border">·</span>
+                    <span>cruise {relativeFromNow(warmup.topped_out_at)}</span>
+                  </>
+                )}
+              </>
             ) : (
               <>
                 <span>

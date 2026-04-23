@@ -1,278 +1,254 @@
-# 📧 Cold Email Pro - B2B Email & LinkedIn Automation Platform
+# 📧 Cold Email Pro
 
-Uma plataforma moderna e completa para automação de cold emails B2B e campanhas do LinkedIn, construída com Next.js, Supabase e integração com N8N.
+Plataforma B2B de **cold email + outreach LinkedIn** construída sobre Next.js e Supabase.
+Importa leads de CSV/Excel, gerencia campanhas, orquestra disparos por múltiplos remetentes
+e plataformas (SmartLead, Gmail, Outlook, Resend, Zapmail, SES, Mailgun, SMTP), controla
+ritmo de aquecimento (warm-up) e integra com N8N para automação.
 
-![Next.js](https://img.shields.io/badge/Next.js-13+-black?style=for-the-badge&logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.6-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-Postgres-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-## 🚀 Features
+---
 
-### 📊 **Dashboard Completo**
+## 🚀 Funcionalidades
 
-- **KPIs em tempo real**: Total enviado, respostas recebidas, hot leads, bounced
-- **Filtros avançados**: Por status, classificação de lead, campanha e busca
-- **Tabela interativa** com seleção múltipla e ações em lote
-- **Paginação** e ordenação dinâmica
+### 📥 Importação de leads
+- Wizard de upload CSV/Excel com preview, validação por linha e confirmação
+- Deduplicação e normalização de campos (empresa, email, telefone, cidade/UF, etc.)
 
-### 📧 **Gestão de Emails**
+### 📊 Dashboard
+- KPIs em tempo real: enviados, respostas, hot leads, bounces
+- Filtros por status, classificação, campanha e keywords
+- Agrupamento por empresa, seleção múltipla (com shift-click) e ações em lote
+- Infinite scroll em listas grandes
 
-- **Campanhas organizadas** por empresa, região e indústria
-- **Tracking completo**: Status de entrega, respostas, tempo de resposta
-- **Classificação de leads**: Hot, Warm, Cold
-- **Informações detalhadas**: Nome, telefone, endereço, Google Maps
+### 📨 Campanhas e disparos
+- Organização de leads por campanha com KPIs por campanha
+- Seleção de remetentes por plataforma/domínio no modal de disparo
+- Distribuição round-robin de leads entre remetentes habilitados
+- Agendamento pontual/recorrente via `schedules` + webhook N8N
 
-### 🤖 **Automação Inteligente**
+### ✉️ Sender emails
+- Cadastro de caixas de envio com provider (**Gmail, Outlook**, Resend, Zapmail, SES,
+  Mailgun, Manual/SMTP, Custom SMTP) e plataforma de dispatch
+- Sync de remetentes Zapmail
+- Limite diário por caixa, status (pending/active/error/suspended), default sender
 
-- **Integração N8N**: Webhooks para automação de workflows
-- **Ações em lote**: Envio de emails iniciais para múltiplos leads
-- **LinkedIn automation**: Ferramentas para campanhas sociais
-- **Templates personalizáveis**: Sistema de modelos de email
+### 🌡️ Warm-up
+- Rampa por caixa: volume inicial, incremento diário, meta, dias úteis
+- Pausa automática por bounce rate acima do limite
+- Edge function `warmup-budget` consultada pelo N8N antes de cada disparo
+  (ver [docs/warmup-budget-n8n.html](docs/warmup-budget-n8n.html))
 
-### 🔐 **Sistema de Autenticação**
+### 💼 LinkedIn outreach
+- Integração Unipile (OAuth LinkedIn)
+- Tabela de mensagens com status, qualidade de lead e histórico completo de perfil
+- Agrupamento por empresa
 
-- **Supabase Auth**: Login seguro com email/senha
-- **OAuth integrado**: Google, GitHub (configurável)
-- **Row Level Security**: Dados isolados por usuário
-- **Gerenciamento de sessão** automático
+### 📄 Templates
+- Templates de email por plataforma (Gmail, Outlook, SmartLead, Resend, Zapmail, LinkedIn)
+- Variáveis (`{{lead_name}}`, `{{company}}`, …), preview HTML e template default por escopo
 
-### 🎨 **Interface Moderna**
+### 🔐 Auth & segurança
+- Supabase Auth (email/senha)
+- Row Level Security em todas as tabelas (`auth.uid() = user_id`)
 
-- **Design responsivo**: Funciona em desktop, tablet e mobile
-- **shadcn/ui components**: Interface consistente e acessível
-- **Dark mode ready**: Preparado para tema escuro
-- **Loading states**: Estados de carregamento e erro elegantes
+---
 
-## 🛠️ Stack Tecnológica
+## 🛠️ Stack
 
-### **Frontend**
+**Frontend**: Next.js 14 (App Router), TypeScript 5.6, Tailwind CSS, shadcn/ui (Radix),
+Framer Motion, Lucide, Sonner (toasts), Recharts (analytics), React Hook Form + Zod.
 
-- **Next.js 14+** - React framework com App Router
-- **TypeScript** - Tipagem estática
-- **Tailwind CSS** - Utility-first CSS framework
-- **shadcn/ui** - Componentes reutilizáveis e acessíveis
-- **Lucide React** - Ícones SVG otimizados
+**Backend**: Supabase (PostgreSQL + Auth + Edge Functions + RLS).
 
-### **Backend & Database**
+**Integrações**: N8N (webhooks), Unipile (LinkedIn), Axios.
 
-- **Supabase** - Backend as a Service
-- **PostgreSQL** - Banco de dados relacional
-- **Row Level Security** - Segurança nível de linha
-- **Real-time subscriptions** - Updates em tempo real
+**Import**: `xlsx` para Excel, parser próprio para CSV.
 
-### **Integrações**
-
-- **N8N Webhooks** - Automação de workflows
-- **Unipile API** - Integrações sociais
-- **Axios** - Cliente HTTP
+---
 
 ## 📋 Pré-requisitos
 
-- **Node.js 18+**
-- **npm 10+** ou **yarn 1.22+**
-- **Conta Supabase** (gratuita)
-- **Conta N8N** (opcional, para automação)
+- Node.js 18+
+- npm 10+ (o `packageManager` do projeto é `npm@10.9.2`)
+- Projeto Supabase
+- N8N (opcional — necessário para disparo automatizado e warm-up)
+- Conta Unipile (opcional — necessário para LinkedIn)
+
+---
 
 ## ⚡ Instalação
-
-1. **Clone o repositório**
 
 ```bash
 git clone https://github.com/IA-LabTracker/coldmail-bg-ia-labtracker.git
 cd coldmail-bg-ia-labtracker
-```
-
-2. **Instale as dependências**
-
-```bash
 npm install
-# ou
-yarn install
-```
-
-3. **Configure as variáveis de ambiente**
-
-```bash
 cp .env.example .env.local
 ```
 
-4. **Configure seu Supabase**
-   - Acesse [app.supabase.com](https://app.supabase.com/)
-   - Crie um novo projeto
-   - Vá em **Settings > API** e copie suas chaves
+Configure o Supabase:
 
-5. **Execute as migrações**
-   - No dashboard do Supabase, vá em **SQL Editor**
-   - Execute o conteúdo de `supabase/migrations/20260204162558_001_create_emails_and_settings_tables.sql`
+1. Crie um projeto em [app.supabase.com](https://app.supabase.com/)
+2. Copie as chaves em **Settings → API** para o `.env.local`
+3. Rode **todas** as migrations em ordem (ver seção abaixo)
 
-6. **Inicie o projeto**
+Suba a aplicação:
 
 ```bash
 npm run dev
-# ou
-yarn dev
 ```
 
-7. **Acesse** http://localhost:3000
+Acesse [http://localhost:3000](http://localhost:3000).
 
-## ⚙️ Configuração
+---
 
-### **Variáveis de Ambiente (.env.local)**
+## ⚙️ Variáveis de ambiente
 
 ```env
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=sua_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=sua_service_role_key
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 
-# Application URL
+# App
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-# N8N Webhook (opcional)
-NEXT_PUBLIC_WEBHOOK_N8N=sua_webhook_url
+# N8N (opcional — disparo via webhook)
+NEXT_PUBLIC_WEBHOOK_N8N=
 
-# Unipile API (opcional)
-UNIPILE_API_KEY=sua_unipile_key
-UNIPILE_DSN=sua_unipile_dsn
+# Unipile (opcional — LinkedIn via Unipile)
+UNIPILE_API_KEY=
+UNIPILE_DSN=
+UNIPILE_WEBHOOK_SECRET=
 ```
 
-### **Estrutura do Banco de Dados**
+---
 
-O projeto criará automaticamente duas tabelas principais:
+## 🗄️ Banco de dados
 
-- **`emails`**: Armazena dados de campanhas e leads
-- **`settings`**: Configurações do usuário e webhooks
+Migrations em [supabase/migrations/](supabase/migrations/), aplicadas em ordem cronológica
+pelo nome do arquivo. Execute pelo **SQL Editor** do Supabase (ou via CLI).
 
-## 📱 Como Usar
+Tabelas principais:
 
-### **1. Primeiro Acesso**
+| Tabela                        | Função                                                               |
+| ----------------------------- | -------------------------------------------------------------------- |
+| `emails`                      | Leads / contatos (entidade central)                                  |
+| `settings`                    | Config por usuário: webhooks, template base, conta LinkedIn padrão   |
+| `sender_emails`               | Caixas de envio (provider, dispatch platform, daily limit, status)   |
+| `sender_warmups`              | Estado de aquecimento por caixa (rampa, dias úteis, auto-pausa)      |
+| `email_warmup_interactions`   | Log de envios de warm-up (consumido pela edge function)              |
+| `email_templates`             | Templates reutilizáveis com escopo de plataforma                     |
+| `schedules`                   | Agendamentos pontuais/recorrentes de disparo                         |
+| `linkedin_accounts`           | Contas LinkedIn conectadas via Unipile                               |
+| `linkedin_messages`           | Mensagens LinkedIn enviadas + dados de perfil e qualidade do lead    |
 
-1. Acesse `/signup` para criar uma conta
-2. Confirme seu email (se habilitado)
-3. Faça login em `/login`
+Todas aplicam RLS com `auth.uid() = user_id`.
 
-### **2. Dashboard**
+Edge functions:
 
-- Visualize KPIs de suas campanhas
-- Filtre emails por status, classificação ou campanha
-- Use a busca para encontrar leads específicos
+- `warmup-budget` — retorna `remaining` diário de warm-up para um `sender_email_id`.
+  Contrato documentado em [docs/warmup-budget-n8n.html](docs/warmup-budget-n8n.html).
 
-### **3. Gerenciar Emails**
+---
 
-- Selecione emails usando os checkboxes
-- Use **"Send Initial Email"** para disparar automação
-- Configure webhooks em **Settings**
-
-### **4. LinkedIn Automation**
-
-- Acesse `/linkedin` para campanhas sociais
-- Configure templates e sequências
-- Conecte sua conta LinkedIn
-
-### **5. Configurações**
-
-- Acesse `/settings` para:
-  - Configurar webhooks N8N
-  - Definir templates de email
-  - Conectar contas sociais
-
-## 📁 Estrutura do Projeto
+## 📁 Estrutura
 
 ```
-├── app/                    # App Router (Next.js 13+)
-│   ├── api/               # API Routes
-│   ├── dashboard/         # Dashboard page
-│   ├── linkedin/          # LinkedIn automation
-│   ├── login/            # Authentication pages
-│   ├── signup/
-│   ├── settings/         # User settings
-│   └── search/           # Search functionality
-├── components/            # React components
-│   ├── dashboard/        # Dashboard-specific
-│   ├── linkedin/         # LinkedIn-specific
-│   ├── shared/           # Reusable components
-│   └── ui/              # shadcn/ui components
-├── contexts/             # React contexts
-├── hooks/               # Custom hooks
-├── lib/                 # Utilities
-├── supabase/           # Database migrations
-└── types/              # TypeScript types
+app/
+├── dashboard/         Analytics + Email Manager (tabs)
+├── campaigns/         Overview de campanhas com KPIs
+├── import/            Wizard de import CSV/Excel
+├── schedules/         Criação e gestão de agendamentos
+├── sender-emails/     Cadastro e sync de caixas de envio
+├── templates/         Templates de email
+├── linkedin-table/    Tabela de mensagens LinkedIn
+├── search/            Busca de leads via webhook
+├── settings/          Webhooks, LinkedIn, template base
+├── profile/           Perfil do usuário
+├── login/  signup/    Auth
+├── pricing/  terms/   Páginas estáticas
+└── api/
+    ├── linkedin-accounts/
+    ├── unipile-auth/
+    ├── unipile-callback/
+    └── schedules/trigger/
+
+components/
+├── ui/                47 primitivas shadcn/ui
+├── dashboard/         EmailManagerTab, EmailTable, DispatchDialog, KPICards, …
+├── campaigns/         CampaignList, CampaignTable, CampaignKPICards
+├── sender-emails/     CreateSenderEmailDialog, SenderEmailSelect, DispatchBar, …
+├── templates/         TemplateFormDialog, TemplateCard, TemplatePreview
+├── schedules/         CreateScheduleDialog, ScheduleCardList, …
+├── linkedin-table/    LinkedInTable, LinkedInDetailModal, …
+├── linkedin/          ConnectionStep, UploadStep, CampaignSettingsStep
+├── import/            ImportStepper, ImportStepUpload/Review/Confirm, PreviewTable
+├── analytics/         AnalyticsDashboard
+├── settings/          WebhooksSection, EmailTemplateSection
+├── search/            SearchFormCard, SearchStatusBanner
+└── shared/            PageLoading, PageError, AlertModal, …
+
+hooks/                 useAuth, useSettings, useSenderEmails, useTemplates, …
+lib/                   supabase client, import parser, grouping, formatação
+supabase/migrations/   Migrations SQL ordenadas
+docs/                  Especificações de integração (N8N)
+types/index.ts         Tipos compartilhados
 ```
 
-## 🎯 Scripts Disponíveis
+---
+
+## 🎯 Scripts
 
 ```bash
-# Desenvolvimento
-npm run dev
-
-# Build para produção
-npm run build
-
-# Iniciar produção
-npm run start
-
-# Linting
-npm run lint
-
-# Type checking
-npm run typecheck
+npm run dev         # dev server em :3000
+npm run build       # build de produção
+npm run start       # serve o build
+npm run lint        # ESLint
+npm run typecheck   # tsc --noEmit
 ```
+
+---
 
 ## 🚀 Deploy
 
-### **Vercel (Recomendado)**
+Recomendado **Vercel**: conecte o repositório, configure as variáveis de ambiente e
+faça deploy. O build padrão do Next.js 14 com App Router funciona sem customização.
 
-1. Conecte seu repositório ao Vercel
-2. Configure as variáveis de ambiente
-3. Deploy automático em cada push
+Qualquer provider que rode Next 14 serve (Railway, Fly, Render, Netlify etc.).
 
-### **Outras Plataformas**
+---
 
-- **Netlify**: Funciona com configuração de build
-- **Railway**: Suporte nativo ao Next.js
-- **Docker**: Dockerfile incluído (futuro)
+## 🔌 Integração com N8N
+
+O disparo por N8N é feito via webhook (`NEXT_PUBLIC_WEBHOOK_N8N`). A app publica
+payloads no formato documentado em [docs/N8N_SENDER_EMAILS_INTEGRATION.md](docs/N8N_SENDER_EMAILS_INTEGRATION.md),
+contendo `dispatches[]` com cada grupo `{ sender_email, platform, emails[] }`.
+
+Antes de cada envio o workflow N8N deve consultar a edge function
+`warmup-budget` e só prosseguir se `remaining > 0`. Ver
+[docs/warmup-budget-n8n.html](docs/warmup-budget-n8n.html) para o contrato completo.
+
+---
 
 ## 🤝 Contribuindo
 
-1. **Fork** o projeto
-2. Crie uma **branch** para sua feature (`git checkout -b feature/AmazingFeature`)
-3. **Commit** suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. **Push** para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um **Pull Request**
+1. Fork + branch (`git checkout -b feat/minha-feature`)
+2. Commits pequenos e descritivos
+3. `npm run lint && npm run typecheck` antes de abrir PR
+4. PR com descrição do **porquê**, não só do **o quê**
 
-## 📝 Roadmap
-
-- [ ] **Multi-tenant support** - Suporte a equipes
-- [ ] **Email templates** - Editor visual
-- [ ] **A/B testing** - Teste de campanhas
-- [ ] **Analytics avançado** - Métricas detalhadas
-- [ ] **API REST** - Integração externa
-- [ ] **Mobile app** - React Native
-- [ ] **AI insights** - Sugestões inteligentes
-
-## 🐛 Problemas Conhecidos
-
-- **Corepack warning**: Pode aparecer warning no Vercel (não afeta funcionamento)
-- **Migration manual**: Migrations devem ser executadas manualmente no Supabase
+---
 
 ## 📄 Licença
 
-Este projeto está licenciado sob a **MIT License** - veja o arquivo [LICENSE](LICENSE) para detalhes.
-
-## 🙏 Agradecimentos
-
-- **[Supabase](https://supabase.com/)** - Backend incrível
-- **[shadcn/ui](https://ui.shadcn.com/)** - Componentes elegantes
-- **[Lucide](https://lucide.dev/)** - Ícones lindos
-- **[Vercel](https://vercel.com/)** - Deploy fantástico
+MIT — ver [LICENSE](LICENSE).
 
 ---
 
 <p align="center">
   Feito com ❤️ por <strong>IA-LabTracker</strong>
-</p>
-
-<p align="center">
-  <a href="#top">⬆️ Voltar ao topo</a>
 </p>

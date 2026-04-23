@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ingestão de Replies (chat de emails) — N8N</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1a1a1a;
+    font-size: 10.5pt;
+    line-height: 1.45;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page { max-width: 170mm; margin: 0 auto; }
+
+  .header {
+    border-bottom: 1px solid #d1d5db;
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+  }
+  .header .eyebrow {
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #6b7280;
+    font-weight: 600;
+  }
+  h1 {
+    font-size: 20pt;
+    font-weight: 600;
+    margin: 4px 0 0;
+    letter-spacing: -0.01em;
+  }
+  .header .sub {
+    color: #6b7280;
+    font-size: 10pt;
+    margin-top: 3px;
+  }
+
+  h2 {
+    font-size: 13pt;
+    font-weight: 600;
+    margin: 22px 0 8px;
+    color: #111;
+  }
+  h3 {
+    font-size: 11pt;
+    font-weight: 600;
+    margin: 14px 0 6px;
+    color: #111;
+  }
+  h4 {
+    font-size: 10pt;
+    font-weight: 600;
+    margin: 10px 0 4px;
+    color: #374151;
+  }
+
+  p { margin: 6px 0; }
+
+  code, pre {
+    font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+    font-size: 9.2pt;
+  }
+  code {
+    background: #f3f4f6;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #111;
+  }
+  pre {
+    background: #0f1419;
+    color: #e5e7eb;
+    padding: 12px 14px;
+    border-radius: 6px;
+    overflow: auto;
+    line-height: 1.45;
+    margin: 8px 0;
+    page-break-inside: avoid;
+  }
+  pre .k { color: #93c5fd; }
+  pre .s { color: #86efac; }
+  pre .n { color: #fca5a5; }
+  pre .c { color: #9ca3af; font-style: italic; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 9.8pt;
+    margin: 8px 0;
+  }
+  th, td {
+    text-align: left;
+    padding: 7px 10px;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: top;
+  }
+  th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+    font-size: 9.2pt;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .kvlist {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 6px 14px;
+    font-size: 10pt;
+    margin: 8px 0;
+  }
+  .kvlist dt { color: #6b7280; font-weight: 500; }
+  .kvlist dd { margin: 0; font-family: ui-monospace, Menlo, monospace; font-size: 9.4pt; }
+
+  ol, ul { padding-left: 18px; margin: 6px 0; }
+  li { margin: 3px 0; }
+
+  .callout {
+    border-left: 3px solid #111;
+    background: #f9fafb;
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+  .callout .label {
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #6b7280;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .callout-warn { border-left-color: #b45309; background: #fffbeb; }
+  .callout-warn .label { color: #b45309; }
+
+  .badge {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 8.5pt;
+    font-weight: 600;
+    font-family: ui-monospace, Menlo, monospace;
+    letter-spacing: 0;
+  }
+  .badge-ok { background: #dcfce7; color: #15803d; }
+  .badge-warn { background: #fef3c7; color: #b45309; }
+  .badge-err { background: #fee2e2; color: #b91c1c; }
+  .badge-neutral { background: #e5e7eb; color: #374151; }
+
+  .checklist { list-style: none; padding-left: 0; }
+  .checklist li { position: relative; padding-left: 22px; margin: 4px 0; }
+  .checklist li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 4px;
+    width: 12px; height: 12px;
+    border: 1px solid #9ca3af;
+    border-radius: 2px;
+  }
+
+  footer {
+    margin-top: 28px;
+    padding-top: 10px;
+    border-top: 1px solid #e5e7eb;
+    color: #9ca3af;
+    font-size: 8.5pt;
+  }
+
+  .section-break { page-break-before: always; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="header">
+  <div class="eyebrow">Especificação técnica · N8N</div>
+  <h1>Ingestão de Replies</h1>
+  <div class="sub">Alterações no webhook de eventos para persistir mensagens completas e habilitar visualização em chat no app.</div>
+</div>
+
+<h2>Contexto</h2>
+<p>
+Hoje o app <strong>Cold Email Pro</strong> mostra apenas o status de cada lead (sent / opened / replied / bounced), sem o conteúdo das trocas. Vamos construir uma <strong>visualização em chat</strong> mostrando a thread completa entre nós e o lead — ida e volta, com timestamp e corpo de cada mensagem.
+</p>
+<p>
+Para isso precisamos que o N8N passe a persistir cada mensagem (enviada e recebida) como linha individual numa nova tabela <code>email_messages</code>, além do update de status já existente.
+</p>
+
+<h2>Estado atual</h2>
+<p>
+Workflow responsável: <code>[Email]Webhook eventos e recebimento</code> (id <code>NkZO6yq9LeKVBnbs</code>).
+</p>
+<p>
+Ele recebe eventos do provider (SmartLead / Resend / etc) e tem um <code>Switch</code> com 4 branches: <code>Resposta</code>, <code>Bounced</code>, <code>Aberto</code>, <code>Entregue</code>. Para cada um, um <code>Set</code> monta o payload e um nó Supabase faz <code>update</code> na tabela <code>emails</code>.
+</p>
+
+<div class="callout callout-warn">
+  <div class="label">Problema</div>
+  O ramo <strong>Resposta</strong> (<code>Reposta</code> → <code>Reposta_staus</code>) atualiza o status do lead para <code>replied</code>, mas <strong>não está salvando o corpo da resposta</strong>. Verificação feita no banco em 2026-04-23: de 1.203 leads, apenas 7 têm status <code>replied</code> e <strong>nenhum</strong> tem <code>response_content</code>, <code>reply_we_got</code> ou <code>reply_time</code> preenchido.
+</div>
+
+<h2>Objetivo</h2>
+<ol>
+  <li>Criar tabela normalizada <code>email_messages</code> (uma linha por mensagem, inbound ou outbound).</li>
+  <li>Ajustar o workflow de ingestão de eventos para <strong>inserir</strong> em <code>email_messages</code> além de atualizar <code>emails.status</code>.</li>
+  <li>Ajustar o workflow de <strong>envio</strong> (<code>[email] Send Email pt2</code>, id <code>jhzBrpA2g5mYOMon</code>) para <strong>inserir</strong> em <code>email_messages</code> toda vez que um email sai.</li>
+</ol>
+<p>Com isso o app consegue renderizar a thread ordenada por data.</p>
+
+<h2>1 · Schema da nova tabela</h2>
+<p>A migration será aplicada no Supabase pela equipe de dev (não é o seu trabalho). Mas você precisa saber o shape para montar os <code>insert</code>:</p>
+
+<pre><span class="c">-- Aplicado no Supabase</span>
+<span class="k">CREATE TABLE</span> email_messages (
+  id uuid <span class="k">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+  user_id uuid <span class="k">NOT NULL REFERENCES</span> auth.users(id) <span class="k">ON DELETE CASCADE</span>,
+  email_id uuid <span class="k">NOT NULL REFERENCES</span> emails(id) <span class="k">ON DELETE CASCADE</span>,
+
+  <span class="c">-- Thread tracking (vem do provider)</span>
+  thread_id <span class="k">text</span>,
+  provider_message_id <span class="k">text</span>,
+  in_reply_to <span class="k">text</span>,
+
+  <span class="c">-- Direção</span>
+  direction <span class="k">text NOT NULL CHECK</span> (direction <span class="k">IN</span> (<span class="s">'outbound'</span>, <span class="s">'inbound'</span>)),
+
+  <span class="c">-- Conteúdo</span>
+  from_address <span class="k">text NOT NULL</span>,
+  from_name <span class="k">text</span>,
+  to_address <span class="k">text NOT NULL</span>,
+  subject <span class="k">text</span>,
+  body_text <span class="k">text</span>,
+  body_html <span class="k">text</span>,
+
+  <span class="c">-- Metadados</span>
+  provider <span class="k">text</span>,                <span class="c">-- smartlead | resend | zapmail | gmail</span>
+  sent_at <span class="k">timestamptz NOT NULL</span>,
+  received_at <span class="k">timestamptz</span>,
+
+  created_at <span class="k">timestamptz DEFAULT</span> now()
+);</pre>
+
+<h2>2 · Payload esperado nos inserts</h2>
+
+<h3>Mensagem recebida (inbound)</h3>
+<pre>{
+  <span class="k">"user_id"</span>: <span class="s">"&lt;user_id do lead&gt;"</span>,
+  <span class="k">"email_id"</span>: <span class="s">"&lt;uuid do lead na tabela emails&gt;"</span>,
+  <span class="k">"direction"</span>: <span class="s">"inbound"</span>,
+  <span class="k">"from_address"</span>: <span class="s">"jake@intelitechs.com"</span>,
+  <span class="k">"from_name"</span>: <span class="s">"Jake Smith"</span>,
+  <span class="k">"to_address"</span>: <span class="s">"sender@meudominio.com"</span>,
+  <span class="k">"subject"</span>: <span class="s">"Re: Quick question about Intelitechs"</span>,
+  <span class="k">"body_text"</span>: <span class="s">"Obrigado pelo contato! Sim, podemos conversar..."</span>,
+  <span class="k">"body_html"</span>: <span class="s">"&lt;p&gt;Obrigado pelo contato!...&lt;/p&gt;"</span>,
+  <span class="k">"thread_id"</span>: <span class="s">"&lt;thread_id do provider, se disponível&gt;"</span>,
+  <span class="k">"provider_message_id"</span>: <span class="s">"&lt;message-id da resposta&gt;"</span>,
+  <span class="k">"in_reply_to"</span>: <span class="s">"&lt;message-id do email que respondeu, se tiver&gt;"</span>,
+  <span class="k">"provider"</span>: <span class="s">"smartlead"</span>,
+  <span class="k">"sent_at"</span>: <span class="s">"2026-04-22T14:33:21Z"</span>,     <span class="c">// quando o lead mandou</span>
+  <span class="k">"received_at"</span>: <span class="s">"2026-04-22T14:33:45Z"</span>  <span class="c">// quando chegou pra nós</span>
+}</pre>
+
+<h3>Mensagem enviada (outbound)</h3>
+<pre>{
+  <span class="k">"user_id"</span>: <span class="s">"&lt;user_id do lead&gt;"</span>,
+  <span class="k">"email_id"</span>: <span class="s">"&lt;uuid do lead&gt;"</span>,
+  <span class="k">"direction"</span>: <span class="s">"outbound"</span>,
+  <span class="k">"from_address"</span>: <span class="s">"sender@meudominio.com"</span>,
+  <span class="k">"from_name"</span>: <span class="s">"Patrick Almeida"</span>,
+  <span class="k">"to_address"</span>: <span class="s">"jake@intelitechs.com"</span>,
+  <span class="k">"subject"</span>: <span class="s">"Quick question about Intelitechs"</span>,
+  <span class="k">"body_text"</span>: <span class="s">"Hey Jake, saw you're leading..."</span>,
+  <span class="k">"body_html"</span>: <span class="s">"&lt;p&gt;Hey Jake...&lt;/p&gt;"</span>,
+  <span class="k">"provider"</span>: <span class="s">"zapmail"</span>,
+  <span class="k">"provider_message_id"</span>: <span class="s">"&lt;message-id que o provider retornou no send&gt;"</span>,
+  <span class="k">"sent_at"</span>: <span class="s">"2026-04-15T15:01:31Z"</span>
+}</pre>
+
+<div class="callout">
+  <div class="label">Importante</div>
+  O campo <code>email_id</code> é <strong>sempre obrigatório</strong> — sem ele não conseguimos linkar a mensagem ao lead. Para inbound, identificar pelo <code>from_address</code>: fazer <code>SELECT id, user_id FROM emails WHERE email = &lt;from_address&gt;</code>. Se retornar mais de um (mesmo lead em campanhas diferentes), pegar o mais recente por <code>date_sent</code>.
+</div>
+
+<h2 class="section-break">3 · Alterações no workflow <code>NkZO6yq9LeKVBnbs</code></h2>
+<p>Workflow atual tem este fluxo para cada branch:</p>
+<pre>Webhook → Switch → Set (monta payload) → Supabase (update emails)</pre>
+
+<p>Novo fluxo para o ramo <strong>Resposta</strong> (inbound):</p>
+<pre>Webhook
+  ↓
+Switch (4 branches)
+  ↓ [Resposta]
+Set (extrai dados do payload do provider)
+  ↓
+Postgres: SELECT id, user_id FROM emails WHERE email = &lt;from_address&gt;
+  ↓
+If (achou o lead?)
+  ↓ TRUE
+Set (monta payload para email_messages)
+  ↓
+Supabase INSERT em email_messages       ← NOVO
+  ↓
+Supabase UPDATE em emails (status='replied', reply_time=now)
+  ↓
+[Opcional] Trigger de notificação (Telegram/Slack/etc)</pre>
+
+<h3>Passos node-a-node</h3>
+
+<h4>a) Node novo: <code>Resolve lead</code> (Postgres)</h4>
+<p>Depois do <code>Set</code> de resposta, antes de qualquer update. Query:</p>
+<pre><span class="k">SELECT</span> id, user_id
+<span class="k">FROM</span> emails
+<span class="k">WHERE LOWER</span>(email) = <span class="k">LOWER</span>(<span class="s">$1</span>)
+<span class="k">ORDER BY</span> date_sent <span class="k">DESC NULLS LAST</span>
+<span class="k">LIMIT</span> 1;</pre>
+<p>Parameter <code>$1</code> = <code>{{ $json.from_email }}</code> (ou o path onde o provider manda o email de quem respondeu).</p>
+
+<h4>b) Node novo: <code>If lead exists</code></h4>
+<p>Condição: <code>{{ $json.id }}</code> <code>isNotEmpty</code>. Se não existir o lead, não insere (evita lixo). Opcional: logar num canal de erro.</p>
+
+<h4>c) Node novo: <code>Build message payload</code> (Set)</h4>
+<p>Monta o objeto descrito em "Mensagem recebida (inbound)" acima. Campos que precisam ser extraídos do payload do provider:</p>
+
+<table>
+  <thead>
+    <tr><th>Campo destino</th><th>SmartLead</th><th>Resend</th><th>Zapmail</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>from_address</code></td><td><code>reply.from_email</code></td><td><code>data.from</code></td><td><code>sender</code></td></tr>
+    <tr><td><code>from_name</code></td><td><code>reply.from_name</code></td><td><code>data.from_name</code></td><td><code>sender_name</code></td></tr>
+    <tr><td><code>to_address</code></td><td><code>reply.to_email</code></td><td><code>data.to[0]</code></td><td><code>receiver</code></td></tr>
+    <tr><td><code>subject</code></td><td><code>reply.subject</code></td><td><code>data.subject</code></td><td><code>subject</code></td></tr>
+    <tr><td><code>body_text</code></td><td><code>reply.message_body_plain</code></td><td><code>data.text</code></td><td><code>body_plain</code></td></tr>
+    <tr><td><code>body_html</code></td><td><code>reply.message_body_html</code></td><td><code>data.html</code></td><td><code>body_html</code></td></tr>
+    <tr><td><code>thread_id</code></td><td><code>reply.thread_id</code></td><td><code>data.thread_id</code></td><td>—</td></tr>
+    <tr><td><code>provider_message_id</code></td><td><code>reply.message_id</code></td><td><code>data.message_id</code></td><td><code>message_id</code></td></tr>
+    <tr><td><code>sent_at</code></td><td><code>reply.received_at</code></td><td><code>data.created_at</code></td><td><code>received_at</code></td></tr>
+  </tbody>
+</table>
+
+<p><small>Ajustar os paths conforme o payload real de cada provider — os nomes acima são chute educado; validar com <code>console.log</code> nos execution logs.</small></p>
+
+<h4>d) Node novo: <code>Insert email_messages</code> (Supabase)</h4>
+<ul>
+  <li><strong>Operation:</strong> Create</li>
+  <li><strong>Table:</strong> <code>email_messages</code></li>
+  <li><strong>Fields:</strong> todo o objeto do passo (c), com <code>direction = "inbound"</code>, <code>email_id</code> e <code>user_id</code> vindos do passo (a).</li>
+</ul>
+
+<h4>e) Node ajustado: <code>Reposta_staus</code> (Supabase — já existe)</h4>
+<p>Manter, mas garantir que atualiza:</p>
+<ul>
+  <li><code>status = 'replied'</code></li>
+  <li><code>reply_time = &lt;sent_at do inbound&gt;</code> (ou <code>now()</code> se não tiver)</li>
+  <li><code>time_we_got_reply = &lt;received_at do inbound&gt;</code></li>
+  <li><strong>NÃO</strong> escrever no <code>response_content</code>/<code>reply_we_got</code>/<code>our_last_reply</code> — isso vai pra <code>email_messages</code>. Esses campos antigos ficarão deprecated e serão removidos no futuro.</li>
+</ul>
+
+<h2 class="section-break">4 · Alterações no workflow de envio <code>jhzBrpA2g5mYOMon</code></h2>
+<p>
+Para o chat mostrar a <strong>nossa</strong> parte da conversa, o workflow de envio também precisa inserir em <code>email_messages</code> toda vez que um email sai — seja o inicial, follow-up ou qualquer resposta manual.
+</p>
+
+<h3>Onde adicionar</h3>
+<p>
+Hoje o workflow tem nodes <code>HTTP Request1</code> (envio direto) e <code>Zapmail - Enviar Email</code>, seguidos de <code>Update a row</code> / <code>Update a row1</code> que atualizam <code>emails</code>. Adicionar um node <code>Supabase: Insert email_messages</code> <strong>depois</strong> do envio bem-sucedido e <strong>antes</strong> (ou em paralelo com) o update de <code>emails</code>.
+</p>
+
+<pre>[envio HTTP/Zapmail] → <strong>Insert email_messages (NOVO)</strong> → Update a row (emails)</pre>
+
+<h3>Payload para outbound</h3>
+<p>Igual ao exemplo "Mensagem enviada (outbound)" acima. Notas:</p>
+<ul>
+  <li><code>email_id</code> já está no contexto (é o lead que o pt1 passou pro pt2).</li>
+  <li><code>user_id</code> também — vem do lead.</li>
+  <li><code>from_address</code>, <code>from_name</code> = o sender escolhido (está disponível no fluxo depois do node <code>SENDER_NAME</code>/<code>SENDER_NAME1</code>).</li>
+  <li><code>to_address</code> = email do lead.</li>
+  <li><code>subject</code>, <code>body_text</code>, <code>body_html</code> = o que foi construído nos <code>Edit Fields</code> de acordo com o tipo de email.</li>
+  <li><code>provider_message_id</code> = ID que o provider retorna na resposta do HTTP de envio (usar <code>{{ $node["HTTP Request1"].json.id }}</code> ou similar).</li>
+  <li><code>sent_at</code> = <code>{{ $now }}</code>.</li>
+</ul>
+
+<h3>Also: aplicar ao <code>[emails] Follow ups</code> (<code>0x9tjMCXLxba1LqZ</code>)</h3>
+<p>Esse workflow também manda emails (via <code>Send Email Resend</code>). Adicionar o mesmo insert em <code>email_messages</code> depois do envio.</p>
+
+<h2>5 · Testing</h2>
+<h3>Inbound</h3>
+<ol>
+  <li>Mandar um email inicial (via app ou manualmente) pra um lead de teste.</li>
+  <li>Responder daquele endereço.</li>
+  <li>Verificar no Supabase: <code>SELECT * FROM email_messages WHERE email_id = '&lt;lead&gt;' ORDER BY sent_at;</code></li>
+  <li>Deve aparecer 1 linha <code>outbound</code> (passo 1) e 1 <code>inbound</code> (passo 2).</li>
+  <li>A linha inbound deve ter <code>body_text</code> e/ou <code>body_html</code> preenchido.</li>
+</ol>
+
+<h3>Outbound</h3>
+<ol>
+  <li>Enviar email via <code>/dashboard</code> → Dispatch.</li>
+  <li>Verificar <code>SELECT * FROM email_messages WHERE direction='outbound' ORDER BY created_at DESC LIMIT 5;</code></li>
+  <li>Todos devem ter <code>body_html</code>, <code>subject</code>, <code>provider_message_id</code>.</li>
+</ol>
+
+<h2>6 · Checklist</h2>
+<ul class="checklist">
+  <li>Confirmei o payload real do provider (SmartLead ou Resend) rodando um teste e capturando o JSON que chega no Webhook.</li>
+  <li>Adicionei node <code>Resolve lead</code> (Postgres SELECT) no ramo Resposta.</li>
+  <li>Adicionei node <code>If lead exists</code> que pula quando não acha.</li>
+  <li>Adicionei node <code>Build message payload</code> (Set) com os campos da tabela.</li>
+  <li>Adicionei node <code>Insert email_messages</code> (Supabase Create) com <code>direction='inbound'</code>.</li>
+  <li>Ajustei <code>Reposta_staus</code> para atualizar só <code>status</code>, <code>reply_time</code>, <code>time_we_got_reply</code>.</li>
+  <li>No workflow de envio (<code>jhzBrpA2g5mYOMon</code>), adicionei <code>Insert email_messages</code> com <code>direction='outbound'</code> depois de cada envio bem-sucedido.</li>
+  <li>No workflow de follow-ups (<code>0x9tjMCXLxba1LqZ</code>), idem.</li>
+  <li>Testei inbound com um endereço real e validei que veio o corpo no banco.</li>
+  <li>Testei outbound e validei que a mensagem enviada também ficou registrada.</li>
+  <li>Ativei os workflows alterados.</li>
+</ul>
+
+<h2>7 · Observações</h2>
+<ul>
+  <li>A tabela <code>email_messages</code> vai crescer rápido (uma linha por envio + uma por reply). RLS será aplicada via <code>auth.uid() = user_id</code> — garantir que o <code>user_id</code> é sempre preenchido corretamente.</li>
+  <li>Os campos antigos da tabela <code>emails</code> (<code>response_content</code>, <code>reply_we_got</code>, <code>our_last_reply</code>, <code>reply_time</code>, <code>time_we_got_reply</code>) vão ficar deprecated. Por ora, manter <code>reply_time</code> e <code>time_we_got_reply</code> atualizados pra compatibilidade com o app atual. Os 3 de corpo podem parar de ser escritos.</li>
+  <li>Se o provider mandar anexos, <strong>não incluir no payload por enquanto</strong> — será adicionado numa segunda fase (nova tabela <code>email_attachments</code>).</li>
+  <li>Se acontecer de o webhook ser chamado duas vezes para o mesmo <code>provider_message_id</code> (duplicação), não é problema hoje, mas no futuro adicionaremos um <code>UNIQUE</code> em <code>(provider, provider_message_id)</code> — o dev do front vai alinhar quando acontecer.</li>
+</ul>
+
+<footer>
+  Cold Email Pro · Ingestão de Replies para Chat · v1 · Abril 2026
+</footer>
+
+</div>
+</body>
+</html>

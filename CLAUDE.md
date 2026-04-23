@@ -81,6 +81,25 @@ Todas as tabelas em `public`, RLS via `auth.uid() = user_id`.
 
 ---
 
+## N8N — acesso e workflows
+
+**Instância:** `https://n8n.coisasdecapitu.com.br` (self-hosted). API key em `.env` (`N8N_API_KEY`).
+
+**Acesso via MCP:** tools `mcp__n8n-mcp__*` já configuradas em `.mcp.json` (gitignored). Inclui `n8n_list_workflows`, `n8n_get_workflow`, `n8n_update_partial_workflow`, `n8n_create_workflow`, `n8n_executions`, `n8n_validate_workflow`, `search_nodes`, `get_node`, etc. Antes de chamar, carregar schema via `ToolSearch` com `select:mcp__n8n-mcp__<nome>`.
+
+**Inventário completo dos workflows do Cold Email Pro:** [docs/n8n-workflows.md](docs/n8n-workflows.md) — mapeia os 13 workflows ativos por categoria (dispatch, reply events, warmup, follow-ups, LinkedIn), com IDs, triggers, topologia resumida e gaps conhecidos. **Consultar sempre antes de propor mudança no N8N.**
+
+**Workflows-chave (decoreba):**
+- `GIFZ8zzIWiXGdral` — `[email] pt 1 Split emails para envio` → entry do `NEXT_PUBLIC_WEBHOOK_N8N`
+- `jhzBrpA2g5mYOMon` — `[email] Send Email pt2` → envio real (49 nodes, o maior)
+- `NkZO6yq9LeKVBnbs` — `[Email]Webhook eventos e recebimento` → ingestão de eventos (reply/bounce/opened)
+- `GaDxY8f5dQnP0LG4` + `bTuTALx2EDDqBrxK` — warmup send + warmup reply auto
+- `G1G1DkHf7GrU79us` — `[Tigger] - zera limite` (reset diário)
+
+**Regra:** ao alterar workflow no n8n, **atualizar `docs/n8n-workflows.md` no mesmo PR**.
+
+---
+
 ## Estrutura de componentes
 
 ```

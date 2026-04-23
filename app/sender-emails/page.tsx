@@ -13,12 +13,12 @@ import { useTemplates } from "@/hooks/useTemplates";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { AppLayout } from "@/components/AppLayout";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
   SenderEmailListItem,
   SenderEmailGroup,
 } from "@/components/sender-emails/SenderEmailListItem";
+import { SenderEmailListSkeleton } from "@/components/sender-emails/SenderEmailListSkeleton";
 import { CreateSenderEmailDialog } from "@/components/sender-emails/CreateSenderEmailDialog";
 import { resolveTemplateForSender } from "@/lib/resolveTemplate";
 
@@ -235,33 +235,7 @@ export default function SenderEmailsPage() {
         )}
 
         {isLoading ? (
-          <div className="space-y-6">
-            {/* Summary bar */}
-            <div className="flex items-center gap-6">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-48" />
-            </div>
-
-            {/* List items */}
-            <div className="space-y-1.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-4 rounded-xl border border-border bg-card px-5 py-4"
-                >
-                  <Skeleton className="h-9 w-9 rounded-full shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2 mb-1.5">
-                      <Skeleton className="h-4 w-44" />
-                      {i === 0 && <Skeleton className="h-4 w-12 rounded-md" />}
-                    </div>
-                    <Skeleton className="h-3 w-56" />
-                  </div>
-                  <Skeleton className="h-7 w-7 rounded-lg shrink-0" />
-                </div>
-              ))}
-            </div>
-          </div>
+          <SenderEmailListSkeleton />
         ) : senderEmails.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border py-20 text-center">
             <p className="text-sm text-muted-foreground">No sender emails yet</p>

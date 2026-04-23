@@ -1,48 +1,83 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useParams } from "next/navigation";
 import { DateRange } from "react-day-picker";
+import { Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Email, SenderEmail } from "@/types";
 import { AppLayout } from "@/components/AppLayout";
 import { EmailDetailModal } from "@/components/dashboard/EmailDetailModal";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ErrorMessage } from "@/components/shared/ErrorMessage";
-import { AlertModal } from "@/components/shared/AlertModal";
-import { EmailListTable } from "@/components/shared/EmailListTable";
 import { EmailFilters } from "@/components/dashboard/EmailFilters";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { EmailListTable } from "@/components/shared/EmailListTable";
+import { ErrorMessage } from "@/components/shared/ErrorMessage";
+import { ConfirmDeleteDialog } from "@/components/shared/ConfirmDeleteDialog";
 import { SenderEmailDispatchBar } from "@/components/sender-emails/SenderEmailDispatchBar";
+import { SenderEmailDetailHeader } from "@/components/sender-emails/SenderEmailDetailHeader";
+import { SenderEmailDetailSkeleton } from "@/components/sender-emails/SenderEmailDetailSkeleton";
+import {
+  computeEmailStats,
+  SenderEmailKPICards,
+} from "@/components/sender-emails/SenderEmailKPICards";
 import { useEmailSelection } from "@/hooks/useEmailSelection";
 import { useTemplates } from "@/hooks/useTemplates";
-import { ArrowLeft, Mail, Send, MessageSquare, Flame, Eye, XCircle, Users, FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { PlatformIndicator } from "@/components/sender-emails/PlatformIndicator";
 import { resolveTemplateForSender } from "@/lib/resolveTemplate";
+
+interface Filters {
+  search: string;
+  status: string;
+  classification: string;
+  clientStep: string;
+  dateRange: DateRange | undefined;
+}
+
+function applyEmailFilters(emails: Email[], f: Filters): Email[] {
+  const search = f.search.trim().toLowerCase();
+  const fromMs = f.dateRange?.from?.getTime();
+  const toMs = f.dateRange?.to?.getTime();
+
+  return emails.filter((e) => {
+    if (f.status && e.status !== f.status) return false;
+    if (f.classification && e.lead_classification !== f.classification) return false;
+    if (f.clientStep && e.client_step !== f.clientStep) return false;
+    if (fromMs !== undefined) {
+      const d = e.created_at ? new Date(e.created_at).getTime() : NaN;
+      if (Number.isNaN(d) || d < fromMs) return false;
+      if (toMs !== undefined && d > toMs) return false;
+    }
+    if (search) {
+      const hit =
+        e.company.toLowerCase().includes(search) ||
+        e.email.toLowerCase().includes(search) ||
+        (e.lead_name ?? "").toLowerCase().includes(search) ||
+        (e.lead_category ?? "").toLowerCase().includes(search);
+      if (!hit) return false;
+    }
+    return true;
+  });
+}
 
 export default function SenderEmailDetailPage() {
   const params = useParams();
-  const router = useRouter();
-  const { user } = useAuth();
   const senderEmailId = params.id as string;
+  const { user } = useAuth();
   const { templates } = useTemplates();
 
   const [senderEmail, setSenderEmail] = useState<SenderEmail | null>(null);
   const [emails, setEmails] = useState<Email[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [searchFilter, setSearchFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [classificationFilter, setClassificationFilter] = useState("");
-  const [clientStepFilter, setClientStepFilter] = useState("");
-  const [dateRangeFilter, setDateRangeFilter] = useState<DateRange | undefined>(undefined);
-  const [selectedDetailEmail, setSelectedDetailEmail] = useState<Email | null>(null);
-  const [detailModalOpen, setDetailModalOpen] = useState(false);
+
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [classification, setClassification] = useState("");
+  const [clientStep, setClientStep] = useState("");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+
+  const [detailEmail, setDetailEmail] = useState<Email | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Email | null>(null);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
 
   const {
     selectedIds,
@@ -76,7 +111,7 @@ export default function SenderEmailDetailPage() {
 
       if (seRes.error) throw seRes.error;
       setSenderEmail(seRes.data);
-      setEmails(emailsRes.data || []);
+      setEmails(emailsRes.data ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load sender email");
     } finally {
@@ -88,310 +123,80 @@ export default function SenderEmailDetailPage() {
     fetchData();
   }, [fetchData]);
 
-  const filteredEmails = useMemo(() => {
-    let filtered = emails;
+  const stats = useMemo(() => computeEmailStats(emails), [emails]);
 
-    if (searchFilter) {
-      const lower = searchFilter.toLowerCase();
-      filtered = filtered.filter(
-        (e) =>
-          e.company.toLowerCase().includes(lower) ||
-          e.email.toLowerCase().includes(lower) ||
-          (e.lead_name || "").toLowerCase().includes(lower) ||
-          (e.lead_category || "").toLowerCase().includes(lower),
-      );
-    }
-    if (statusFilter) filtered = filtered.filter((e) => e.status === statusFilter);
-    if (classificationFilter)
-      filtered = filtered.filter((e) => e.lead_classification === classificationFilter);
-    if (clientStepFilter) filtered = filtered.filter((e) => e.client_step === clientStepFilter);
-    if (dateRangeFilter?.from) {
-      filtered = filtered.filter((e) => {
-        const d = e.created_at ? new Date(e.created_at) : null;
-        if (!d) return false;
-        if (dateRangeFilter.from && d < dateRangeFilter.from) return false;
-        if (dateRangeFilter.to && d > dateRangeFilter.to) return false;
-        return true;
-      });
-    }
+  const filteredEmails = useMemo(
+    () => applyEmailFilters(emails, { search, status, classification, clientStep, dateRange }),
+    [emails, search, status, classification, clientStep, dateRange],
+  );
 
-    return filtered;
-  }, [emails, searchFilter, statusFilter, classificationFilter, clientStepFilter, dateRangeFilter]);
-
-  // KPIs
-  const totalEmails = emails.length;
-  const sentCount = emails.filter((e) => e.status === "sent").length;
-  const repliedCount = emails.filter((e) => e.status === "replied").length;
-  const bouncedCount = emails.filter((e) => e.status === "bounced").length;
-  const openedCount = emails.filter((e) => e.status === "opened").length;
-  const hotLeads = emails.filter((e) => e.lead_classification === "hot").length;
-  const totalSentish = emails.filter((e) => e.status !== "researched").length;
-  const replyRate = totalSentish > 0 ? Math.round((repliedCount / totalSentish) * 100) : 0;
-
-  const handleViewDetails = useCallback((email: Email) => {
-    setSelectedDetailEmail(email);
-    setDetailModalOpen(true);
-  }, []);
-
-  const handleDeleteRequest = useCallback((email: Email) => {
-    setDeleteTarget(email);
-    setDeleteModalOpen(true);
-  }, []);
-
-  const handleConfirmDelete = useCallback(async () => {
-    if (!deleteTarget) return;
-    try {
-      await supabase.from("emails").delete().eq("id", deleteTarget.id);
-      setEmails((prev) => prev.filter((e) => e.id !== deleteTarget.id));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete");
-    } finally {
-      setDeleteTarget(null);
-      setDeleteModalOpen(false);
-    }
-  }, [deleteTarget]);
-
-  const handleConfirmBulkDelete = useCallback(async () => {
-    try {
-      const ids = Array.from(selectedIds);
-      await supabase.from("emails").delete().in("id", ids);
-      setEmails((prev) => prev.filter((e) => !selectedIds.has(e.id)));
-      clearSelection();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete");
-    } finally {
-      setBulkDeleteModalOpen(false);
-    }
-  }, [selectedIds, clearSelection]);
-
-  const kpis = [
-    {
-      label: "Total",
-      value: totalEmails,
-      icon: Mail,
-      iconColor: "text-blue-500",
-      valueColor: "text-blue-600 dark:text-blue-400",
-      borderColor: "bg-blue-500/70",
-      filterValue: "",
-    },
-    {
-      label: "Sent",
-      value: sentCount,
-      icon: Send,
-      iconColor: "text-purple-500",
-      valueColor: "text-purple-600 dark:text-purple-400",
-      borderColor: "bg-purple-500/70",
-      filterValue: "sent",
-    },
-    {
-      label: "Replied",
-      value: repliedCount,
-      icon: MessageSquare,
-      iconColor: "text-green-500",
-      valueColor: "text-green-600 dark:text-green-400",
-      borderColor: "bg-green-500/70",
-      filterValue: "replied",
-    },
-    {
-      label: "Bounced",
-      value: bouncedCount,
-      icon: XCircle,
-      iconColor: "text-red-500",
-      valueColor: "text-red-600 dark:text-red-400",
-      borderColor: "bg-red-500/70",
-      filterValue: "bounced",
-    },
-    {
-      label: "Opened",
-      value: openedCount,
-      icon: Eye,
-      iconColor: "text-cyan-500",
-      valueColor: "text-cyan-600 dark:text-cyan-400",
-      borderColor: "bg-cyan-500/70",
-      filterValue: "opened",
-    },
-    {
-      label: "Reply Rate",
-      value: `${replyRate}%`,
-      icon: MessageSquare,
-      iconColor: "text-emerald-500",
-      valueColor: "text-emerald-600 dark:text-emerald-400",
-      borderColor: "bg-emerald-500/70",
-      filterValue: "",
-    },
-    {
-      label: "Hot Leads",
-      value: hotLeads,
-      icon: Flame,
-      iconColor: "text-orange-500",
-      valueColor: "text-orange-600 dark:text-orange-400",
-      borderColor: "bg-orange-500/70",
-      filterValue: "",
-    },
-  ];
-
-  const platformKey =
-    senderEmail?.platform && senderEmail.platform !== "none"
-      ? senderEmail.platform
-      : null;
   const resolvedTemplate = useMemo(
     () => resolveTemplateForSender(senderEmail?.platform, templates),
     [senderEmail?.platform, templates],
   );
 
+  const handleViewDetails = useCallback((email: Email) => {
+    setDetailEmail(email);
+    setDetailOpen(true);
+  }, []);
+
+  const handleDeleteRequest = useCallback((email: Email) => {
+    setDeleteTarget(email);
+  }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deleteTarget) return;
+    const { id } = deleteTarget;
+    try {
+      await supabase.from("emails").delete().eq("id", id);
+      setEmails((prev) => prev.filter((e) => e.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete");
+    } finally {
+      setDeleteTarget(null);
+    }
+  }, [deleteTarget]);
+
+  const handleKpiFilterToggle = useCallback((filterValue: string) => {
+    setStatus((prev) => (prev === filterValue ? "" : filterValue));
+    setClassification("");
+    setClientStep("");
+  }, []);
+
   return (
     <AppLayout>
       <div className="space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => router.push("/sender-emails")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-bold text-foreground">
-                  {senderEmail?.email_address ?? "Loading..."}
-                </h1>
-                {platformKey && (
-                  <PlatformIndicator platform={platformKey} size="md" />
-                )}
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {senderEmail?.display_name || "No display name"}
-                {senderEmail?.domain && (
-                  <>
-                    <span className="mx-1.5 text-border">·</span>
-                    {senderEmail.domain}
-                  </>
-                )}
-                <span className="mx-1.5 text-border">·</span>
-                {totalEmails} lead{totalEmails !== 1 ? "s" : ""} assigned
-              </p>
-              {senderEmail && (
-                <button
-                  type="button"
-                  onClick={() => router.push("/templates")}
-                  className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:border-primary/30 hover:bg-muted hover:text-foreground"
-                  title={
-                    resolvedTemplate
-                      ? `Template: ${resolvedTemplate.name}${resolvedTemplate.subject ? ` — ${resolvedTemplate.subject}` : ""}`
-                      : "No template assigned — click to create one"
-                  }
-                >
-                  <FileText className="h-3 w-3 shrink-0" />
-                  <span className="max-w-[260px] truncate">
-                    {resolvedTemplate
-                      ? `Template: ${resolvedTemplate.name}`
-                      : "No template assigned"}
-                  </span>
-                </button>
-              )}
-            </div>
-          </div>
-          <DateRangePicker date={dateRangeFilter} onDateChange={setDateRangeFilter} />
-        </div>
+        <SenderEmailDetailHeader
+          senderEmail={senderEmail}
+          totalEmails={stats.total}
+          template={resolvedTemplate}
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+        />
 
         {error && <ErrorMessage message={error} />}
 
         {loading ? (
-          <div className="space-y-6">
-            {/* KPI Cards */}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
-              {Array.from({ length: 7 }).map((_, i) => (
-                <div key={i} className="overflow-hidden rounded-xl border border-border bg-card">
-                  <div className="px-4 pb-3 pt-4">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <Skeleton className="h-3 w-16" />
-                        <Skeleton className="h-7 w-10" />
-                      </div>
-                      <Skeleton className="h-4 w-4" />
-                    </div>
-                  </div>
-                  <Skeleton className="h-0.5 w-full" />
-                </div>
-              ))}
-            </div>
-
-            {/* Filters */}
-            <Skeleton className="h-12 w-full rounded-lg" />
-
-            {/* Table */}
-            <div className="rounded-lg border border-border bg-card">
-              <div className="border-b border-border px-4 py-3">
-                <div className="flex items-center gap-4">
-                  <Skeleton className="h-4 w-4" />
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-4 w-48" />
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-4 w-20" />
-                </div>
-              </div>
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="border-b border-border px-4 py-3">
-                  <div className="flex items-center gap-4">
-                    <Skeleton className="h-4 w-4" />
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-4 w-48" />
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-4 w-20" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <SenderEmailDetailSkeleton />
         ) : (
           <>
-            {/* KPI Cards */}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
-              {kpis.map((kpi) => {
-                const Icon = kpi.icon;
-                const isActive = statusFilter === kpi.filterValue && kpi.filterValue !== "";
-                return (
-                  <div
-                    key={kpi.label}
-                    className={`relative cursor-pointer overflow-hidden rounded-xl border border-border bg-card transition-all hover:shadow-md ${
-                      isActive ? "ring-2 ring-primary" : ""
-                    }`}
-                    onClick={() => {
-                      if (kpi.filterValue) {
-                        setStatusFilter(isActive ? "" : kpi.filterValue);
-                        setClassificationFilter("");
-                        setClientStepFilter("");
-                      }
-                    }}
-                  >
-                    <div className="px-4 pb-3 pt-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                            {kpi.label}
-                          </p>
-                          <p className={`mt-1 text-2xl font-bold ${kpi.valueColor}`}>{kpi.value}</p>
-                        </div>
-                        <Icon className={`h-4 w-4 ${kpi.iconColor}`} />
-                      </div>
-                    </div>
-                    <div className={`h-0.5 w-full ${kpi.borderColor}`} />
-                  </div>
-                );
-              })}
-            </div>
-
-            <EmailFilters
-              search={searchFilter}
-              onSearchChange={setSearchFilter}
-              status={statusFilter}
-              onStatusChange={setStatusFilter}
-              classification={classificationFilter}
-              onClassificationChange={setClassificationFilter}
-              clientStep={clientStepFilter}
-              onClientStepChange={setClientStepFilter}
+            <SenderEmailKPICards
+              stats={stats}
+              activeFilter={status}
+              onFilterToggle={handleKpiFilterToggle}
             />
 
-            {/* Dispatch bar */}
+            <EmailFilters
+              search={search}
+              onSearchChange={setSearch}
+              status={status}
+              onStatusChange={setStatus}
+              classification={classification}
+              onClassificationChange={setClassification}
+              clientStep={clientStep}
+              onClientStepChange={setClientStep}
+            />
+
             {senderEmail && selectedEmails.length > 0 && (
               <SenderEmailDispatchBar
                 senderEmail={senderEmail}
@@ -401,7 +206,7 @@ export default function SenderEmailDetailPage() {
               />
             )}
 
-            {totalEmails === 0 ? (
+            {stats.total === 0 ? (
               <div className="rounded-xl border border-dashed border-border py-16 text-center">
                 <Users className="mx-auto h-8 w-8 text-muted-foreground/40" />
                 <p className="mt-3 text-sm text-muted-foreground">
@@ -425,49 +230,24 @@ export default function SenderEmailDetailPage() {
             )}
 
             <EmailDetailModal
-              email={selectedDetailEmail}
-              open={detailModalOpen}
-              onOpenChange={setDetailModalOpen}
+              email={detailEmail}
+              open={detailOpen}
+              onOpenChange={setDetailOpen}
               onUpdate={fetchData}
             />
 
-            <AlertModal open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
-              <AlertModal.Header>
-                <AlertModal.Title>Delete Record</AlertModal.Title>
-                <AlertModal.Description>
+            <ConfirmDeleteDialog
+              open={!!deleteTarget}
+              onOpenChange={(open) => !open && setDeleteTarget(null)}
+              title="Delete Record"
+              description={
+                <>
                   Are you sure you want to delete the record for{" "}
                   <strong>{deleteTarget?.company}</strong>?
-                </AlertModal.Description>
-              </AlertModal.Header>
-              <AlertModal.Footer>
-                <AlertModal.Cancel>Cancel</AlertModal.Cancel>
-                <AlertModal.Action
-                  onClick={handleConfirmDelete}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  Delete
-                </AlertModal.Action>
-              </AlertModal.Footer>
-            </AlertModal>
-
-            <AlertModal open={bulkDeleteModalOpen} onOpenChange={setBulkDeleteModalOpen}>
-              <AlertModal.Header>
-                <AlertModal.Title>Delete Selected</AlertModal.Title>
-                <AlertModal.Description>
-                  Delete <strong>{selectedEmails.length}</strong> selected record
-                  {selectedEmails.length > 1 ? "s" : ""}?
-                </AlertModal.Description>
-              </AlertModal.Header>
-              <AlertModal.Footer>
-                <AlertModal.Cancel>Cancel</AlertModal.Cancel>
-                <AlertModal.Action
-                  onClick={handleConfirmBulkDelete}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  Delete All
-                </AlertModal.Action>
-              </AlertModal.Footer>
-            </AlertModal>
+                </>
+              }
+              onConfirm={handleConfirmDelete}
+            />
           </>
         )}
       </div>

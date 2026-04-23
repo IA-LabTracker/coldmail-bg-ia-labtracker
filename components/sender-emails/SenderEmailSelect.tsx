@@ -26,12 +26,16 @@ const PROVIDER_LABELS: Record<string, string> = {
   ses: "SES",
   mailgun: "Mailgun",
   smtp: "SMTP",
+  google: "Gmail",
+  outlook: "Outlook",
 };
 
 const PLATFORM_LABELS: Record<string, string> = {
   smartlead: "SmartLead",
   resend: "Resend",
   zapmail: "Zapmail",
+  google: "Gmail",
+  outlook: "Outlook",
 };
 
 export function SenderEmailSelect({

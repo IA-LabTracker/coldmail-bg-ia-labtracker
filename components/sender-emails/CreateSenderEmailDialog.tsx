@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { PlatformIndicator } from "@/components/sender-emails/PlatformIndicator";
 
 interface CreateSenderEmailDialogProps {
   open: boolean;
@@ -32,6 +33,8 @@ interface CreateSenderEmailDialogProps {
 }
 
 const PROVIDER_OPTIONS: { value: SenderEmailProvider; label: string }[] = [
+  { value: "google", label: "Google / Gmail" },
+  { value: "outlook", label: "Outlook" },
   { value: "manual", label: "Manual / SMTP" },
   { value: "resend", label: "Resend" },
   { value: "zapmail", label: "Zapmail" },
@@ -42,6 +45,8 @@ const PROVIDER_OPTIONS: { value: SenderEmailProvider; label: string }[] = [
 
 const PLATFORM_OPTIONS: { value: SenderEmailPlatform; label: string }[] = [
   { value: "none", label: "None" },
+  { value: "google", label: "Google / Gmail" },
+  { value: "outlook", label: "Outlook" },
   { value: "smartlead", label: "SmartLead" },
   { value: "resend", label: "Resend" },
   { value: "zapmail", label: "Zapmail" },
@@ -119,7 +124,7 @@ export function CreateSenderEmailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[420px]">
+      <DialogContent className="sm:max-w-[640px]">
         <DialogHeader>
           <DialogTitle className="text-base">
             {isEditing ? "Edit sender email" : "Add sender email"}
@@ -131,118 +136,122 @@ export function CreateSenderEmailDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-1">
-          <div className="space-y-1.5">
-            <Label htmlFor="sender-email-address" className="text-xs text-muted-foreground">
-              Email address
-            </Label>
-            <Input
-              id="sender-email-address"
-              type="email"
-              placeholder="you@company.com"
-              value={emailAddress}
-              onChange={(e) => setEmailAddress(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleSubmit();
-                }
-              }}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="sender-display-name" className="text-xs text-muted-foreground">
-              Display name
-            </Label>
-            <Input
-              id="sender-display-name"
-              placeholder="John Doe"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleSubmit();
-                }
-              }}
-            />
-            <p className="text-[11px] text-muted-foreground/60">
-              Shown as the &quot;From&quot; name to recipients.
-            </p>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Provider</Label>
-            <Select value={provider} onValueChange={(v) => setProvider(v as SenderEmailProvider)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PROVIDER_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-[11px] text-muted-foreground/60">
-              Where this email is hosted. Used to route dispatches correctly.
-            </p>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Dispatch Platform</Label>
-            <Select value={platform} onValueChange={(v) => setPlatform(v as SenderEmailPlatform)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PLATFORM_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-[11px] text-muted-foreground/60">
-              The platform where this email will be allocated for dispatch.
-            </p>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="sender-daily-limit" className="text-xs text-muted-foreground">
-              Daily send limit
-            </Label>
-            <Input
-              id="sender-daily-limit"
-              type="number"
-              min={0}
-              placeholder="0"
-              value={dailyLimit || ""}
-              onChange={(e) => setDailyLimit(parseInt(e.target.value) || 0)}
-            />
-            <p className="text-[11px] text-muted-foreground/60">
-              Max emails per day. 0 = unlimited.
-            </p>
-          </div>
-
-          {showProviderId && (
+        <div className="space-y-3 py-1">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="sender-provider-id" className="text-xs text-muted-foreground">
-                Provider ID
+              <Label htmlFor="sender-email-address" className="text-xs text-muted-foreground">
+                Email address
               </Label>
               <Input
-                id="sender-provider-id"
-                placeholder="e.g. domain ID or API identifier"
-                value={providerId}
-                onChange={(e) => setProviderId(e.target.value)}
+                id="sender-email-address"
+                type="email"
+                placeholder="you@company.com"
+                value={emailAddress}
+                onChange={(e) => setEmailAddress(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
               />
-              <p className="text-[11px] text-muted-foreground/60">
-                The identifier for this email or domain in {PROVIDER_OPTIONS.find((o) => o.value === provider)?.label ?? provider}.
-              </p>
             </div>
-          )}
+
+            <div className="space-y-1.5">
+              <Label htmlFor="sender-display-name" className="text-xs text-muted-foreground">
+                Display name
+              </Label>
+              <Input
+                id="sender-display-name"
+                placeholder="John Doe"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Provider</Label>
+              <Select value={provider} onValueChange={(v) => setProvider(v as SenderEmailProvider)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROVIDER_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      <span className="flex items-center gap-2">
+                        <PlatformIndicator platform={opt.value} size="md" iconOnly />
+                        <span>{opt.label}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Dispatch Platform</Label>
+              <Select value={platform} onValueChange={(v) => setPlatform(v as SenderEmailPlatform)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PLATFORM_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      <span className="flex items-center gap-2">
+                        {opt.value !== "none" ? (
+                          <PlatformIndicator platform={opt.value} size="md" iconOnly />
+                        ) : (
+                          <span className="inline-block h-4 w-4 shrink-0" />
+                        )}
+                        <span>{opt.label}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="sender-daily-limit" className="text-xs text-muted-foreground">
+                Daily send limit
+              </Label>
+              <Input
+                id="sender-daily-limit"
+                type="number"
+                min={0}
+                placeholder="0 = unlimited"
+                value={dailyLimit || ""}
+                onChange={(e) => setDailyLimit(parseInt(e.target.value) || 0)}
+              />
+            </div>
+
+            {showProviderId && (
+              <div className="space-y-1.5">
+                <Label htmlFor="sender-provider-id" className="text-xs text-muted-foreground">
+                  Provider ID
+                  <span className="ml-1 font-normal text-muted-foreground/50">
+                    ({PROVIDER_OPTIONS.find((o) => o.value === provider)?.label ?? provider})
+                  </span>
+                </Label>
+                <Input
+                  id="sender-provider-id"
+                  placeholder="Domain ID or API identifier"
+                  value={providerId}
+                  onChange={(e) => setProviderId(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         <DialogFooter>

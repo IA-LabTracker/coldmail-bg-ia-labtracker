@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Send, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { PlatformIndicator } from "@/components/sender-emails/PlatformIndicator";
 
 interface SenderEmailDispatchBarProps {
   senderEmail: SenderEmail;
@@ -25,6 +26,8 @@ interface SenderEmailDispatchBarProps {
 }
 
 const PLATFORM_OPTIONS: { value: SenderEmailPlatform; label: string }[] = [
+  { value: "google", label: "Google / Gmail" },
+  { value: "outlook", label: "Outlook" },
   { value: "smartlead", label: "SmartLead" },
   { value: "resend", label: "Resend" },
   { value: "zapmail", label: "Zapmail" },
@@ -161,13 +164,16 @@ export function SenderEmailDispatchBar({
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Platform:</span>
           <Select value={platform} onValueChange={(v) => setPlatform(v as SenderEmailPlatform)}>
-            <SelectTrigger className="h-8 w-[140px]">
+            <SelectTrigger className="h-8 w-[180px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {PLATFORM_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
+                  <span className="flex items-center gap-2">
+                    <PlatformIndicator platform={opt.value} size="md" iconOnly />
+                    <span>{opt.label}</span>
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>

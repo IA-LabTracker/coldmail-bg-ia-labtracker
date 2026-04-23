@@ -18,6 +18,8 @@ type PlatformFilter = "all" | EmailTemplatePlatform;
 const PLATFORM_TABS: { value: PlatformFilter; label: string }[] = [
   { value: "all", label: "All" },
   { value: "any", label: "Any" },
+  { value: "google", label: "Gmail" },
+  { value: "outlook", label: "Outlook" },
   { value: "smartlead", label: "SmartLead" },
   { value: "resend", label: "Resend" },
   { value: "zapmail", label: "Zapmail" },

@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Integração Warm-up Budget — N8N</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1a1a1a;
+    font-size: 10.5pt;
+    line-height: 1.45;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page { max-width: 170mm; margin: 0 auto; }
+
+  .header {
+    border-bottom: 1px solid #d1d5db;
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+  }
+  .header .eyebrow {
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #6b7280;
+    font-weight: 600;
+  }
+  h1 {
+    font-size: 20pt;
+    font-weight: 600;
+    margin: 4px 0 0;
+    letter-spacing: -0.01em;
+  }
+  .header .sub {
+    color: #6b7280;
+    font-size: 10pt;
+    margin-top: 3px;
+  }
+
+  h2 {
+    font-size: 13pt;
+    font-weight: 600;
+    margin: 22px 0 8px;
+    color: #111;
+  }
+  h3 {
+    font-size: 11pt;
+    font-weight: 600;
+    margin: 14px 0 6px;
+    color: #111;
+  }
+
+  p { margin: 6px 0; }
+
+  code, pre {
+    font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+    font-size: 9.2pt;
+  }
+  code {
+    background: #f3f4f6;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #111;
+  }
+  pre {
+    background: #0f1419;
+    color: #e5e7eb;
+    padding: 12px 14px;
+    border-radius: 6px;
+    overflow: auto;
+    line-height: 1.45;
+    margin: 8px 0;
+  }
+  pre .k { color: #93c5fd; }
+  pre .s { color: #86efac; }
+  pre .n { color: #fca5a5; }
+  pre .c { color: #9ca3af; font-style: italic; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 9.8pt;
+    margin: 8px 0;
+  }
+  th, td {
+    text-align: left;
+    padding: 7px 10px;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: top;
+  }
+  th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+    font-size: 9.2pt;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .kvlist {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 6px 14px;
+    font-size: 10pt;
+    margin: 8px 0;
+  }
+  .kvlist dt { color: #6b7280; font-weight: 500; }
+  .kvlist dd { margin: 0; font-family: ui-monospace, Menlo, monospace; font-size: 9.4pt; }
+
+  ol, ul { padding-left: 18px; margin: 6px 0; }
+  li { margin: 3px 0; }
+
+  .callout {
+    border-left: 3px solid #111;
+    background: #f9fafb;
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 10pt;
+  }
+  .callout .label {
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #6b7280;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 8.5pt;
+    font-weight: 600;
+    font-family: ui-monospace, Menlo, monospace;
+    letter-spacing: 0;
+  }
+  .badge-ok { background: #dcfce7; color: #15803d; }
+  .badge-warn { background: #fef3c7; color: #b45309; }
+  .badge-err { background: #fee2e2; color: #b91c1c; }
+  .badge-neutral { background: #e5e7eb; color: #374151; }
+
+  footer {
+    margin-top: 28px;
+    padding-top: 10px;
+    border-top: 1px solid #e5e7eb;
+    color: #9ca3af;
+    font-size: 8.5pt;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="header">
+  <div class="eyebrow">Especificação técnica · N8N</div>
+  <h1>Integração Warm-up Budget</h1>
+  <div class="sub">Consulta ao orçamento diário de warm-up antes de cada disparo por caixa de envio.</div>
+</div>
+
+<h2>Visão geral</h2>
+<p>
+A plataforma gerencia o ritmo de aquecimento (warm-up) de cada caixa de envio: volume inicial,
+incremento diário, meta diária, dias úteis, pausa automática por bounce. Todo esse estado fica
+em <code>sender_warmups</code> no Supabase.
+</p>
+<p>
+Pra o N8N não precisar replicar essa lógica, foi criada uma <strong>edge function</strong> que
+expõe, pra um <code>sender_email_id</code>, quantos emails podem ser enviados hoje e quantos já
+foram. O N8N faz uma chamada HTTP antes de cada disparo e decide: manda ou pula.
+</p>
+
+<h2>Endpoint</h2>
+<dl class="kvlist">
+  <dt>Método</dt>
+  <dd><span class="badge badge-neutral">GET</span></dd>
+  <dt>URL</dt>
+  <dd>https://kxgwviiewmnmignqmptu.supabase.co/functions/v1/warmup-budget</dd>
+  <dt>Query param</dt>
+  <dd><code>sender_email_id</code> (uuid) — obrigatório</dd>
+  <dt>Header</dt>
+  <dd><code>Authorization: Bearer &lt;SUPABASE_ANON_KEY&gt;</code></dd>
+</dl>
+
+<div class="callout">
+  <div class="label">Auth</div>
+  A chave é a <strong>anon key</strong> do projeto Supabase (mesma usada pelo frontend).
+  Pegue de <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> no <code>.env</code> do projeto ou do
+  dashboard Supabase → Settings → API.
+</div>
+
+<h3>Exemplo de chamada</h3>
+<pre><span class="c"># bash / curl</span>
+<span class="k">curl</span> <span class="s">"https://kxgwviiewmnmignqmptu.supabase.co/functions/v1/warmup-budget?sender_email_id=ee9ee28f-97a6-43a6-beb9-c5daca42f6f9"</span> \
+  -H <span class="s">"Authorization: Bearer &lt;ANON_KEY&gt;"</span></pre>
+
+<h2>Resposta</h2>
+<p>Sempre retorna JSON com HTTP 200, mesmo quando a caixa está pausada ou sem warmup configurado. Erros são indicados via <code>status</code>, não via código HTTP.</p>
+
+<table>
+  <thead>
+    <tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>enabled</code></td>
+      <td>boolean</td>
+      <td>Warm-up está ativo? Se <code>false</code>, não dispara.</td>
+    </tr>
+    <tr>
+      <td><code>status</code></td>
+      <td>string</td>
+      <td>
+        Estado atual: <code>active</code>, <code>rest_day</code>, <code>paused</code>,
+        <code>auto_paused</code>, ou <code>no_warmup_configured</code>.
+      </td>
+    </tr>
+    <tr>
+      <td><code>sender_email</code></td>
+      <td>string</td>
+      <td>Email do sender (lowercase).</td>
+    </tr>
+    <tr>
+      <td><code>current_day</code></td>
+      <td>integer</td>
+      <td>Dia da rampa (1-based, contando só dias úteis se configurado).</td>
+    </tr>
+    <tr>
+      <td><code>daily_limit</code></td>
+      <td>integer</td>
+      <td>Meta diária (topo da rampa).</td>
+    </tr>
+    <tr>
+      <td><code>allowed_today</code></td>
+      <td>integer</td>
+      <td>Quantos emails de warm-up podem ser enviados hoje no total.</td>
+    </tr>
+    <tr>
+      <td><code>already_sent</code></td>
+      <td>integer</td>
+      <td>Quantos já saíram hoje (consulta <code>email_warmup_interactions</code>).</td>
+    </tr>
+    <tr>
+      <td><code>remaining</code></td>
+      <td>integer</td>
+      <td><strong>Quantos ainda faltam hoje</strong> — é esse campo que define se dispara.</td>
+    </tr>
+    <tr>
+      <td><code>is_rest_day</code></td>
+      <td>boolean</td>
+      <td>Hoje é fim de semana e <code>business_days_only = true</code>.</td>
+    </tr>
+    <tr>
+      <td><code>is_at_target</code></td>
+      <td>boolean</td>
+      <td>A rampa já chegou no topo (<code>allowed_today === daily_limit</code>).</td>
+    </tr>
+    <tr>
+      <td><code>paused_reason</code></td>
+      <td>string/null</td>
+      <td>Motivo da pausa automática (ex: "Bounce 7% &gt; 5%"). Null se não pausou.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Exemplos por estado</h2>
+
+<h3>Warm-up ativo (pode disparar)</h3>
+<pre>{
+  "enabled": true,
+  "status": "active",
+  "sender_email": "maria@myplatformops.co",
+  "current_day": 3,
+  "daily_limit": 15,
+  "allowed_today": 7,
+  "already_sent": 2,
+  "remaining": 5,
+  "is_rest_day": false,
+  "is_at_target": false,
+  "paused_reason": null
+}</pre>
+
+<h3>Dia de descanso (sábado/domingo)</h3>
+<pre>{
+  "enabled": true,
+  "status": "rest_day",
+  "is_rest_day": true,
+  "allowed_today": 0,
+  "remaining": 0,
+  ...
+}</pre>
+
+<h3>Pausado pelo usuário</h3>
+<pre>{
+  "enabled": false,
+  "status": "paused",
+  "allowed_today": 0,
+  "remaining": 0,
+  "paused_reason": null
+}</pre>
+
+<h3>Pausado automaticamente (bounce alto)</h3>
+<pre>{
+  "enabled": false,
+  "status": "auto_paused",
+  "allowed_today": 0,
+  "remaining": 0,
+  "paused_reason": "Bounce 7.1% &gt; limite 5% (42 envios últimas 24h)"
+}</pre>
+
+<h3>Sem warm-up configurado</h3>
+<pre>{
+  "enabled": false,
+  "status": "no_warmup_configured",
+  "allowed_today": 0,
+  "remaining": 0
+}</pre>
+
+<h2>Fluxo no N8N</h2>
+<p>Pra cada caixa que o fluxo vai disparar warm-up, execute:</p>
+<ol>
+  <li>
+    <strong>HTTP Request</strong> → GET no endpoint acima, passando o <code>sender_email_id</code>
+    da caixa atual na query string.
+  </li>
+  <li>
+    <strong>IF</strong> node com a condição
+    <code>$json.remaining &gt; 0</code>.
+  </li>
+  <li>
+    <span class="badge badge-ok">TRUE</span> → segue pro disparo do email (cria a interação,
+    manda, grava em <code>email_warmup_interactions</code> com
+    <code>interaction_type = 'sent'</code>).
+  </li>
+  <li>
+    <span class="badge badge-err">FALSE</span> → pula essa caixa nessa rodada (não precisa tratar
+    diferente os sub-estados <code>paused</code>, <code>rest_day</code>, etc. — todos retornam
+    <code>remaining: 0</code>).
+  </li>
+</ol>
+
+<div class="callout">
+  <div class="label">Importante</div>
+  O N8N <strong>não precisa saber fazer cálculo de rampa</strong>, nem consultar Supabase
+  diretamente. Só olha pro campo <code>remaining</code> e decide. Toda a lógica de
+  dias úteis, rampa, auto-pausa, etc. fica no backend.
+</div>
+
+<h2>Tabela de estados — ação no N8N</h2>
+<table>
+  <thead>
+    <tr><th>Status</th><th>Significado</th><th>Ação</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="badge badge-ok">active</span></td>
+      <td>Warm-up rodando normalmente</td>
+      <td>Se <code>remaining &gt; 0</code>, dispara. Senão skip.</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-warn">rest_day</span></td>
+      <td>Fim de semana (se <code>business_days_only</code>)</td>
+      <td>Skip. Retomar segunda-feira.</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-neutral">paused</span></td>
+      <td>Usuário pausou no dashboard</td>
+      <td>Skip.</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-err">auto_paused</span></td>
+      <td>Bounce rate estourou o limite</td>
+      <td>Skip. Usuário vai reativar manualmente depois de investigar.</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-neutral">no_warmup_configured</span></td>
+      <td>Sender sem registro de warm-up</td>
+      <td>Skip. Provável que a caixa nem deveria estar no fluxo.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Rate limiting</h2>
+<p>
+A edge function tem overhead baixo (2 queries ao Postgres), mas vale lembrar que a API do
+Supabase tem limites. Pra um batch de ~100 caixas, uma chamada por caixa é seguro. Se escalar
+muito, podemos expor um endpoint batch que recebe um array de IDs e retorna todos de uma vez
+— só pedir.
+</p>
+
+<h2>Observações</h2>
+<ul>
+  <li>
+    O cálculo de "hoje" usa o timezone do servidor (UTC). Na prática, envios feitos de 21h do
+    Brasil em diante contam no "dia seguinte" no banco. Impacto mínimo mas vale ter ciência.
+  </li>
+  <li>
+    A função já é idempotente — chamar várias vezes retorna o mesmo resultado (só lê, nunca escreve).
+  </li>
+  <li>
+    Se aparecer algum status novo no futuro (ex: <code>cooldown</code> pós-auto-pausa), vamos
+    manter <code>remaining = 0</code> pros status restritivos — ou seja, o critério
+    <code>remaining &gt; 0</code> continua sendo suficiente no N8N.
+  </li>
+</ul>
+
+<footer>
+  Cold Email Pro · Integração Warm-up Budget · v1 · Abril 2026
+</footer>
+
+</div>
+</body>
+</html>

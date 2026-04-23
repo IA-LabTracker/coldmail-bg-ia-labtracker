@@ -24,9 +24,24 @@ export interface Subscription {
 export type EmailStatus = "sent" | "replied" | "bounced" | "researched" | "opened" | "scheduled";
 export type LeadClassification = "hot" | "warm" | "cold";
 
-export type SenderEmailProvider = "manual" | "resend" | "zapmail" | "ses" | "mailgun" | "smtp";
+export type SenderEmailProvider =
+  | "manual"
+  | "resend"
+  | "zapmail"
+  | "ses"
+  | "mailgun"
+  | "smtp"
+  | "google"
+  | "outlook";
 export type SenderEmailStatus = "pending" | "active" | "error" | "suspended";
-export type SenderEmailPlatform = "none" | "auto" | "smartlead" | "resend" | "zapmail";
+export type SenderEmailPlatform =
+  | "none"
+  | "auto"
+  | "smartlead"
+  | "resend"
+  | "zapmail"
+  | "google"
+  | "outlook";
 
 export interface SenderEmail {
   id: string;
@@ -85,7 +100,14 @@ export interface Email {
   dispatch_platform?: string | null;
 }
 
-export type EmailTemplatePlatform = "any" | "smartlead" | "resend" | "zapmail" | "linkedin";
+export type EmailTemplatePlatform =
+  | "any"
+  | "smartlead"
+  | "resend"
+  | "zapmail"
+  | "google"
+  | "outlook"
+  | "linkedin";
 
 export interface EmailTemplate {
   id: string;

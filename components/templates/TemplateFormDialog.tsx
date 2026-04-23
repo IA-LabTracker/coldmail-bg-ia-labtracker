@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { TemplatePreview } from "./TemplatePreview";
+import { PlatformIndicator } from "@/components/sender-emails/PlatformIndicator";
 
 interface TemplateFormDialogProps {
   open: boolean;
@@ -37,6 +38,8 @@ interface TemplateFormDialogProps {
 
 const PLATFORM_OPTIONS: { value: EmailTemplatePlatform; label: string; hint: string }[] = [
   { value: "any", label: "Any platform", hint: "Available for all email dispatches" },
+  { value: "google", label: "Google / Gmail", hint: "Use with Gmail dispatches" },
+  { value: "outlook", label: "Outlook", hint: "Use with Outlook dispatches" },
   { value: "smartlead", label: "SmartLead", hint: "Use with SmartLead dispatches" },
   { value: "resend", label: "Resend", hint: "Use with Resend dispatches" },
   { value: "zapmail", label: "Zapmail", hint: "Use with Zapmail dispatches" },
@@ -206,7 +209,14 @@ export function TemplateFormDialog({
                     <SelectContent>
                       {PLATFORM_OPTIONS.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
+                          <span className="flex items-center gap-2">
+                            {opt.value !== "any" ? (
+                              <PlatformIndicator platform={opt.value} size="md" iconOnly />
+                            ) : (
+                              <span className="inline-block h-4 w-4 shrink-0" />
+                            )}
+                            <span>{opt.label}</span>
+                          </span>
                         </SelectItem>
                       ))}
                     </SelectContent>

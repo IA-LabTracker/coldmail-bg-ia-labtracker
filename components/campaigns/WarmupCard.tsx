@@ -15,10 +15,10 @@ import { WARMUP_LIMITS, classifyDailyLimit } from "@/lib/warmupRecommendations";
 function relativeFromNow(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
   const days = Math.floor(ms / 86_400_000);
-  if (days >= 1) return `há ${days}d`;
+  if (days >= 1) return `${days}d ago`;
   const hours = Math.floor(ms / 3_600_000);
-  if (hours >= 1) return `há ${hours}h`;
-  return "agora";
+  if (hours >= 1) return `${hours}h ago`;
+  return "just now";
 }
 
 interface WarmupCardProps {
@@ -168,11 +168,11 @@ export function WarmupCard({
               <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuItem onSelect={onOpenSettings}>
                   <Settings2 className="mr-2 h-4 w-4" />
-                  Configurar
+                  Settings
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={onReset} disabled={!warmup?.started_at}>
                   <RotateCcw className="mr-2 h-4 w-4" />
-                  Reiniciar progresso
+                  Reset progress
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -185,7 +185,7 @@ export function WarmupCard({
             progress.atTarget ? (
               <>
                 <span>
-                  Topo <span className="font-medium text-foreground">{dailyLimit}/dia</span>
+                  At target <span className="font-medium text-foreground">{dailyLimit}/day</span>
                 </span>
                 {warmup?.topped_out_at && (
                   <>
@@ -197,41 +197,41 @@ export function WarmupCard({
             ) : (
               <>
                 <span>
-                  Dia <span className="font-medium text-foreground">{progress.currentDay}</span>
+                  Day <span className="font-medium text-foreground">{progress.currentDay}</span>
                 </span>
                 <span className="text-border">·</span>
-                <span>Meta {dailyLimit}/dia</span>
+                <span>Target {dailyLimit}/day</span>
                 <span className="text-border">·</span>
                 <span>
-                  +{increment}/dia
+                  +{increment}/day
                 </span>
               </>
             )
           ) : (
             <>
-              <span>Início {startVolume}/dia</span>
+              <span>Start {startVolume}/day</span>
               <span className="text-border">·</span>
-              <span>+{increment}/dia</span>
+              <span>+{increment}/day</span>
               <span className="text-border">·</span>
-              <span>Meta {dailyLimit}/dia</span>
+              <span>Target {dailyLimit}/day</span>
             </>
           )}
           {businessOnly && (
             <>
               <span className="text-border">·</span>
-              <span>Dias úteis</span>
+              <span>Business days</span>
             </>
           )}
           {risk.level === "very_risky" && (
             <>
               <span className="text-border">·</span>
-              <span className="text-red-600 dark:text-red-400">Muito arriscado</span>
+              <span className="text-red-600 dark:text-red-400">Very risky</span>
             </>
           )}
           {risk.level === "risky" && (
             <>
               <span className="text-border">·</span>
-              <span className="text-amber-600 dark:text-amber-400">Arriscado</span>
+              <span className="text-amber-600 dark:text-amber-400">Risky</span>
             </>
           )}
         </div>
@@ -239,18 +239,18 @@ export function WarmupCard({
         {/* Row 3: progress bars */}
         {state === "rest" ? (
           <p className="text-[11px] text-muted-foreground">
-            Dia de descanso — a rampa retoma no próximo dia útil.
+            Rest day — the ramp resumes on the next business day.
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <ProgressLine
-              label="Warm-up hoje"
+              label="Warm-up today"
               value={warmupDone}
               max={warmupToday}
               muted={!enabled || warmupToday === 0}
             />
             <ProgressLine
-              label="Envios totais"
+              label="Total sends"
               value={sentToday}
               max={senderLimit}
               muted={senderLimit === 0}
@@ -264,7 +264,7 @@ export function WarmupCard({
             {state === "auto_paused" ? (
               <div className="flex items-center gap-1.5 text-red-600 dark:text-red-400">
                 <AlertTriangle className="h-3 w-3" />
-                <span>Pausado automaticamente · {warmup?.auto_paused_reason}</span>
+                <span>Auto-paused · {warmup?.auto_paused_reason}</span>
               </div>
             ) : stats ? (
               <div className="flex items-center gap-3 text-muted-foreground">
@@ -283,11 +283,11 @@ export function WarmupCard({
                   </span>
                 </span>
                 <span className="text-border">·</span>
-                <span>{bounceSample} envios {warmup?.bounce_window_hours ?? 24}h</span>
+                <span>{bounceSample} sends in {warmup?.bounce_window_hours ?? 24}h</span>
                 {warmup?.bounce_threshold_pct != null && (
                   <>
                     <span className="text-border">·</span>
-                    <span>limite {warmup.bounce_threshold_pct}%</span>
+                    <span>threshold {warmup.bounce_threshold_pct}%</span>
                   </>
                 )}
               </div>

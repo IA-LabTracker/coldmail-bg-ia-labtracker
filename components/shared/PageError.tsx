@@ -35,60 +35,60 @@ export function PageError({
     switch (variant) {
       case "dashboard":
         return {
-          title: "Erro no Dashboard",
+          title: "Dashboard Error",
           description:
-            "Não foi possível carregar seus dados. Verifique sua conexão e tente novamente.",
-          primaryAction: { label: "Recarregar Dashboard", icon: RefreshCw },
-          secondaryAction: { label: "Voltar ao Início", icon: Home, href: "/" },
+            "Failed to load your data. Check your connection and try again.",
+          primaryAction: { label: "Reload Dashboard", icon: RefreshCw },
+          secondaryAction: { label: "Back to Home", icon: Home, href: "/" },
         };
 
       case "linkedin":
         return {
-          title: "Erro na Automação LinkedIn",
+          title: "LinkedIn Automation Error",
           description:
-            "Não foi possível carregar a ferramenta de automação do LinkedIn. Tente novamente.",
-          primaryAction: { label: "Tentar Novamente", icon: RefreshCw },
-          secondaryAction: { label: "Voltar ao Dashboard", icon: ArrowLeft, href: "/dashboard" },
+            "Failed to load the LinkedIn automation tool. Please try again.",
+          primaryAction: { label: "Try Again", icon: RefreshCw },
+          secondaryAction: { label: "Back to Dashboard", icon: ArrowLeft, href: "/dashboard" },
         };
 
       case "search":
         return {
-          title: "Erro na Pesquisa",
-          description: "Não foi possível carregar a ferramenta de pesquisa. Tente novamente.",
-          primaryAction: { label: "Tentar Novamente", icon: RefreshCw },
-          secondaryAction: { label: "Ir para Dashboard", icon: Search, href: "/dashboard" },
+          title: "Search Error",
+          description: "Failed to load the search tool. Please try again.",
+          primaryAction: { label: "Try Again", icon: RefreshCw },
+          secondaryAction: { label: "Go to Dashboard", icon: Search, href: "/dashboard" },
         };
 
       case "settings":
         return {
-          title: "Erro nas Configurações",
-          description: "Não foi possível carregar suas configurações. Tente novamente.",
-          primaryAction: { label: "Recarregar Configurações", icon: RefreshCw },
-          secondaryAction: { label: "Voltar ao Dashboard", icon: Settings, href: "/dashboard" },
+          title: "Settings Error",
+          description: "Failed to load your settings. Please try again.",
+          primaryAction: { label: "Reload Settings", icon: RefreshCw },
+          secondaryAction: { label: "Back to Dashboard", icon: Settings, href: "/dashboard" },
         };
 
       case "login":
         return {
-          title: "Erro no Login",
-          description: "Não foi possível carregar a página de login. Verifique sua conexão.",
-          primaryAction: { label: "Tentar Novamente", icon: RefreshCw },
-          secondaryAction: { label: "Voltar ao Início", icon: Home, href: "/" },
+          title: "Login Error",
+          description: "Failed to load the login page. Check your connection.",
+          primaryAction: { label: "Try Again", icon: RefreshCw },
+          secondaryAction: { label: "Back to Home", icon: Home, href: "/" },
         };
 
       case "signup":
         return {
-          title: "Erro no Cadastro",
-          description: "Não foi possível carregar a página de cadastro. Verifique sua conexão.",
-          primaryAction: { label: "Tentar Novamente", icon: RefreshCw },
-          secondaryAction: { label: "Ir para Login", icon: LogIn, href: "/login" },
+          title: "Signup Error",
+          description: "Failed to load the signup page. Check your connection.",
+          primaryAction: { label: "Try Again", icon: RefreshCw },
+          secondaryAction: { label: "Go to Login", icon: LogIn, href: "/login" },
         };
 
       default:
         return {
-          title: "Algo deu errado!",
-          description: "Ocorreu um erro inesperado. Por favor, tente novamente.",
-          primaryAction: { label: "Tentar novamente", icon: RefreshCw },
-          secondaryAction: { label: "Voltar ao Início", icon: Home, href: "/" },
+          title: "Something went wrong!",
+          description: "An unexpected error occurred. Please try again.",
+          primaryAction: { label: "Try again", icon: RefreshCw },
+          secondaryAction: { label: "Back to Home", icon: Home, href: "/" },
         };
     }
   };
@@ -144,7 +144,7 @@ export function PageError({
             {process.env.NODE_ENV === "development" && (
               <details className="text-left">
                 <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
-                  Detalhes do erro
+                  Error details
                 </summary>
                 <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto text-gray-700">
                   {error.message}

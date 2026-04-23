@@ -108,13 +108,13 @@ export function SenderEmailMultiSelect({
   const triggerLabel = useMemo(() => {
     if (selectedIds.length === 0) return placeholder;
     if (selectedIds.length === activeEmails.length && activeEmails.length > 0) {
-      return `Todos os remetentes (${activeEmails.length})`;
+      return `All senders (${activeEmails.length})`;
     }
     if (selectedIds.length === 1) {
       const se = activeEmails.find((e) => e.id === selectedIds[0]);
-      return se?.email_address ?? "1 selecionado";
+      return se?.email_address ?? "1 selected";
     }
-    return `${selectedIds.length} remetentes`;
+    return `${selectedIds.length} senders`;
   }, [selectedIds, activeEmails, placeholder]);
 
   return (

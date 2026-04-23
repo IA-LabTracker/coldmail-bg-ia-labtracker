@@ -108,15 +108,15 @@ export function WarmupSettingsDialog({
 
   const error =
     startVolume < 1
-      ? "Volume inicial deve ser ≥ 1"
+      ? "Initial volume must be ≥ 1"
       : increment < 0
-        ? "Incremento não pode ser negativo"
+        ? "Increment can't be negative"
         : dailyLimit < startVolume
-          ? "Meta diária deve ser ≥ volume inicial"
+          ? "Daily target must be ≥ initial volume"
           : bounceEnabled && (bounceThreshold <= 0 || bounceThreshold > 100)
-            ? "Limite de bounce deve estar entre 0 e 100%"
+            ? "Bounce limit must be between 0 and 100%"
             : bounceEnabled && bounceWindow < 1
-              ? "Janela deve ser ≥ 1 hora"
+              ? "Window must be ≥ 1 hour"
               : null;
 
   const risk = classifyDailyLimit(dailyLimit);
@@ -150,19 +150,19 @@ export function WarmupSettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-base">Configurações de warm-up</DialogTitle>
+          <DialogTitle className="text-base">Warm-up settings</DialogTitle>
           <DialogDescription className="text-xs">{senderLabel}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 py-3">
           <Section
-            title="Rampa de envio"
-            description="Volume aumenta gradualmente até a meta diária"
+            title="Sending ramp"
+            description="Volume grows gradually up to the daily target"
           >
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="start_volume" className="text-xs text-muted-foreground">
-                  Volume inicial
+                  Initial volume
                 </Label>
                 <Input
                   id="start_volume"
@@ -174,7 +174,7 @@ export function WarmupSettingsDialog({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="increment" className="text-xs text-muted-foreground">
-                  + por dia
+                  + per day
                 </Label>
                 <Input
                   id="increment"
@@ -186,7 +186,7 @@ export function WarmupSettingsDialog({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="daily_limit" className="text-xs text-muted-foreground">
-                  Meta diária
+                  Daily target
                 </Label>
                 <Input
                   id="daily_limit"
@@ -201,8 +201,8 @@ export function WarmupSettingsDialog({
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-muted-foreground">
                 {increment > 0
-                  ? `Chega em ${dailyLimit}/dia em ${rampDays} dia${rampDays === 1 ? "" : "s"}`
-                  : `Sem incremento — ${startVolume}/dia sempre`}
+                  ? `Reaches ${dailyLimit}/day in ${rampDays} day${rampDays === 1 ? "" : "s"}`
+                  : `No increment — ${startVolume}/day always`}
               </span>
               <span className={riskLabelTone}>{risk.label}</span>
             </div>
@@ -211,7 +211,7 @@ export function WarmupSettingsDialog({
               <div className="flex items-start gap-1.5 text-[11px] text-red-600 dark:text-red-400">
                 <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
                 <span>
-                  Acima de {WARMUP_LIMITS.MAX}/dia pode queimar a reputação do domínio.
+                  Above {WARMUP_LIMITS.MAX}/day can burn your domain reputation.
                 </span>
               </div>
             )}
@@ -220,8 +220,8 @@ export function WarmupSettingsDialog({
               <div className="flex items-start gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
                 <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
                 <span>
-                  Entre {WARMUP_LIMITS.OPTIMAL + 1}–{WARMUP_LIMITS.MAX}/dia é o máximo tolerável.
-                  O ótimo é {WARMUP_LIMITS.OPTIMAL}/dia.
+                  Between {WARMUP_LIMITS.OPTIMAL + 1}–{WARMUP_LIMITS.MAX}/day is the
+                  upper tolerable range. The sweet spot is {WARMUP_LIMITS.OPTIMAL}/day.
                 </span>
               </div>
             )}
@@ -230,29 +230,29 @@ export function WarmupSettingsDialog({
               <div className="flex items-start gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
                 <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
                 <span>
-                  Rampa curta ({rampDays}d). Caixas novas precisam de pelo menos{" "}
-                  {WARMUP_LIMITS.MIN_WARMUP_DAYS} dias de warm-up.
+                  Ramp is short ({rampDays}d). New mailboxes need at least{" "}
+                  {WARMUP_LIMITS.MIN_WARMUP_DAYS} days of warm-up.
                 </span>
               </div>
             )}
           </Section>
 
-          <Section title="Agenda">
+          <Section title="Schedule">
             <InlineToggle
-              label="Apenas dias úteis"
-              description="Ignora sábados e domingos — a rampa só avança seg–sex"
+              label="Business days only"
+              description="Skip Saturdays and Sundays — the ramp only advances Mon–Fri"
               checked={businessDaysOnly}
               onCheckedChange={setBusinessDaysOnly}
             />
           </Section>
 
           <Section
-            title="Proteção automática"
-            description="Pausa o warm-up se a taxa de bounce subir"
+            title="Automatic protection"
+            description="Pause warm-up if bounce rate spikes"
           >
             <InlineToggle
-              label="Auto-pausa por bounce"
-              description="Protege a reputação do domínio automaticamente"
+              label="Auto-pause on bounce"
+              description="Protects your domain reputation automatically"
               checked={bounceEnabled}
               onCheckedChange={setBounceEnabled}
             />
@@ -261,7 +261,7 @@ export function WarmupSettingsDialog({
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="bounce_pct" className="text-xs text-muted-foreground">
-                    Limite (%)
+                    Threshold (%)
                   </Label>
                   <Input
                     id="bounce_pct"
@@ -275,7 +275,7 @@ export function WarmupSettingsDialog({
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="bounce_hours" className="text-xs text-muted-foreground">
-                    Janela (horas)
+                    Window (hours)
                   </Label>
                   <Input
                     id="bounce_hours"
@@ -290,10 +290,10 @@ export function WarmupSettingsDialog({
           </Section>
 
           <div className="border-t border-border pt-3 text-[11px] text-muted-foreground">
-            <span className="font-medium text-foreground">Referências:</span> até{" "}
-            {WARMUP_LIMITS.SAFE}/dia seguro · {WARMUP_LIMITS.OPTIMAL}/dia ótimo · acima de{" "}
-            {WARMUP_LIMITS.MAX}/dia arriscado · mínimo {WARMUP_LIMITS.MIN_WARMUP_DAYS} dias
-            de warm-up em caixas novas.
+            <span className="font-medium text-foreground">Guidelines:</span> up to{" "}
+            {WARMUP_LIMITS.SAFE}/day is safe · {WARMUP_LIMITS.OPTIMAL}/day is optimal · above{" "}
+            {WARMUP_LIMITS.MAX}/day is risky · at least {WARMUP_LIMITS.MIN_WARMUP_DAYS} days
+            of warm-up on new mailboxes.
           </div>
 
           {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
@@ -301,10 +301,10 @@ export function WarmupSettingsDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            Cancelar
+            Cancel
           </Button>
           <Button onClick={handleSave} disabled={!!error || saving}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>

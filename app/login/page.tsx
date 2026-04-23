@@ -21,8 +21,8 @@ import Link from "next/link";
 import Image from "next/image";
 
 const loginSchema = z.object({
-  email: z.string().email("Digite um e-mail válido"),
-  password: z.string().min(1, "Senha é obrigatória"),
+  email: z.string().email("Enter a valid email"),
+  password: z.string().min(1, "Password is required"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -46,7 +46,7 @@ export default function LoginPage() {
       await signIn(values.email, values.password);
       router.push("/");
     } catch (err) {
-      setServerError(err instanceof Error ? err.message : "Falha ao entrar. Tente novamente.");
+      setServerError(err instanceof Error ? err.message : "Failed to sign in. Please try again.");
     }
   };
 
@@ -67,10 +67,10 @@ export default function LoginPage() {
           {/* Heading */}
           <div className="mb-8">
             <h1 className="text-[28px] font-bold tracking-tight text-foreground">
-              Bem-vindo de volta
+              Welcome back
             </h1>
             <p className="mt-2 text-[15px] text-muted-foreground">
-              Entre com seu e-mail e senha para acessar sua conta.
+              Sign in with your email and password to access your account.
             </p>
           </div>
 
@@ -95,14 +95,14 @@ export default function LoginPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-sm font-medium text-foreground">
-                      E-mail
+                      Email
                     </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Mail className="absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground/60" />
                         <Input
                           type="email"
-                          placeholder="seu@email.com"
+                          placeholder="you@email.com"
                           className="h-12 rounded-lg pl-11 text-[15px]"
                           {...field}
                         />
@@ -119,13 +119,13 @@ export default function LoginPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-sm font-medium text-foreground">
-                      Senha
+                      Password
                     </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
                           type={showPassword ? "text" : "password"}
-                          placeholder="Digite sua senha"
+                          placeholder="Enter your password"
                           className="h-12 rounded-lg pr-11 text-[15px]"
                           {...field}
                         />
@@ -134,7 +134,7 @@ export default function LoginPage() {
                           onClick={() => setShowPassword((v) => !v)}
                           className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground/60 transition-colors hover:text-foreground"
                           tabIndex={-1}
-                          aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                          aria-label={showPassword ? "Hide password" : "Show password"}
                         >
                           {showPassword ? (
                             <EyeOff className="h-[18px] w-[18px]" />
@@ -158,7 +158,7 @@ export default function LoginPage() {
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <>
-                    Entrar
+                    Sign in
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -167,9 +167,9 @@ export default function LoginPage() {
           </Form>
 
           <p className="mt-8 text-center text-sm text-muted-foreground">
-            Não tem uma conta?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/signup" className="font-semibold text-primary hover:underline">
-              Criar conta
+              Create account
             </Link>
           </p>
 
@@ -177,7 +177,7 @@ export default function LoginPage() {
           <div className="mt-16 flex items-center justify-between text-xs text-muted-foreground/60">
             <span>&copy; {new Date().getFullYear()} Cold Email Pro</span>
             <Link href="/terms" className="hover:text-muted-foreground hover:underline">
-              Termos de Uso
+              Terms of Use
             </Link>
           </div>
         </div>
@@ -198,10 +198,10 @@ export default function LoginPage() {
           </div>
 
           <h2 className="text-2xl font-bold leading-tight text-primary-foreground">
-            Gerencie seus leads e<br />automatize seu outreach.
+            Manage your leads and<br />automate your outreach.
           </h2>
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-primary-foreground/60">
-            Importe contatos, crie campanhas personalizadas e acompanhe resultados em tempo real.
+            Import contacts, create personalized campaigns and track results in real time.
           </p>
         </div>
       </div>

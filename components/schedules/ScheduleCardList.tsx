@@ -178,6 +178,7 @@ export function ScheduleCardList({
                     <Button
                       variant="ghost"
                       size="sm"
+                      aria-label="Schedule options"
                       className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100"
                       onClick={(e) => e.stopPropagation()}
                     >

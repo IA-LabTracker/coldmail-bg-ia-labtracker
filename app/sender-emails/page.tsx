@@ -75,7 +75,7 @@ export default function SenderEmailsPage() {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        toast.error("Sessão expirada");
+        toast.error("Session expired");
         return;
       }
 
@@ -86,18 +86,18 @@ export default function SenderEmailsPage() {
       const body = await res.json();
 
       if (!res.ok) {
-        toast.error(body.error || "Falha ao sincronizar Zapmail");
+        toast.error(body.error || "Failed to sync Zapmail");
         return;
       }
 
       toast.success(
         body.total === 0
-          ? "Nenhum mailbox encontrado no Zapmail"
-          : `${body.total} mailbox${body.total === 1 ? "" : "es"} sincronizado${body.total === 1 ? "" : "s"}`,
+          ? "No mailbox found in Zapmail"
+          : `${body.total} mailbox${body.total === 1 ? "" : "es"} synced`,
       );
       await refetch();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao sincronizar");
+      toast.error(err instanceof Error ? err.message : "Failed to sync");
     } finally {
       setZapmailSyncing(false);
     }

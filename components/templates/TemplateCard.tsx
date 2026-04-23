@@ -63,6 +63,7 @@ export function TemplateCard({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
+              aria-label="Template options"
               className="shrink-0 rounded-md p-1 text-muted-foreground/40 opacity-0 transition-all hover:bg-muted hover:text-muted-foreground group-hover:opacity-100 focus-visible:opacity-100"
               onClick={(e) => e.stopPropagation()}
             >

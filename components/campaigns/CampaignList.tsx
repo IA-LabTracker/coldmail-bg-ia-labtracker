@@ -15,6 +15,7 @@ export interface CampaignGroup {
   opened: number;
   replyRate: number;
   createdAt: string;
+  createdAtMs: number;
 }
 
 interface CampaignListProps {
@@ -38,18 +39,37 @@ export function groupEmailsByCampaign(emails: Email[]): CampaignGroup[] {
   }
 
   return Array.from(groups.entries()).map(([campaignName, campaignEmails]) => {
-    const sent = campaignEmails.filter((e) => e.status === "sent").length;
-    const replied = campaignEmails.filter((e) => e.status === "replied").length;
-    const bounced = campaignEmails.filter((e) => e.status === "bounced").length;
-    const opened = campaignEmails.filter((e) => e.status === "opened").length;
-    const totalSentish = campaignEmails.filter((e) => e.status !== "researched").length;
-    const replyRate = totalSentish > 0 ? Math.round((replied / totalSentish) * 100) : 0;
+    let sent = 0;
+    let replied = 0;
+    let bounced = 0;
+    let opened = 0;
+    let totalSentish = 0;
+    let earliest: string | null = null;
 
-    const dates = campaignEmails
-      .map((e) => e.created_at)
-      .filter(Boolean)
-      .sort();
-    const createdAt = dates[0] || "";
+    for (const e of campaignEmails) {
+      switch (e.status) {
+        case "sent":
+          sent++;
+          break;
+        case "replied":
+          replied++;
+          break;
+        case "bounced":
+          bounced++;
+          break;
+        case "opened":
+          opened++;
+          break;
+      }
+      if (e.status !== "researched") totalSentish++;
+      if (e.created_at && (!earliest || e.created_at < earliest)) {
+        earliest = e.created_at;
+      }
+    }
+
+    const replyRate = totalSentish > 0 ? Math.round((replied / totalSentish) * 100) : 0;
+    const createdAt = earliest ?? "";
+    const createdAtMs = earliest ? Date.parse(earliest) : 0;
 
     return {
       campaignName,
@@ -61,6 +81,7 @@ export function groupEmailsByCampaign(emails: Email[]): CampaignGroup[] {
       opened,
       replyRate,
       createdAt,
+      createdAtMs,
     };
   });
 }
@@ -75,10 +96,10 @@ function sortCampaigns(campaigns: CampaignGroup[], sortBy: string): CampaignGrou
       case "rate":
         return b.replyRate - a.replyRate;
       default:
-        if (!a.createdAt && !b.createdAt) return 0;
-        if (!a.createdAt) return 1;
-        if (!b.createdAt) return -1;
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        if (!a.createdAtMs && !b.createdAtMs) return 0;
+        if (!a.createdAtMs) return 1;
+        if (!b.createdAtMs) return -1;
+        return b.createdAtMs - a.createdAtMs;
     }
   });
 }
@@ -87,9 +108,7 @@ export function CampaignList({ emails, searchFilter, sortBy, onRefresh }: Campai
   const campaigns = useMemo(() => {
     const grouped = groupEmailsByCampaign(emails);
     const filtered = searchFilter
-      ? grouped.filter((c) =>
-          c.campaignName.toLowerCase().includes(searchFilter.toLowerCase())
-        )
+      ? grouped.filter((c) => c.campaignName.toLowerCase().includes(searchFilter.toLowerCase()))
       : grouped;
     return sortCampaigns(filtered, sortBy);
   }, [emails, searchFilter, sortBy]);

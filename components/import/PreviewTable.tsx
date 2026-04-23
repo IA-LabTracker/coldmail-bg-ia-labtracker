@@ -64,9 +64,7 @@ export function PreviewTable({
       <div className="flex items-center justify-between border-b border-border px-5 py-3">
         <h3 className="text-sm font-semibold text-foreground">
           Data Preview
-          <span className="ml-2 text-xs font-normal text-muted-foreground">
-            {rows.length} rows
-          </span>
+          <span className="ml-2 text-xs font-normal text-muted-foreground">{rows.length} rows</span>
         </h3>
         <p className="text-xs text-muted-foreground">Double click a cell to edit</p>
       </div>
@@ -76,14 +74,7 @@ export function PreviewTable({
             <TableRow>
               <TableHead className="w-10">
                 <Checkbox
-                  checked={allSelected}
-                  ref={(el) => {
-                    if (el) {
-                      (el as unknown as HTMLButtonElement).dataset.indeterminate = someSelected
-                        ? "true"
-                        : "false";
-                    }
-                  }}
+                  checked={someSelected ? "indeterminate" : allSelected}
                   onCheckedChange={onSelectAll}
                   aria-label="Select all rows"
                 />

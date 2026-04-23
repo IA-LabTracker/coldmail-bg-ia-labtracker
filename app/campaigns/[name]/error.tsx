@@ -14,7 +14,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    if (process.env.NODE_ENV === "development") console.error(error);
   }, [error]);
 
   return (
@@ -37,29 +37,29 @@ export default function Error({
                 <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
               </div>
               <CardTitle className="text-xl font-semibold text-foreground">
-                Erro na Campanha
+                Campaign Error
               </CardTitle>
               <CardDescription>
-                Não foi possível carregar os detalhes da campanha. Tente novamente.
+                Failed to load campaign details. Please try again.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Button onClick={reset} className="w-full" variant="default">
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Tentar Novamente
+                Try Again
               </Button>
 
               <Button asChild className="w-full" variant="outline">
                 <Link href="/campaigns">
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Voltar para Campaigns
+                  Back to Campaigns
                 </Link>
               </Button>
 
               {process.env.NODE_ENV === "development" && (
                 <details className="text-left">
                   <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
-                    Detalhes do erro
+                    Error details
                   </summary>
                   <pre className="mt-2 overflow-auto rounded bg-muted p-2 text-xs text-foreground">
                     {error.message}

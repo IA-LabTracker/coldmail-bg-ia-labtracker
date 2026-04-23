@@ -13,7 +13,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    if (process.env.NODE_ENV === "development") console.error(error);
   }, [error]);
 
   return (
@@ -23,21 +23,21 @@ export default function Error({
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
             <AlertTriangle className="h-6 w-6 text-red-600" />
           </div>
-          <CardTitle className="text-xl font-semibold text-foreground">Algo deu errado!</CardTitle>
+          <CardTitle className="text-xl font-semibold text-foreground">Something went wrong!</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Ocorreu um erro inesperado. Por favor, tente novamente.
+            An unexpected error occurred. Please try again.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
           <Button onClick={reset} className="w-full" variant="default">
             <RefreshCw className="mr-2 h-4 w-4" />
-            Tentar novamente
+            Try again
           </Button>
 
           {process.env.NODE_ENV === "development" && (
             <details className="mt-4 text-left">
               <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
-                Detalhes do erro
+                Error details
               </summary>
               <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-auto text-foreground">
                 {error.message}

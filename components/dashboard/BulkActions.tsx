@@ -45,10 +45,10 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">
-                {selectedEmails.length} lead{selectedEmails.length > 1 ? "s" : ""} selecionado{selectedEmails.length > 1 ? "s" : ""}
+                {selectedEmails.length} lead{selectedEmails.length > 1 ? "s" : ""} selected
               </p>
               <p className="text-xs text-muted-foreground">
-                Escolha uma ação para os registros selecionados.
+                Choose an action for the selected records.
               </p>
             </div>
           </div>
@@ -60,7 +60,7 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
               className="gap-2"
             >
               <Send className="h-4 w-4" />
-              Disparar
+              Send
             </Button>
 
             <Button
@@ -70,7 +70,7 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
               className="gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
             >
               <Trash2 className="h-4 w-4" />
-              Excluir
+              Delete
             </Button>
 
             <Button
@@ -80,7 +80,7 @@ export function BulkActions({ selectedEmails, onClear, onBulkDelete }: BulkActio
               className="gap-2 text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               <X className="h-4 w-4" />
-              Limpar
+              Clear
             </Button>
           </div>
         </div>

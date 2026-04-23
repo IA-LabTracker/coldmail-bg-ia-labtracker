@@ -47,10 +47,10 @@ function SummaryBar({
 function EmptyState() {
   return (
     <div className="rounded-lg border border-dashed border-border py-16 text-center">
-      <p className="text-sm font-medium text-foreground">Nenhum sender cadastrado</p>
+      <p className="text-sm font-medium text-foreground">No senders configured</p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Warm-up roda por caixa de entrada. Adicione um sender em{" "}
-        <span className="font-medium text-foreground">/sender-emails</span> pra começar.
+        Warm-up runs per mailbox. Add a sender in{" "}
+        <span className="font-medium text-foreground">/sender-emails</span> to get started.
       </p>
     </div>
   );
@@ -88,7 +88,7 @@ export function WarmupTab() {
 
       if (didInitialScan.current && sender) {
         toast.success(
-          `${sender.email_address} chegou em ${w.daily_limit}/dia — agora é cruise.`,
+          `${sender.email_address} reached ${w.daily_limit}/day — now on cruise.`,
           { duration: 6000 },
         );
       }

@@ -196,6 +196,7 @@ export function SenderEmailListItem({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
+            aria-label="Sender options"
             className="shrink-0 rounded-lg p-2 text-muted-foreground/40 opacity-0 transition-all duration-200 hover:bg-muted hover:text-muted-foreground group-hover:opacity-100 focus-visible:opacity-100"
             onClick={(e) => e.stopPropagation()}
           >

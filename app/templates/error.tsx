@@ -13,7 +13,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    if (process.env.NODE_ENV === "development") console.error(error);
   }, [error]);
 
   return (
@@ -29,25 +29,25 @@ export default function Error({
       </div>
 
       <div className="mx-auto max-w-sm px-4 pt-24 text-center">
-        <p className="text-sm font-medium text-foreground">Erro ao carregar templates</p>
+        <p className="text-sm font-medium text-foreground">Failed to load templates</p>
         <p className="mt-1.5 text-xs text-muted-foreground">
-          Verifique sua conexao e tente novamente.
+          Check your connection and try again.
         </p>
 
         <div className="mt-6 flex flex-col gap-2">
           <Button onClick={reset} size="sm" variant="outline">
             <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
-            Tentar novamente
+            Try again
           </Button>
           <Button asChild size="sm" variant="ghost">
-            <Link href="/dashboard">Voltar ao dashboard</Link>
+            <Link href="/dashboard">Back to dashboard</Link>
           </Button>
         </div>
 
         {process.env.NODE_ENV === "development" && (
           <details className="mt-8 text-left">
             <summary className="cursor-pointer text-[11px] text-muted-foreground/60 hover:text-muted-foreground">
-              Detalhes do erro
+              Error details
             </summary>
             <pre className="mt-2 text-[11px] bg-muted p-3 rounded-lg overflow-auto text-muted-foreground">
               {error.message}

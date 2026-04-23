@@ -233,25 +233,25 @@ export function DispatchDialog({
   // --- Dispatch ---
   const handleDispatch = async () => {
     if (summary.unassigned > 0) {
-      toast.error(`${summary.unassigned} lead(s) sem plataforma atribuída.`);
+      toast.error(`${summary.unassigned} lead(s) without an assigned platform.`);
       return;
     }
     const missingCampaign = leads.filter((e) => !e.campaign_name?.trim());
     if (missingCampaign.length > 0) {
-      toast.error(`${missingCampaign.length} lead(s) sem campanha.`);
+      toast.error(`${missingCampaign.length} lead(s) without a campaign.`);
       return;
     }
     if (!process.env.NEXT_PUBLIC_WEBHOOK_N8N) {
-      toast.error("Webhook URL não configurada.");
+      toast.error("Webhook URL not configured.");
       return;
     }
 
     let scheduledIso: string | null = null;
     if (scheduleEnabled) {
-      if (!scheduleAt) { toast.error("Selecione data e hora."); return; }
+      if (!scheduleAt) { toast.error("Select date and time."); return; }
       const d = new Date(scheduleAt);
       if (Number.isNaN(d.getTime()) || d.getTime() <= Date.now()) {
-        toast.error("Data/hora deve ser no futuro."); return;
+        toast.error("Date/time must be in the future."); return;
       }
       scheduledIso = d.toISOString();
     }
@@ -336,13 +336,13 @@ export function DispatchDialog({
 
       toast.success(
         dispatches.length > 1
-          ? `${leads.length} leads distribuídos entre ${dispatches.length} remetentes`
-          : `${leads.length} leads enviados via ${first.sender_email.email_address}`,
+          ? `${leads.length} leads distributed across ${dispatches.length} senders`
+          : `${leads.length} leads sent via ${first.sender_email.email_address}`,
       );
       onOpenChange(false);
       onDispatchComplete();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Falha ao disparar.");
+      toast.error(error instanceof Error ? error.message : "Failed to send.");
     } finally {
       setLoading(false);
     }
@@ -510,7 +510,7 @@ export function DispatchDialog({
           {checked.size > 0 ? (
             <>
               <span className="text-xs font-semibold text-foreground">
-                {checked.size} selecionado{checked.size > 1 ? "s" : ""}
+                {checked.size} selected
               </span>
               <span className="text-xs text-muted-foreground">→</span>
               {platforms.map((pg) => (
@@ -528,7 +528,7 @@ export function DispatchDialog({
             </>
           ) : (
             <>
-              <span className="text-xs text-muted-foreground">Ações:</span>
+              <span className="text-xs text-muted-foreground">Actions:</span>
               <Button
                 variant="outline"
                 size="sm"
@@ -693,7 +693,7 @@ export function DispatchDialog({
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={loading}>
-              Cancelar
+              Cancel
             </Button>
             <Button
               size="sm"
@@ -702,7 +702,7 @@ export function DispatchDialog({
               disabled={loading || summary.unassigned > 0 || enabledByPlatform.size === 0}
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              {loading ? "Enviando..." : `Disparar ${leads.length} lead${leads.length > 1 ? "s" : ""}`}
+              {loading ? "Sending..." : `Send ${leads.length} lead${leads.length > 1 ? "s" : ""}`}
             </Button>
           </div>
         </DialogFooter>

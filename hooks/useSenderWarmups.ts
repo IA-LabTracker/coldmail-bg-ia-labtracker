@@ -76,7 +76,7 @@ export function computeWarmupProgress(w: SenderWarmup): WarmupProgress {
 export interface SenderStats {
   sentToday: number;           // total envios (emails reais) hoje
   warmupSentToday: number;     // envios de warmup network hoje (email_warmup_interactions)
-  sentInWindow: number;        // envios reais na janela (pro cálculo de bounce rate)
+  sentInWindow: number;        // real sends in the window (used for bounce rate calc)
   bouncedInWindow: number;
   bounceRatePct: number;       // 0..100
 }
@@ -430,7 +430,7 @@ export function useSenderWarmups(windowHoursDefault = 24) {
       if (!s || s.sentInWindow < 10) continue; // don't trigger on tiny samples
 
       if (s.bounceRatePct > w.bounce_threshold_pct) {
-        const reason = `Bounce ${s.bounceRatePct.toFixed(1)}% > limite ${w.bounce_threshold_pct}% (${s.sentInWindow} envios últimas ${w.bounce_window_hours}h)`;
+        const reason = `Bounce ${s.bounceRatePct.toFixed(1)}% > threshold ${w.bounce_threshold_pct}% (${s.sentInWindow} sends in last ${w.bounce_window_hours}h)`;
         const now = new Date().toISOString();
 
         supabase

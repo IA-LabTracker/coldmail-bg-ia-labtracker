@@ -61,13 +61,13 @@ const STATUS_CONFIG: Record<
     textColor: "text-red-700",
   },
   CREDENTIALS: {
-    label: "Credenciais",
+    label: "Credentials",
     icon: <AlertCircle className="h-4 w-4" />,
     dotColor: "bg-red-500",
     textColor: "text-red-700",
   },
   PERMISSIONS: {
-    label: "Permissões",
+    label: "Permissions",
     icon: <AlertCircle className="h-4 w-4" />,
     dotColor: "bg-red-500",
     textColor: "text-red-700",
@@ -322,7 +322,7 @@ export function ConnectionStep({ accountId, onAccountIdChange }: ConnectionStepP
                           size="sm"
                           className="text-xs text-red-500 hover:bg-red-50 hover:text-red-600"
                         >
-                          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Remover"}
+                          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Remove"}
                         </Button>
                       )}
                     </div>

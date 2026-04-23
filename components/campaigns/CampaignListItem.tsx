@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, MoreHorizontal, Pencil } from "lucide-react";
 import { CampaignGroup } from "./CampaignList";
@@ -94,18 +94,25 @@ function MetricBlock({ value, label, sublabel }: MetricBlockProps) {
   );
 }
 
-export function CampaignListItem({ campaign, index, onRenamed }: CampaignListItemProps) {
+function CampaignListItemImpl({ campaign, index, onRenamed }: CampaignListItemProps) {
   const router = useRouter();
   const [renameOpen, setRenameOpen] = useState(false);
+
+  const createdLabel = useMemo(() => {
+    if (!campaign.createdAtMs) return "—";
+    return new Date(campaign.createdAtMs).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }, [campaign.createdAtMs]);
 
   return (
     <>
       <div
         className="animate-list-item hover-lift hover-glow group flex cursor-pointer items-center gap-5 rounded-xl border border-border bg-card px-6 py-5"
         style={{ animationDelay: `${Math.min(index * 60, 400)}ms` }}
-        onClick={() =>
-          router.push(`/campaigns/${encodeURIComponent(campaign.campaignName)}`)
-        }
+        onClick={() => router.push(`/campaigns/${encodeURIComponent(campaign.campaignName)}`)}
       >
         {/* Avatar */}
         <CampaignAvatar name={campaign.campaignName} />
@@ -116,14 +123,7 @@ export function CampaignListItem({ campaign, index, onRenamed }: CampaignListIte
             {campaign.campaignName}
           </h3>
           <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
-            {campaign.totalEmails} emails · Created{" "}
-            {campaign.createdAt
-              ? new Date(campaign.createdAt).toLocaleDateString("pt-BR", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                })
-              : "—"}
+            {campaign.totalEmails} emails · Created {createdLabel}
           </p>
           <CampaignTags campaign={campaign} />
         </div>
@@ -143,7 +143,9 @@ export function CampaignListItem({ campaign, index, onRenamed }: CampaignListIte
             <span className="ml-1 text-[11px] text-muted-foreground">sent</span>
           </div>
           <div className="text-center">
-            <span className="text-lg font-bold tabular-nums text-foreground">{campaign.replied}</span>
+            <span className="text-lg font-bold tabular-nums text-foreground">
+              {campaign.replied}
+            </span>
             <span className="ml-1 text-[11px] text-muted-foreground">replied</span>
           </div>
         </div>
@@ -156,24 +158,23 @@ export function CampaignListItem({ campaign, index, onRenamed }: CampaignListIte
         />
 
         {/* Actions */}
-        <div onClick={(e) => e.stopPropagation()}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className="shrink-0 rounded-lg p-2 text-muted-foreground/40 opacity-0 transition-all duration-200 hover:bg-muted hover:text-muted-foreground group-hover:opacity-100 data-[state=open]:opacity-100"
-                aria-label="Campaign actions"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onSelect={() => setRenameOpen(true)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Renomear
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              onClick={(e) => e.stopPropagation()}
+              className="shrink-0 rounded-lg p-2 text-muted-foreground/40 opacity-0 transition-all duration-200 hover:bg-muted hover:text-muted-foreground group-hover:opacity-100 data-[state=open]:opacity-100"
+              aria-label="Campaign actions"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem onSelect={() => setRenameOpen(true)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Rename
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <RenameCampaignDialog
@@ -185,3 +186,5 @@ export function CampaignListItem({ campaign, index, onRenamed }: CampaignListIte
     </>
   );
 }
+
+export const CampaignListItem = memo(CampaignListItemImpl);

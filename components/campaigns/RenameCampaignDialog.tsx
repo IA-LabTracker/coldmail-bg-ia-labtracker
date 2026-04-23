@@ -58,7 +58,7 @@ export function RenameCampaignDialog({
     }
 
     if ((count ?? 0) > 0) {
-      toast.error("Já existe uma campanha com esse nome");
+      toast.error("A campaign with that name already exists");
       setSaving(false);
       return;
     }
@@ -75,7 +75,7 @@ export function RenameCampaignDialog({
       return;
     }
 
-    toast.success("Campanha renomeada");
+    toast.success("Campaign renamed");
     onRenamed(trimmed);
     onOpenChange(false);
     setSaving(false);
@@ -85,14 +85,14 @@ export function RenameCampaignDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Renomear campanha</DialogTitle>
+          <DialogTitle>Rename campaign</DialogTitle>
           <DialogDescription>
-            Todos os leads dessa campanha passarão a usar o novo nome.
+            All leads in this campaign will be updated to the new name.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-2 py-2">
-          <Label htmlFor="campaign-name">Nome</Label>
+          <Label htmlFor="campaign-name">Name</Label>
           <Input
             id="campaign-name"
             value={name}
@@ -109,10 +109,10 @@ export function RenameCampaignDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            Cancelar
+            Cancel
           </Button>
           <Button onClick={handleSave} disabled={!canSave}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -23,15 +23,15 @@ import Image from "next/image";
 
 const signupSchema = z
   .object({
-    email: z.string().email("Digite um e-mail válido"),
-    password: z.string().min(6, "Mínimo de 6 caracteres"),
-    confirmPassword: z.string().min(1, "Confirme sua senha"),
-    acceptTerms: z.literal(true, {
-      errorMap: () => ({ message: "Você deve aceitar os Termos de Uso" }),
-    }),
+    email: z.string().email("Enter a valid email"),
+    password: z.string().min(6, "Minimum 6 characters"),
+    confirmPassword: z.string().min(1, "Confirm your password"),
+    acceptTerms: z
+      .boolean()
+      .refine((v) => v === true, { message: "You must accept the Terms of Use" }),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "As senhas não conferem",
+    message: "Passwords don't match",
     path: ["confirmPassword"],
   });
 
@@ -50,7 +50,7 @@ export default function SignupPage() {
       email: "",
       password: "",
       confirmPassword: "",
-      acceptTerms: false as unknown as true,
+      acceptTerms: false,
     },
   });
 
@@ -58,10 +58,10 @@ export default function SignupPage() {
     setServerError("");
     try {
       await signUp(values.email, values.password);
-      router.push("/login?message=Conta criada! Verifique seu e-mail para confirmar.");
+      router.push("/login?message=Account created! Check your email to confirm.");
     } catch (err) {
       setServerError(
-        err instanceof Error ? err.message : "Falha ao criar conta. Tente novamente.",
+        err instanceof Error ? err.message : "Failed to create account. Please try again.",
       );
     }
   };
@@ -83,10 +83,10 @@ export default function SignupPage() {
           </div>
 
           <h2 className="text-2xl font-bold leading-tight text-primary-foreground">
-            Comece a escalar suas<br />vendas B2B hoje.
+            Start scaling your<br />B2B sales today.
           </h2>
           <p className="mt-3 max-w-sm text-sm leading-relaxed text-primary-foreground/60">
-            Crie sua conta gratuita e tenha acesso a todas as ferramentas de prospecção e automação.
+            Create your free account and get access to all prospecting and automation tools.
           </p>
         </div>
       </div>
@@ -106,10 +106,10 @@ export default function SignupPage() {
           {/* Heading */}
           <div className="mb-8">
             <h1 className="text-[28px] font-bold tracking-tight text-foreground">
-              Criar conta
+              Create account
             </h1>
             <p className="mt-2 text-[15px] text-muted-foreground">
-              Preencha os dados abaixo para começar.
+              Fill in the details below to get started.
             </p>
           </div>
 
@@ -128,14 +128,14 @@ export default function SignupPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-sm font-medium text-foreground">
-                      E-mail
+                      Email
                     </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Mail className="absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground/60" />
                         <Input
                           type="email"
-                          placeholder="seu@email.com"
+                          placeholder="you@email.com"
                           className="h-12 rounded-lg pl-11 text-[15px]"
                           {...field}
                         />
@@ -152,13 +152,13 @@ export default function SignupPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-sm font-medium text-foreground">
-                      Senha
+                      Password
                     </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
                           type={showPassword ? "text" : "password"}
-                          placeholder="Mínimo 6 caracteres"
+                          placeholder="Minimum 6 characters"
                           className="h-12 rounded-lg pr-11 text-[15px]"
                           {...field}
                         />
@@ -167,7 +167,7 @@ export default function SignupPage() {
                           onClick={() => setShowPassword((v) => !v)}
                           className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground/60 transition-colors hover:text-foreground"
                           tabIndex={-1}
-                          aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                          aria-label={showPassword ? "Hide password" : "Show password"}
                         >
                           {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                         </button>
@@ -184,13 +184,13 @@ export default function SignupPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-sm font-medium text-foreground">
-                      Confirmar senha
+                      Confirm password
                     </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
                           type={showConfirm ? "text" : "password"}
-                          placeholder="Repita sua senha"
+                          placeholder="Repeat your password"
                           className="h-12 rounded-lg pr-11 text-[15px]"
                           {...field}
                         />
@@ -199,7 +199,7 @@ export default function SignupPage() {
                           onClick={() => setShowConfirm((v) => !v)}
                           className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground/60 transition-colors hover:text-foreground"
                           tabIndex={-1}
-                          aria-label={showConfirm ? "Ocultar senha" : "Mostrar senha"}
+                          aria-label={showConfirm ? "Hide password" : "Show password"}
                         >
                           {showConfirm ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                         </button>
@@ -220,13 +220,13 @@ export default function SignupPage() {
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel className="text-sm font-normal text-muted-foreground">
-                        Li e aceito os{" "}
+                        I have read and accept the{" "}
                         <Link
                           href="/terms"
                           target="_blank"
                           className="font-semibold text-primary hover:underline"
                         >
-                          Termos de Uso
+                          Terms of Use
                         </Link>
                       </FormLabel>
                       <FormMessage />
@@ -244,7 +244,7 @@ export default function SignupPage() {
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <>
-                    Criar conta
+                    Create account
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -253,9 +253,9 @@ export default function SignupPage() {
           </Form>
 
           <p className="mt-8 text-center text-sm text-muted-foreground">
-            Já tem uma conta?{" "}
+            Already have an account?{" "}
             <Link href="/login" className="font-semibold text-primary hover:underline">
-              Entrar
+              Sign in
             </Link>
           </p>
 
@@ -263,7 +263,7 @@ export default function SignupPage() {
           <div className="mt-12 flex items-center justify-between text-xs text-muted-foreground/60">
             <span>&copy; {new Date().getFullYear()} Cold Email Pro</span>
             <Link href="/terms" className="hover:text-muted-foreground hover:underline">
-              Termos de Uso
+              Terms of Use
             </Link>
           </div>
         </div>

@@ -14,7 +14,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    if (process.env.NODE_ENV === "development") console.error(error);
   }, [error]);
 
   return (
@@ -38,29 +38,29 @@ export default function Error({
                 <AlertTriangle className="h-6 w-6 text-red-600" />
               </div>
               <CardTitle className="text-xl font-semibold text-gray-900">
-                Erro nas Configurações
+                Settings Error
               </CardTitle>
               <CardDescription className="text-gray-600">
-                Não foi possível carregar suas configurações. Tente novamente.
+                Failed to load your settings. Please try again.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Button onClick={reset} className="w-full" variant="default">
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Recarregar Configurações
+                Reload Settings
               </Button>
 
               <Button asChild className="w-full" variant="outline">
                 <Link href="/dashboard">
                   <Settings className="mr-2 h-4 w-4" />
-                  Voltar ao Dashboard
+                  Back to Dashboard
                 </Link>
               </Button>
 
               {process.env.NODE_ENV === "development" && (
                 <details className="text-left">
                   <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
-                    Detalhes do erro
+                    Error details
                   </summary>
                   <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto text-gray-700">
                     {error.message}

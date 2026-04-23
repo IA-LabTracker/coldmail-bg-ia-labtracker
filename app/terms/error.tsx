@@ -14,7 +14,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    if (process.env.NODE_ENV === "development") console.error(error);
   }, [error]);
 
   return (
@@ -24,28 +24,28 @@ export default function Error({
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
             <AlertTriangle className="h-6 w-6 text-destructive" />
           </div>
-          <CardTitle className="text-xl font-semibold">Erro ao Carregar os Termos</CardTitle>
+          <CardTitle className="text-xl font-semibold">Failed to Load Terms</CardTitle>
           <CardDescription>
-            Não foi possível carregar a página de Termos de Uso. Verifique sua conexão.
+            Failed to load the Terms of Use page. Check your connection.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Button onClick={reset} className="w-full" variant="default">
             <RefreshCw className="mr-2 h-4 w-4" />
-            Tentar Novamente
+            Try Again
           </Button>
 
           <Button asChild className="w-full" variant="outline">
             <Link href="/">
               <Home className="mr-2 h-4 w-4" />
-              Voltar ao Início
+              Back to Home
             </Link>
           </Button>
 
           {process.env.NODE_ENV === "development" && (
             <details className="text-left">
               <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
-                Detalhes do erro
+                Error details
               </summary>
               <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-auto text-muted-foreground">
                 {error.message}

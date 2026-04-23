@@ -2,15 +2,7 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Send,
-  MessageSquare,
-  XCircle,
-  Eye,
-  Mail,
-  ArrowRight,
-  Calendar,
-} from "lucide-react";
+import { Send, MessageSquare, XCircle, Eye, Mail, ArrowRight, Calendar } from "lucide-react";
 import { Email } from "@/types";
 import { Badge } from "@/components/ui/badge";
 
@@ -24,6 +16,7 @@ export interface CampaignGroup {
   opened: number;
   replyRate: number;
   createdAt: string;
+  createdAtMs: number;
 }
 
 interface CampaignTableProps {
@@ -46,18 +39,37 @@ export function groupEmailsByCampaign(emails: Email[]): CampaignGroup[] {
 
   return Array.from(groups.entries())
     .map(([campaignName, campaignEmails]) => {
-      const sent = campaignEmails.filter((e) => e.status === "sent").length;
-      const replied = campaignEmails.filter((e) => e.status === "replied").length;
-      const bounced = campaignEmails.filter((e) => e.status === "bounced").length;
-      const opened = campaignEmails.filter((e) => e.status === "opened").length;
-      const totalSentish = campaignEmails.filter((e) => e.status !== "researched").length;
-      const replyRate = totalSentish > 0 ? Math.round((replied / totalSentish) * 100) : 0;
+      let sent = 0;
+      let replied = 0;
+      let bounced = 0;
+      let opened = 0;
+      let totalSentish = 0;
+      let earliest: string | null = null;
 
-      const dates = campaignEmails
-        .map((e) => e.created_at)
-        .filter(Boolean)
-        .sort();
-      const createdAt = dates[0] || "";
+      for (const e of campaignEmails) {
+        switch (e.status) {
+          case "sent":
+            sent++;
+            break;
+          case "replied":
+            replied++;
+            break;
+          case "bounced":
+            bounced++;
+            break;
+          case "opened":
+            opened++;
+            break;
+        }
+        if (e.status !== "researched") totalSentish++;
+        if (e.created_at && (!earliest || e.created_at < earliest)) {
+          earliest = e.created_at;
+        }
+      }
+
+      const replyRate = totalSentish > 0 ? Math.round((replied / totalSentish) * 100) : 0;
+      const createdAt = earliest ?? "";
+      const createdAtMs = earliest ? Date.parse(earliest) : 0;
 
       return {
         campaignName,
@@ -69,23 +81,20 @@ export function groupEmailsByCampaign(emails: Email[]): CampaignGroup[] {
         opened,
         replyRate,
         createdAt,
+        createdAtMs,
       };
     })
     .sort((a, b) => {
-      if (!a.createdAt && !b.createdAt) return 0;
-      if (!a.createdAt) return 1;
-      if (!b.createdAt) return -1;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (!a.createdAtMs && !b.createdAtMs) return 0;
+      if (!a.createdAtMs) return 1;
+      if (!b.createdAtMs) return -1;
+      return b.createdAtMs - a.createdAtMs;
     });
 }
 
 function ReplyRateBar({ rate }: { rate: number }) {
   const color =
-    rate >= 10
-      ? "bg-green-500"
-      : rate >= 5
-        ? "bg-yellow-500"
-        : "bg-slate-400 dark:bg-slate-600";
+    rate >= 10 ? "bg-green-500" : rate >= 5 ? "bg-yellow-500" : "bg-slate-400 dark:bg-slate-600";
 
   return (
     <div className="flex items-center gap-2.5">
@@ -112,9 +121,27 @@ function ReplyRateBar({ rate }: { rate: number }) {
 
 const metrics = [
   { key: "sent" as const, label: "Sent", icon: Send, color: "text-blue-500", bg: "bg-blue-500/10" },
-  { key: "replied" as const, label: "Replied", icon: MessageSquare, color: "text-green-500", bg: "bg-green-500/10" },
-  { key: "bounced" as const, label: "Bounced", icon: XCircle, color: "text-red-500", bg: "bg-red-500/10" },
-  { key: "opened" as const, label: "Opened", icon: Eye, color: "text-cyan-500", bg: "bg-cyan-500/10" },
+  {
+    key: "replied" as const,
+    label: "Replied",
+    icon: MessageSquare,
+    color: "text-green-500",
+    bg: "bg-green-500/10",
+  },
+  {
+    key: "bounced" as const,
+    label: "Bounced",
+    icon: XCircle,
+    color: "text-red-500",
+    bg: "bg-red-500/10",
+  },
+  {
+    key: "opened" as const,
+    label: "Opened",
+    icon: Eye,
+    color: "text-cyan-500",
+    bg: "bg-cyan-500/10",
+  },
 ] as const;
 
 export function CampaignTable({ emails, searchFilter }: CampaignTableProps) {
@@ -150,9 +177,7 @@ export function CampaignTable({ emails, searchFilter }: CampaignTableProps) {
             hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5
             animate-fade-up stagger-${(idx % 6) + 1}
           `}
-          onClick={() =>
-            router.push(`/campaigns/${encodeURIComponent(campaign.campaignName)}`)
-          }
+          onClick={() => router.push(`/campaigns/${encodeURIComponent(campaign.campaignName)}`)}
         >
           {/* Header */}
           <div className="mb-4 flex items-start justify-between">
@@ -189,10 +214,7 @@ export function CampaignTable({ emails, searchFilter }: CampaignTableProps) {
               const Icon = m.icon;
               const value = campaign[m.key];
               return (
-                <div
-                  key={m.key}
-                  className={`flex flex-col items-center rounded-lg ${m.bg} py-2`}
-                >
+                <div key={m.key} className={`flex flex-col items-center rounded-lg ${m.bg} py-2`}>
                   <Icon className={`mb-1 h-3.5 w-3.5 ${m.color}`} />
                   <span className="text-sm font-bold text-foreground">{value}</span>
                   <span className="text-[10px] text-muted-foreground">{m.label}</span>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Filter, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -88,25 +89,40 @@ export function EmailFilters({
 }: EmailFiltersProps) {
   const showCampaign = !!onCampaignChange && !!campaignOptions?.length;
 
-  const categories = showCampaign
-    ? [
-        ...filterCategories,
-        {
-          key: "campaign",
-          label: "Campaign",
-          options: campaignOptions!.map((c) => ({ label: c, value: c })),
-        },
-      ]
-    : filterCategories;
+  const categories = useMemo(
+    () =>
+      showCampaign
+        ? [
+            ...filterCategories,
+            {
+              key: "campaign",
+              label: "Campaign",
+              options: campaignOptions!.map((c) => ({ label: c, value: c })),
+            },
+          ]
+        : filterCategories,
+    [showCampaign, campaignOptions],
+  );
 
-  const filterHandlers: Record<string, { value: string; onChange: (v: string) => void }> = {
-    status: { value: status, onChange: onStatusChange },
-    classification: { value: classification, onChange: onClassificationChange },
-    clientStep: { value: clientStep, onChange: onClientStepChange },
-    ...(showCampaign
-      ? { campaign: { value: campaign ?? "", onChange: onCampaignChange! } }
-      : {}),
-  };
+  const filterHandlers = useMemo<Record<string, { value: string; onChange: (v: string) => void }>>(
+    () => ({
+      status: { value: status, onChange: onStatusChange },
+      classification: { value: classification, onChange: onClassificationChange },
+      clientStep: { value: clientStep, onChange: onClientStepChange },
+      ...(showCampaign ? { campaign: { value: campaign ?? "", onChange: onCampaignChange! } } : {}),
+    }),
+    [
+      status,
+      onStatusChange,
+      classification,
+      onClassificationChange,
+      clientStep,
+      onClientStepChange,
+      showCampaign,
+      campaign,
+      onCampaignChange,
+    ],
+  );
 
   const activeFilters = categories
     .filter((cat) => !!filterHandlers[cat.key].value)
@@ -138,18 +154,11 @@ export function EmailFilters({
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 border-dashed"
-          >
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 border-dashed">
             <Filter className="h-3.5 w-3.5" />
             Filters
             {hasActiveFilters && (
-              <Badge
-                variant="secondary"
-                className="ml-1 h-5 min-w-5 rounded-full px-1.5 text-xs"
-              >
+              <Badge variant="secondary" className="ml-1 h-5 min-w-5 rounded-full px-1.5 text-xs">
                 {activeFilters.length}
               </Badge>
             )}
@@ -163,9 +172,7 @@ export function EmailFilters({
                 <DropdownMenuSubTrigger className="cursor-pointer">
                   <span className="flex-1">{category.label}</span>
                   {handler.value && (
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      active
-                    </span>
+                    <span className="ml-2 text-xs text-muted-foreground">active</span>
                   )}
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent className="min-w-[140px]">
@@ -185,9 +192,7 @@ export function EmailFilters({
                       key={option.value}
                       onClick={() => handler.onChange(option.value)}
                       className={`cursor-pointer ${
-                        handler.value === option.value
-                          ? "bg-accent font-medium"
-                          : ""
+                        handler.value === option.value ? "bg-accent font-medium" : ""
                       }`}
                     >
                       {option.label}
@@ -227,6 +232,7 @@ export function EmailFilters({
           <button
             type="button"
             onClick={filter.onRemove}
+            aria-label={`Remove ${filter.categoryLabel} filter`}
             className="ml-0.5 rounded-sm p-0.5 hover:bg-muted-foreground/20"
           >
             <X className="h-3 w-3" />

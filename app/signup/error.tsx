@@ -14,7 +14,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    if (process.env.NODE_ENV === "development") console.error(error);
   }, [error]);
 
   return (
@@ -24,28 +24,28 @@ export default function Error({
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
             <AlertTriangle className="h-6 w-6 text-red-600" />
           </div>
-          <CardTitle className="text-xl font-semibold text-gray-900">Erro no Cadastro</CardTitle>
+          <CardTitle className="text-xl font-semibold text-gray-900">Signup Error</CardTitle>
           <CardDescription className="text-gray-600">
-            Não foi possível carregar a página de cadastro. Verifique sua conexão.
+            Failed to load the signup page. Check your connection.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Button onClick={reset} className="w-full" variant="default">
             <RefreshCw className="mr-2 h-4 w-4" />
-            Tentar Novamente
+            Try Again
           </Button>
 
           <Button asChild className="w-full" variant="outline">
             <Link href="/login">
               <LogIn className="mr-2 h-4 w-4" />
-              Ir para Login
+              Go to Login
             </Link>
           </Button>
 
           {process.env.NODE_ENV === "development" && (
             <details className="text-left">
               <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
-                Detalhes do erro
+                Error details
               </summary>
               <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto text-gray-700">
                 {error.message}

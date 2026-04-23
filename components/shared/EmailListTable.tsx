@@ -248,6 +248,7 @@ export function EmailListTable({
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label="Edit email"
                       className="h-8 w-8 text-muted-foreground hover:text-foreground"
                       onClick={() => onViewDetails(email)}
                     >
@@ -256,6 +257,7 @@ export function EmailListTable({
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label="Delete email"
                       className="h-8 w-8 text-muted-foreground hover:bg-red-500/10 hover:text-red-500"
                       onClick={() => onDelete(email)}
                     >

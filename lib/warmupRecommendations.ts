@@ -24,31 +24,31 @@ export function classifyDailyLimit(dailyLimit: number): RiskInfo {
   if (dailyLimit <= WARMUP_LIMITS.SAFE) {
     return {
       level: "safe",
-      label: "Seguro",
-      description: `Até ${WARMUP_LIMITS.SAFE}/dia é o limite conservador`,
+      label: "Safe",
+      description: `Up to ${WARMUP_LIMITS.SAFE}/day is the conservative limit`,
       tone: "emerald",
     };
   }
   if (dailyLimit <= WARMUP_LIMITS.OPTIMAL) {
     return {
       level: "optimal",
-      label: "Ótimo",
-      description: `${WARMUP_LIMITS.OPTIMAL}/dia é o equilíbrio ideal`,
+      label: "Optimal",
+      description: `${WARMUP_LIMITS.OPTIMAL}/day is the sweet spot`,
       tone: "blue",
     };
   }
   if (dailyLimit <= WARMUP_LIMITS.MAX) {
     return {
       level: "risky",
-      label: "Arriscado",
-      description: `${WARMUP_LIMITS.OPTIMAL + 1}–${WARMUP_LIMITS.MAX}/dia é o máximo tolerável`,
+      label: "Risky",
+      description: `${WARMUP_LIMITS.OPTIMAL + 1}–${WARMUP_LIMITS.MAX}/day is the upper tolerable range`,
       tone: "amber",
     };
   }
   return {
     level: "very_risky",
-    label: "Muito arriscado",
-    description: `Acima de ${WARMUP_LIMITS.MAX}/dia pode queimar a reputação do domínio`,
+    label: "Very risky",
+    description: `Above ${WARMUP_LIMITS.MAX}/day can burn your domain reputation`,
     tone: "red",
   };
 }

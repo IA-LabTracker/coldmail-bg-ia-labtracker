@@ -226,6 +226,7 @@ export function ScheduleTable({
                       <Button
                         variant="ghost"
                         size="sm"
+                        aria-label="Schedule options"
                         className="h-8 w-8 p-0"
                         onClick={(e) => e.stopPropagation()}
                       >

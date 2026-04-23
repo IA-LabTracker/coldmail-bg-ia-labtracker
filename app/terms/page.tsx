@@ -23,22 +23,22 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
 const sections = [
-  { id: "aceitacao", number: "01", title: "Aceitação dos Termos", icon: ScrollText },
-  { id: "definicoes", number: "02", title: "Definições", icon: BookOpen },
-  { id: "descricao", number: "03", title: "Descrição do Serviço", icon: Mail },
-  { id: "cadastro", number: "04", title: "Cadastro e Conta", icon: Users },
-  { id: "uso-permitido", number: "05", title: "Uso Permitido", icon: Shield },
-  { id: "restricoes", number: "06", title: "Restrições de Uso", icon: XCircle },
-  { id: "contas-email", number: "07", title: "Contas de Email Conectadas", icon: Globe },
-  { id: "propriedade", number: "08", title: "Propriedade Intelectual", icon: Lock },
-  { id: "privacidade", number: "09", title: "Privacidade e Proteção de Dados", icon: Shield },
-  { id: "disponibilidade", number: "10", title: "Disponibilidade e Garantias", icon: Server },
-  { id: "limitacao", number: "11", title: "Limitação de Responsabilidade", icon: AlertTriangle },
-  { id: "indenizacao", number: "12", title: "Indenização", icon: HandshakeIcon },
-  { id: "rescisao", number: "13", title: "Rescisão", icon: Gavel },
-  { id: "alteracoes", number: "14", title: "Alterações nos Termos", icon: Pencil },
-  { id: "lei-aplicavel", number: "15", title: "Lei Aplicável e Foro", icon: Scale },
-  { id: "disposicoes", number: "16", title: "Disposições Gerais", icon: FileText },
+  { id: "acceptance", number: "01", title: "Acceptance of Terms", icon: ScrollText },
+  { id: "definitions", number: "02", title: "Definitions", icon: BookOpen },
+  { id: "description", number: "03", title: "Service Description", icon: Mail },
+  { id: "registration", number: "04", title: "Registration and Account", icon: Users },
+  { id: "permitted-use", number: "05", title: "Permitted Use", icon: Shield },
+  { id: "restrictions", number: "06", title: "Use Restrictions", icon: XCircle },
+  { id: "connected-accounts", number: "07", title: "Connected Email Accounts", icon: Globe },
+  { id: "ip", number: "08", title: "Intellectual Property", icon: Lock },
+  { id: "privacy", number: "09", title: "Privacy and Data Protection", icon: Shield },
+  { id: "availability", number: "10", title: "Availability and Warranties", icon: Server },
+  { id: "liability", number: "11", title: "Limitation of Liability", icon: AlertTriangle },
+  { id: "indemnification", number: "12", title: "Indemnification", icon: HandshakeIcon },
+  { id: "termination", number: "13", title: "Termination", icon: Gavel },
+  { id: "changes", number: "14", title: "Changes to the Terms", icon: Pencil },
+  { id: "governing-law", number: "15", title: "Governing Law and Jurisdiction", icon: Scale },
+  { id: "general", number: "16", title: "General Provisions", icon: FileText },
 ];
 
 function SectionCard({
@@ -89,7 +89,7 @@ export default function TermsPage() {
             >
               <Link href="/login">
                 <ArrowLeft className="h-4 w-4" />
-                Voltar ao Login
+                Back to Login
               </Link>
             </Button>
           </div>
@@ -100,19 +100,19 @@ export default function TermsPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                Termos de Uso
+                Terms of Use
               </h1>
               <p className="mt-2 text-base text-muted-foreground">
-                Cold Email Pro — Plataforma de Automação de Cold Emails
+                Cold Email Pro — Cold Email Automation Platform
               </p>
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 <Badge variant="secondary" className="gap-1.5">
                   <FileText className="h-3 w-3" />
-                  Versão 1.0
+                  Version 1.0
                 </Badge>
                 <Badge variant="secondary" className="gap-1.5">
                   <Pencil className="h-3 w-3" />
-                  Atualizado em 20/02/2026
+                  Updated 02/20/2026
                 </Badge>
               </div>
             </div>
@@ -125,7 +125,7 @@ export default function TermsPage() {
           <aside className="hidden lg:block w-64 shrink-0">
             <div className="sticky top-8">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Navegação
+                Navigation
               </p>
               <nav className="space-y-1">
                 {sections.map((s) => (
@@ -143,42 +143,42 @@ export default function TermsPage() {
           </aside>
 
           <div className="min-w-0 flex-1 space-y-6">
-            <SectionCard id="aceitacao" number="01" title="Aceitação dos Termos" icon={ScrollText}>
+            <SectionCard id="acceptance" number="01" title="Acceptance of Terms" icon={ScrollText}>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Ao acessar ou usar o Cold Email Pro (&quot;Serviço&quot;), você concorda em ficar
-                vinculado a estes Termos de Uso (&quot;Termos&quot;). Se você não concordar com
-                qualquer parte destes Termos, não poderá acessar ou usar o Serviço. O uso continuado
-                do Serviço após quaisquer alterações nestes Termos constitui sua aceitação das
-                alterações.
+                By accessing or using Cold Email Pro (the &quot;Service&quot;), you agree to be
+                bound by these Terms of Use (the &quot;Terms&quot;). If you do not agree with any
+                part of these Terms, you may not access or use the Service. Continued use of the
+                Service after any changes to these Terms constitutes your acceptance of those
+                changes.
               </p>
             </SectionCard>
 
-            <SectionCard id="definicoes" number="02" title="Definições" icon={BookOpen}>
+            <SectionCard id="definitions" number="02" title="Definitions" icon={BookOpen}>
               <div className="space-y-3">
                 {[
                   {
-                    term: "Serviço",
-                    desc: "A plataforma Cold Email Pro, incluindo todas as funcionalidades de envio de emails, gerenciamento de campanhas, importação de contatos e relatórios.",
+                    term: "Service",
+                    desc: "The Cold Email Pro platform, including all features for sending emails, managing campaigns, importing contacts, and reporting.",
                   },
                   {
-                    term: "Usuário",
-                    desc: "Qualquer pessoa ou entidade que acesse ou utilize o Serviço.",
+                    term: "User",
+                    desc: "Any person or entity that accesses or uses the Service.",
                   },
                   {
-                    term: "Conta Conectada",
-                    desc: "Conta de email de terceiros vinculada ao Serviço para envio de campanhas.",
+                    term: "Connected Account",
+                    desc: "A third-party email account linked to the Service for sending campaigns.",
                   },
                   {
-                    term: "Campanha",
-                    desc: "Conjunto de emails configurados para envio automatizado através do Serviço.",
+                    term: "Campaign",
+                    desc: "A set of emails configured to be sent automatically through the Service.",
                   },
                   {
-                    term: "Dados Pessoais",
-                    desc: "Qualquer informação que identifique ou possa identificar uma pessoa natural.",
+                    term: "Personal Data",
+                    desc: "Any information that identifies or can identify a natural person.",
                   },
                   {
-                    term: "Conteúdo do Usuário",
-                    desc: "Todos os dados, textos, listas de contatos e materiais enviados pelo Usuário ao Serviço.",
+                    term: "User Content",
+                    desc: "All data, text, contact lists, and materials submitted by the User to the Service.",
                   },
                 ].map((item) => (
                   <div key={item.term} className="flex gap-3 rounded-lg bg-muted/40 px-4 py-3">
@@ -191,38 +191,36 @@ export default function TermsPage() {
               </div>
             </SectionCard>
 
-            <SectionCard id="descricao" number="03" title="Descrição do Serviço" icon={Mail}>
+            <SectionCard id="description" number="03" title="Service Description" icon={Mail}>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                O Cold Email Pro é uma plataforma SaaS de automação de emails frios (cold emails)
-                que permite aos Usuários criar, gerenciar e enviar campanhas de email em massa para
-                prospecção comercial. O Serviço inclui funcionalidades como importação de listas de
-                contatos, criação de templates, agendamento de envios, rastreamento de aberturas e
-                cliques, e relatórios de desempenho.
+                Cold Email Pro is a SaaS cold email automation platform that enables Users to
+                create, manage, and send bulk email campaigns for commercial prospecting. The
+                Service includes features such as contact list import, template creation, send
+                scheduling, open and click tracking, and performance reporting.
               </p>
             </SectionCard>
 
-            <SectionCard id="cadastro" number="04" title="Cadastro e Conta" icon={Users}>
+            <SectionCard id="registration" number="04" title="Registration and Account" icon={Users}>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Para utilizar o Serviço, você deve criar uma conta fornecendo informações precisas e
-                atualizadas. Você é responsável por manter a confidencialidade de suas credenciais
-                de acesso e por todas as atividades realizadas em sua conta. Você concorda em
-                notificar imediatamente o Cold Email Pro sobre qualquer uso não autorizado de sua
-                conta.
+                To use the Service, you must create an account by providing accurate and up-to-date
+                information. You are responsible for keeping your access credentials confidential
+                and for all activities that occur in your account. You agree to notify Cold Email
+                Pro immediately of any unauthorized use of your account.
               </p>
             </SectionCard>
 
-            <SectionCard id="uso-permitido" number="05" title="Uso Permitido" icon={Shield}>
+            <SectionCard id="permitted-use" number="05" title="Permitted Use" icon={Shield}>
               <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
-                O Serviço deve ser utilizado exclusivamente para fins de prospecção comercial
-                legítima (B2B). Ao utilizar o Serviço, você concorda que:
+                The Service must be used exclusively for legitimate B2B commercial prospecting. By
+                using the Service, you agree that:
               </p>
               <ul className="space-y-2">
                 {[
-                  "Possui base legal adequada para enviar emails aos destinatários de suas campanhas.",
-                  "Seus emails não conterão conteúdo ilegal, fraudulento, enganoso, difamatório, obsceno ou de outra forma objetável.",
-                  "Não utilizará o Serviço para enviar spam, phishing ou qualquer tipo de email não solicitado em violação às leis aplicáveis.",
-                  "Cumprirá todas as leis e regulamentos aplicáveis ao envio de emails comerciais, incluindo, mas não se limitando a: LGPD (Brasil), CAN-SPAM Act (EUA) e GDPR (União Europeia).",
-                  "Incluirá mecanismo de descadastro (opt-out) funcional em todos os emails enviados através do Serviço.",
+                  "You have an adequate legal basis to send emails to the recipients of your campaigns.",
+                  "Your emails will not contain illegal, fraudulent, misleading, defamatory, obscene, or otherwise objectionable content.",
+                  "You will not use the Service to send spam, phishing, or any kind of unsolicited email in violation of applicable laws.",
+                  "You will comply with all laws and regulations applicable to commercial email, including but not limited to: LGPD (Brazil), CAN-SPAM Act (USA), and GDPR (European Union).",
+                  "You will include a working opt-out mechanism in all emails sent through the Service.",
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-muted-foreground">
                     <div className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
@@ -232,19 +230,19 @@ export default function TermsPage() {
               </ul>
             </SectionCard>
 
-            <SectionCard id="restricoes" number="06" title="Restrições de Uso" icon={XCircle}>
+            <SectionCard id="restrictions" number="06" title="Use Restrictions" icon={XCircle}>
               <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
-                Você concorda em <strong className="text-foreground">NÃO</strong>:
+                You agree <strong className="text-foreground">NOT</strong> to:
               </p>
               <ul className="space-y-2">
                 {[
-                  "Revender, sublicenciar ou comercializar o acesso ao Serviço ou qualquer dado obtido através dele.",
-                  "Fazer engenharia reversa, descompilar ou tentar extrair o código-fonte do Serviço.",
-                  "Utilizar o Serviço para enviar emails que violem direitos de propriedade intelectual de terceiros.",
-                  "Tentar contornar quaisquer limitações técnicas ou de segurança do Serviço.",
-                  "Utilizar bots, scrapers ou outros meios automatizados para acessar o Serviço de forma não autorizada.",
-                  "Compartilhar credenciais de acesso com terceiros não autorizados.",
-                  "Enviar emails com conteúdo malicioso, vírus ou malware.",
+                  "Resell, sublicense, or commercialize access to the Service or any data obtained through it.",
+                  "Reverse engineer, decompile, or attempt to extract the source code of the Service.",
+                  "Use the Service to send emails that infringe third-party intellectual property rights.",
+                  "Attempt to bypass any technical or security limitations of the Service.",
+                  "Use bots, scrapers, or other automated means to access the Service without authorization.",
+                  "Share access credentials with unauthorized third parties.",
+                  "Send emails with malicious content, viruses, or malware.",
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-muted-foreground">
                     <div className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
@@ -255,126 +253,126 @@ export default function TermsPage() {
             </SectionCard>
 
             <SectionCard
-              id="contas-email"
+              id="connected-accounts"
               number="07"
-              title="Contas de Email Conectadas"
+              title="Connected Email Accounts"
               icon={Globe}
             >
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Ao conectar contas de email de terceiros ao Serviço, você declara que possui
-                autorização para utilizar essas contas para envio de emails comerciais. O Cold Email
-                Pro não se responsabiliza por suspensões, bloqueios ou penalidades aplicadas por
-                provedores de email devido ao uso de suas contas através do Serviço. Você é o único
-                responsável por manter a reputação de suas contas de email e domínios.
+                By connecting third-party email accounts to the Service, you represent that you
+                are authorized to use those accounts for sending commercial email. Cold Email Pro
+                is not responsible for suspensions, blocks, or penalties applied by email
+                providers due to use of your accounts through the Service. You are solely
+                responsible for maintaining the reputation of your email accounts and domains.
               </p>
             </SectionCard>
 
-            <SectionCard id="propriedade" number="08" title="Propriedade Intelectual" icon={Lock}>
+            <SectionCard id="ip" number="08" title="Intellectual Property" icon={Lock}>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Todo o conteúdo, design, código-fonte, funcionalidades e tecnologia do Serviço são
-                de propriedade exclusiva do Cold Email Pro e estão protegidos por leis de
-                propriedade intelectual. Você retém todos os direitos sobre o Conteúdo do Usuário
-                enviado ao Serviço, concedendo ao Cold Email Pro uma licença limitada para processar
-                esses dados exclusivamente para a prestação do Serviço.
+                All content, design, source code, features, and technology of the Service are the
+                exclusive property of Cold Email Pro and are protected by intellectual property
+                laws. You retain all rights to the User Content submitted to the Service and grant
+                Cold Email Pro a limited license to process that data solely for the purpose of
+                providing the Service.
               </p>
             </SectionCard>
 
             <SectionCard
-              id="privacidade"
+              id="privacy"
               number="09"
-              title="Privacidade e Proteção de Dados"
+              title="Privacy and Data Protection"
               icon={Shield}
             >
               <p className="text-sm leading-relaxed text-muted-foreground">
-                O Cold Email Pro se compromete a proteger seus dados pessoais em conformidade com a
-                LGPD e demais legislações aplicáveis. Ao utilizar o Serviço, você consente com a
-                coleta e processamento de dados conforme descrito em nossa Política de Privacidade.
-                Você é o controlador dos dados pessoais de terceiros que enviar ao Serviço e é
-                responsável por garantir a base legal adequada para esse tratamento.
+                Cold Email Pro is committed to protecting your personal data in compliance with
+                LGPD and other applicable laws. By using the Service, you consent to the
+                collection and processing of data as described in our Privacy Policy. You are the
+                controller of any third-party personal data you submit to the Service and are
+                responsible for ensuring an adequate legal basis for that processing.
               </p>
             </SectionCard>
 
             <SectionCard
-              id="disponibilidade"
+              id="availability"
               number="10"
-              title="Disponibilidade e Garantias"
+              title="Availability and Warranties"
               icon={Server}
             >
               <p className="text-sm leading-relaxed text-muted-foreground">
-                O Serviço é fornecido &quot;COMO ESTÁ&quot; e &quot;CONFORME DISPONÍVEL&quot;. O
-                Cold Email Pro não garante que o Serviço será ininterrupto, livre de erros ou que
-                atenderá a todos os seus requisitos. Não garantimos taxas específicas de entrega de
-                emails, taxas de abertura, ou que seus emails não serão classificados como spam
-                pelos provedores de email dos destinatários.
+                The Service is provided &quot;AS IS&quot; and &quot;AS AVAILABLE&quot;. Cold Email
+                Pro does not guarantee that the Service will be uninterrupted, error-free, or
+                will meet all of your requirements. We do not guarantee specific email delivery
+                rates, open rates, or that your emails will not be classified as spam by
+                recipients&apos; email providers.
               </p>
             </SectionCard>
 
             <SectionCard
-              id="limitacao"
+              id="liability"
               number="11"
-              title="Limitação de Responsabilidade"
+              title="Limitation of Liability"
               icon={AlertTriangle}
             >
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Na extensão máxima permitida por lei, o Cold Email Pro não será responsável por
-                quaisquer danos indiretos, incidentais, especiais, consequenciais ou punitivos,
-                incluindo perda de lucros, dados, oportunidades de negócios ou goodwill, resultantes
-                do uso ou incapacidade de uso do Serviço. A responsabilidade agregada total do Cold
-                Email Pro está limitada ao valor pago pelo Usuário nos 12 meses anteriores ao evento
-                que deu origem à reclamação.
+                To the maximum extent permitted by law, Cold Email Pro will not be liable for any
+                indirect, incidental, special, consequential, or punitive damages, including loss
+                of profits, data, business opportunities, or goodwill, resulting from your use or
+                inability to use the Service. The total aggregate liability of Cold Email Pro is
+                limited to the amount paid by the User in the 12 months preceding the event that
+                gave rise to the claim.
               </p>
             </SectionCard>
 
-            <SectionCard id="indenizacao" number="12" title="Indenização" icon={HandshakeIcon}>
+            <SectionCard id="indemnification" number="12" title="Indemnification" icon={HandshakeIcon}>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Você concorda em indenizar e isentar o Cold Email Pro, seus diretores, funcionários
-                e parceiros de quaisquer reclamações, danos, perdas ou despesas (incluindo
-                honorários advocatícios) decorrentes de: (a) seu uso do Serviço; (b) violação destes
-                Termos; (c) violação de direitos de terceiros; ou (d) conteúdo dos emails enviados
-                através do Serviço.
+                You agree to indemnify and hold harmless Cold Email Pro, its directors, employees,
+                and partners from any claims, damages, losses, or expenses (including attorneys&apos;
+                fees) arising from: (a) your use of the Service; (b) breach of these Terms; (c)
+                infringement of third-party rights; or (d) the content of emails sent through the
+                Service.
               </p>
             </SectionCard>
 
-            <SectionCard id="rescisao" number="13" title="Rescisão" icon={Gavel}>
+            <SectionCard id="termination" number="13" title="Termination" icon={Gavel}>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                O Cold Email Pro reserva-se o direito de suspender ou encerrar sua conta a qualquer
-                momento, com ou sem aviso prévio, caso você viole estes Termos ou utilize o Serviço
-                de forma que possa causar danos ao Cold Email Pro ou a terceiros. Você pode encerrar
-                sua conta a qualquer momento entrando em contato com nosso suporte. Após o
-                encerramento, seus dados serão excluídos em até 30 dias, salvo quando a retenção for
-                necessária por obrigação legal.
+                Cold Email Pro reserves the right to suspend or terminate your account at any
+                time, with or without prior notice, if you breach these Terms or use the Service
+                in a way that could cause harm to Cold Email Pro or to third parties. You may
+                terminate your account at any time by contacting our support. After termination,
+                your data will be deleted within 30 days, except where retention is required by
+                law.
               </p>
             </SectionCard>
 
-            <SectionCard id="alteracoes" number="14" title="Alterações nos Termos" icon={Pencil}>
+            <SectionCard id="changes" number="14" title="Changes to the Terms" icon={Pencil}>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                O Cold Email Pro pode modificar estes Termos a qualquer momento. Alterações
-                significativas serão comunicadas por email ou através de notificação no Serviço. O
-                uso continuado do Serviço após a publicação das alterações constitui sua aceitação
-                dos novos Termos.
+                Cold Email Pro may modify these Terms at any time. Significant changes will be
+                communicated by email or through an in-Service notification. Continued use of the
+                Service after the changes are published constitutes your acceptance of the new
+                Terms.
               </p>
             </SectionCard>
 
-            <SectionCard id="lei-aplicavel" number="15" title="Lei Aplicável e Foro" icon={Scale}>
+            <SectionCard id="governing-law" number="15" title="Governing Law and Jurisdiction" icon={Scale}>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Estes Termos serão regidos e interpretados de acordo com as leis da República
-                Federativa do Brasil. Fica eleito o foro da comarca de São Paulo/SP como competente
-                para dirimir quaisquer controvérsias decorrentes destes Termos, com renúncia
-                expressa a qualquer outro, por mais privilegiado que seja.
+                These Terms are governed by and construed in accordance with the laws of the
+                Federative Republic of Brazil. The courts of São Paulo/SP are elected as the
+                competent venue to settle any disputes arising from these Terms, with express
+                waiver of any other, however privileged it may be.
               </p>
             </SectionCard>
 
-            <SectionCard id="disposicoes" number="16" title="Disposições Gerais" icon={FileText}>
+            <SectionCard id="general" number="16" title="General Provisions" icon={FileText}>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Se qualquer disposição destes Termos for considerada inválida ou inexequível, as
-                demais disposições permanecerão em pleno vigor e efeito. A falha do Cold Email Pro
-                em exercer qualquer direito previsto nestes Termos não constituirá renúncia a esse
-                direito. Estes Termos constituem o acordo integral entre você e o Cold Email Pro em
-                relação ao uso do Serviço.
+                If any provision of these Terms is deemed invalid or unenforceable, the remaining
+                provisions will remain in full force and effect. Failure by Cold Email Pro to
+                exercise any right provided in these Terms does not constitute a waiver of that
+                right. These Terms constitute the entire agreement between you and Cold Email Pro
+                regarding use of the Service.
               </p>
             </SectionCard>
 
-            {/* Contato */}
+            {/* Contact */}
             <Separator />
 
             <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
@@ -383,9 +381,9 @@ export default function TermsPage() {
                   <Mail className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-base font-semibold text-foreground">Dúvidas?</h3>
+                  <h3 className="text-base font-semibold text-foreground">Questions?</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Em caso de dúvidas sobre estes Termos de Uso, entre em contato conosco.
+                    If you have questions about these Terms of Use, please contact us.
                   </p>
                 </div>
                 <Button variant="outline" asChild className="shrink-0">
@@ -398,7 +396,7 @@ export default function TermsPage() {
               <Button variant="ghost" size="sm" asChild className="gap-2 text-muted-foreground">
                 <a href="#">
                   <ArrowLeft className="h-4 w-4 rotate-90" />
-                  Voltar ao topo
+                  Back to top
                 </a>
               </Button>
             </div>

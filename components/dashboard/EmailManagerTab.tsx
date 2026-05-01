@@ -60,47 +60,50 @@ export function EmailManagerTab({ emails, setEmails, fetchEmails, setError }: Em
   } = useEmailSelection(emails);
 
   const filteredEmails = useMemo(() => {
-    let filtered = emails;
+    const lowerSearch = searchFilter ? searchFilter.toLowerCase() : "";
+    const fromTime = dateRangeFilter?.from ? dateRangeFilter.from.getTime() : null;
+    const toTime = dateRangeFilter?.to ? dateRangeFilter.to.getTime() : null;
+    const hasAnyFilter =
+      lowerSearch !== "" ||
+      statusFilter !== "" ||
+      classificationFilter !== "" ||
+      clientStepFilter !== "" ||
+      campaignFilter !== "" ||
+      fromTime !== null ||
+      toTime !== null;
 
-    if (searchFilter) {
-      const lowerSearch = searchFilter.toLowerCase();
-      filtered = filtered.filter(
-        (e) =>
-          e.company.toLowerCase().includes(lowerSearch) ||
-          e.email.toLowerCase().includes(lowerSearch) ||
-          (e.lead_name || "").toLowerCase().includes(lowerSearch) ||
-          (e.lead_category || "").toLowerCase().includes(lowerSearch) ||
-          (e.client_tag || "").toLowerCase().includes(lowerSearch),
-      );
-    }
+    if (!hasAnyFilter) return emails;
 
-    if (statusFilter) {
-      filtered = filtered.filter((e) => e.status === statusFilter);
-    }
+    return emails.filter((e) => {
+      if (statusFilter && e.status !== statusFilter) return false;
+      if (classificationFilter && e.lead_classification !== classificationFilter) return false;
+      if (clientStepFilter && e.client_step !== clientStepFilter) return false;
+      if (campaignFilter && e.campaign_name !== campaignFilter) return false;
 
-    if (classificationFilter) {
-      filtered = filtered.filter((e) => e.lead_classification === classificationFilter);
-    }
+      if (fromTime !== null || toTime !== null) {
+        if (!e.created_at) return false;
+        const t = Date.parse(e.created_at);
+        if (Number.isNaN(t)) return false;
+        if (fromTime !== null && t < fromTime) return false;
+        if (toTime !== null && t > toTime) return false;
+      }
 
-    if (clientStepFilter) {
-      filtered = filtered.filter((e) => e.client_step === clientStepFilter);
-    }
+      if (lowerSearch) {
+        const company = e.company ? e.company.toLowerCase() : "";
+        if (company.includes(lowerSearch)) return true;
+        const email = e.email ? e.email.toLowerCase() : "";
+        if (email.includes(lowerSearch)) return true;
+        const leadName = e.lead_name ? e.lead_name.toLowerCase() : "";
+        if (leadName.includes(lowerSearch)) return true;
+        const leadCategory = e.lead_category ? e.lead_category.toLowerCase() : "";
+        if (leadCategory.includes(lowerSearch)) return true;
+        const clientTag = e.client_tag ? e.client_tag.toLowerCase() : "";
+        if (clientTag.includes(lowerSearch)) return true;
+        return false;
+      }
 
-    if (campaignFilter) {
-      filtered = filtered.filter((e) => e.campaign_name === campaignFilter);
-    }
-
-    if (dateRangeFilter?.from) {
-      filtered = filtered.filter((e) => {
-        const createdAt = e.created_at ? new Date(e.created_at) : null;
-        if (!createdAt) return false;
-        if (dateRangeFilter.from && createdAt < dateRangeFilter.from) return false;
-        if (dateRangeFilter.to && createdAt > dateRangeFilter.to) return false;
-        return true;
-      });
-    }
-
-    return filtered;
+      return true;
+    });
   }, [emails, searchFilter, statusFilter, classificationFilter, clientStepFilter, campaignFilter, dateRangeFilter]);
 
   const companyGroups = useMemo(() => groupEmailsByCompany(filteredEmails), [filteredEmails]);

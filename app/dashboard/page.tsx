@@ -9,8 +9,29 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorMessage } from "@/components/shared/ErrorMessage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, TableProperties } from "lucide-react";
-import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
-import { EmailManagerTab } from "@/components/dashboard/EmailManagerTab";
+import dynamic from "next/dynamic";
+
+const AnalyticsDashboard = dynamic(
+  () =>
+    import("@/components/analytics/AnalyticsDashboard").then((m) => ({
+      default: m.AnalyticsDashboard,
+    })),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[40rem] w-full rounded-xl" />,
+  },
+);
+
+const EmailManagerTab = dynamic(
+  () =>
+    import("@/components/dashboard/EmailManagerTab").then((m) => ({
+      default: m.EmailManagerTab,
+    })),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[40rem] w-full rounded-xl" />,
+  },
+);
 
 const DASHBOARD_TAB_KEY = "coldmail:dashboard-tab";
 

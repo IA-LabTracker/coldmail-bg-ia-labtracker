@@ -72,8 +72,23 @@ Todas as tabelas em `public`, RLS via `auth.uid() = user_id`.
 2. **CHECK constraint:** `sender_emails.platform` só aceita `none | smartlead | resend | zapmail | google | outlook`
    (extendido em `20260422120000_extend_sender_platform_check.sql`). Adicionar novo provider exige
    DROP + ADD do constraint.
-3. **`email_warmup_interactions` não tem RLS útil** — não tem `user_id`. O hook filtra via
-   `sender IN (myAddresses)` em query client-side.
+3. **`email_warmup_interactions` RLS** — não tem `user_id`. As policies (a partir de
+   `20260501120000_security_rls_lockdown.sql`) escopam via `sender IN (sender_emails do user)`
+   no SELECT e via `sender IN (...)` no INSERT. N8N continua escrevendo via service role.
+
+### Hardening (2026-05-01) — leia antes de mexer no banco
+
+- **Toda tabela usa RLS** com policies do tipo `user_id = (SELECT auth.uid())` — o `(SELECT ...)`
+  é **obrigatório** para o planner cachear o uid uma vez por query (sem isso, ele re-avalia por
+  linha; advisor `auth_rls_initplan`).
+- **Nunca recriar** policies `Allow all *` ou `USING (true)` — havia em `emails` e `settings`,
+  e qualquer usuário autenticado lia/modificava dados de TODOS os outros tenants.
+- **Toda função plpgsql** tem `SET search_path = ''`. Ao criar nova função, qualifique TODAS as
+  refs com `public.` ou `pg_catalog.` no corpo, senão quebra em runtime.
+- **Funções SECURITY DEFINER** (`handle_new_user`, `handle_new_user_subscription`) tiveram
+  `EXECUTE` revogado de `anon, authenticated, PUBLIC` — disparam apenas por trigger.
+- **Índices**: hot queries usam composite `(user_id, X)` (porque RLS força `user_id` first).
+  Antes de adicionar single-column `(X)`, pergunte se `(user_id, X)` não cobre.
 
 ### Edge Functions
 
@@ -170,7 +185,9 @@ components/
 - `resolveTemplate.ts` — escolhe template default por sender.platform
 - `autoRouting.ts` — distribuição round-robin entre senders
 - `warmupRecommendations.ts` — `WARMUP_LIMITS`, `classifyDailyLimit`
-- `importParser.ts`, `csvParser.ts` — import
+- `importParser.ts` — XLSX/CSV parser com size+row caps, formula-injection defang, email RFC check
+- `csvParser.ts` — fallback CSV puro
+- `validateWebhookUrl.ts` — guard de SSRF para URLs vindas do user (server-side)
 - `groupEmailsByCompany`, `groupLinkedInByCompany` — agrupamento
 - `formatDate`, `sparkline`, `utils` (cn)
 
@@ -251,6 +268,69 @@ Exemplos: `useScheduleActions`, `SenderEmailKPICards` (com `computeEmailStats`).
 - Config de KPIs/colunas em module-level, **nunca** recriar no render
 - Comparações de data em `.getTime()` (number), não `Date < Date`
 - Pré-agrupar (`Map<key, T[]>`) antes de loops N×M (ex: `resolveSelectedEmails`)
+- **Single-pass filter** com short-circuit por flag (ver `EmailManagerTab.filteredEmails`)
+  em vez de `.filter().filter()...` em sequência
+- **Single-pass aggregate** quando precisa de N agregações da mesma lista — popular N buckets
+  num for loop só, depois derivar contagens e sparklines deles (ver `KPICards`)
+- **Lazy-load tabs/charts pesados** com `next/dynamic` + `ssr: false` (ver `app/dashboard/page.tsx`
+  importando `AnalyticsDashboard` e `EmailManagerTab` dinamicamente)
+- **Recharts pesa muito**: qualquer page nova com gráficos deve carregar via dynamic import.
+
+---
+
+## Segurança (modelo + regras de ouro)
+
+> **2026-05-01:** lockdown completo aplicado em DB + código. Ler antes de tocar em qualquer
+> rota de API, query, ou input vindo do usuário.
+
+### Princípios
+
+1. **RLS é a primeira linha de defesa** — toda tabela tem policies escopadas por `user_id`.
+   Nunca usar `service role key` no client. No server, só usar onde é INDISPENSÁVEL (webhooks
+   sem sessão), e sempre filtrando manualmente por `user_id` extraído do JWT verificado.
+2. **Tudo que vem do usuário é hostil** — emails, URLs, HTML de templates, CSV/XLSX, querystring.
+3. **CSP + headers ativos** em `next.config.js`: `frame-ancestors 'none'`, `object-src 'none'`,
+   `base-uri 'self'`, `form-action 'self'`, HSTS preload, X-Frame DENY, X-Content nosniff.
+   `connect-src` é permissivo (`https:`/`wss:`) porque users configuram webhooks próprios.
+4. **CSRF**: rotas server confiam em cookies SameSite=Lax do Supabase + verificação explícita
+   de `auth.getUser()`. Rotas com `Authorization: Bearer` exigem token explícito do client.
+
+### Componentes de segurança
+
+| Risco | Onde mora a defesa |
+|---|---|
+| **SSRF** em webhook URL do user | `lib/validateWebhookUrl.ts` — bloqueia private/loopback/link-local + portas estranhas. Usado em `app/api/schedules/trigger/route.ts`. **Rotas novas que façam fetch para URL do user DEVEM usar este helper.** |
+| **SSRF preventivo no client** | `hooks/useSettings.ts` — Zod refine bloqueia o user de salvar URL com host privado (defense in depth, server valida de novo). |
+| **Open redirect** na landing | `app/page.tsx#safeLandingPath` — whitelist de paths internos. |
+| **XSS em template HTML** | `components/templates/TemplatePreview.tsx` renderiza dentro de `<iframe sandbox="" srcDoc=...>`. **Nunca** voltar para `dangerouslySetInnerHTML`. |
+| **CSP** | `next.config.js#securityHeaders` aplica em todas as rotas. |
+| **Webhook timing attack** | `app/api/unipile-callback/route.ts#safeCompare` usa `crypto.timingSafeEqual`. Secret é OBRIGATÓRIO (era opcional). |
+| **Open redirect Unipile** | `app/api/unipile-auth/route.ts#isAllowedRedirectUrl` valida só contra `NEXT_PUBLIC_APP_URL` (nunca contra Host header). |
+| **Formula injection (CSV)** | `lib/importParser.ts#defangFormula` prefixa `'` em células que começam com `= + - @ \t \r`. |
+| **Email-header injection** | `lib/importParser.ts#sanitizeEmail` strip CR/LF/TAB e valida regex RFC-básica. |
+| **Decompression bomb / DOS no import** | `parseImportFile` enforce `MAX_FILE_BYTES=50MB` + `MAX_ROWS=100_000` via `XLSX.read({ sheetRows })`. |
+
+### Ao criar uma rota nova em `app/api/`
+
+1. Comece com `const supabase = createSupabaseServer(); const { data: { user } } = await supabase.auth.getUser();` e retorne 401 se faltar user.
+2. Se for fetch para URL do user: passe pelo `validateWebhookUrl()` antes do `fetch()`. Inclua
+   `signal: AbortSignal.timeout(15_000)` e `redirect: "error"`.
+3. Se usar `SUPABASE_SERVICE_ROLE_KEY`: filtre todo `.from(...)` por `user_id = user.id`.
+   RLS é bypass com service role — você é o único guard.
+4. Erro 5xx: log detalhe no servidor, **não devolva** o detalhe para o client em produção
+   (`process.env.NODE_ENV === "production" ? "Internal error" : err.message`).
+5. Webhooks de terceiros (Unipile, Zapmail) verificam segredo com `timingSafeEqual` e
+   **falham fechado** se o segredo não estiver configurado no env.
+
+### Variáveis de ambiente sensíveis
+
+- **NUNCA** logar `SUPABASE_SERVICE_ROLE_KEY`, `UNIPILE_API_KEY`, `ZAPMAIL_API_KEY`, `N8N_API_KEY`,
+  `UNIPILE_WEBHOOK_SECRET`. `.env` é gitignored — confirmar com `git ls-files .env` antes de
+  commitar qualquer mudança em config.
+- `UNIPILE_WEBHOOK_SECRET` é **obrigatório** em prod — sem ele a rota retorna 500 e nada é
+  processado. Configure no painel da Unipile + no env do deploy.
+- Para habilitar **Leaked Password Protection** (último warning do advisor) ative em
+  Authentication → Security no painel do Supabase.
 
 ---
 

@@ -8,6 +8,34 @@ interface ParseImportResult {
   filteredOutRows: number;
 }
 
+// Hard caps protect against memory exhaustion / decompression bombs.
+const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
+const MAX_ROWS = 100_000;
+
+const VALID_EMAIL_STATUSES: ReadonlyArray<EmailStatus> = [
+  "researched",
+  "sent",
+  "opened",
+  "replied",
+  "bounced",
+  "scheduled",
+];
+
+// Cells starting with these chars become live formulas when re-opened in
+// Excel/Sheets. We don't defang on import because (a) no export feature
+// exists today, and (b) it would mangle phone numbers like "+55 11 ...".
+// If/when an export-to-CSV/XLSX path is added, run the defang there.
+export const FORMULA_TRIGGERS = /^[=+\-@\t\r]/;
+
+const EMAIL_RE = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
+
+function sanitizeEmail(raw: string): string {
+  // Strip CR/LF/TAB to prevent email-header injection in downstream SMTP.
+  const cleaned = raw.replace(/[\r\n\t]/g, "").trim().toLowerCase();
+  if (!cleaned) return "";
+  return EMAIL_RE.test(cleaned) ? cleaned : "";
+}
+
 const TREATED_COLUMNS = [
   "company",
   "email",
@@ -199,7 +227,8 @@ function processTreatedData(rawData: Record<string, unknown>[]): ParseImportResu
 
   rawData.forEach((raw) => {
     const company = sanitizeValue(findColumnValue(raw, "company"));
-    const email = sanitizeValue(findColumnValue(raw, "email"));
+    const rawEmail = sanitizeValue(findColumnValue(raw, "email"));
+    const email = sanitizeEmail(rawEmail);
 
     if (!company && !email) {
       filteredOutRows++;
@@ -210,10 +239,15 @@ function processTreatedData(rawData: Record<string, unknown>[]): ParseImportResu
       validations.push({
         rowIndex: rows.length,
         field: "email",
-        message: "Email is empty",
-        severity: "warning",
+        message: rawEmail ? "Email format is invalid" : "Email is empty",
+        severity: rawEmail ? "error" : "warning",
       });
     }
+
+    const rawStatus = sanitizeValue(findColumnValue(raw, "status")).toLowerCase();
+    const status: EmailStatus = VALID_EMAIL_STATUSES.includes(rawStatus as EmailStatus)
+      ? (rawStatus as EmailStatus)
+      : ("researched" as EmailStatus);
 
     if (!company) {
       validations.push({
@@ -242,7 +276,7 @@ function processTreatedData(rawData: Record<string, unknown>[]): ParseImportResu
       region: sanitizeValue(findColumnValue(raw, "region")) || "Utah",
       industry: sanitizeValue(findColumnValue(raw, "industry")),
       keywords,
-      status: (sanitizeValue(findColumnValue(raw, "status")) || "researched") as EmailStatus,
+      status,
       campaign_name: sanitizeValue(findColumnValue(raw, "campaign_name")),
       lead_name: leadName,
       phone: sanitizeValue(findColumnValue(raw, "phone")),
@@ -277,14 +311,17 @@ function mapRawRow(
 
   const workEmail = sanitizeValue(findColumnValue(raw, "Use Work Email"));
   const fallbackEmail = sanitizeValue(findColumnValue(raw, "Email"));
-  const email = workEmail || fallbackEmail;
+  const rawEmail = workEmail || fallbackEmail;
+  const email = sanitizeEmail(rawEmail);
 
   if (!email) {
     validations.push({
       rowIndex: index,
       field: "email",
-      message: "No email found (checked Use Work Email and Email columns)",
-      severity: "warning",
+      message: rawEmail
+        ? "Email format is invalid"
+        : "No email found (checked Use Work Email and Email columns)",
+      severity: rawEmail ? "error" : "warning",
     });
   }
 
@@ -349,14 +386,34 @@ function processRawData(rawData: Record<string, unknown>[]): ParseImportResult {
 
 export function parseImportFile(file: File): Promise<ParseImportResult> {
   return new Promise((resolve, reject) => {
+    if (file.size > MAX_FILE_BYTES) {
+      reject(
+        new Error(
+          `File is too large (${Math.round(file.size / 1024 / 1024)} MB). Max ${
+            MAX_FILE_BYTES / 1024 / 1024
+          } MB.`,
+        ),
+      );
+      return;
+    }
+
     const reader = new FileReader();
 
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array" });
+        // sheetRows caps how many rows SheetJS materialises — protects against
+        // a tiny .xlsx (zip) that decompresses to millions of rows.
+        const workbook = XLSX.read(data, { type: "array", sheetRows: MAX_ROWS + 1 });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const rawData = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet);
+
+        if (rawData.length > MAX_ROWS) {
+          reject(
+            new Error(`File has more than ${MAX_ROWS.toLocaleString()} rows. Split it into batches.`),
+          );
+          return;
+        }
 
         const format = detectFormat(rawData);
         const result = format === "treated" ? processTreatedData(rawData) : processRawData(rawData);

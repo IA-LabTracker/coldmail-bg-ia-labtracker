@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServer } from "@/lib/supabase-server";
+import { describeWebhookUrlError, validateWebhookUrl } from "@/lib/validateWebhookUrl";
 
 export async function POST(request: Request) {
   try {
@@ -28,10 +29,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Webhook URL not configured" }, { status: 400 });
     }
 
-    const webhookResponse = await fetch(webhookUrl, {
+    const validation = validateWebhookUrl(webhookUrl);
+    if (!validation.ok) {
+      return NextResponse.json(
+        { error: describeWebhookUrlError(validation.error!) },
+        { status: 400 },
+      );
+    }
+
+    const webhookResponse = await fetch(validation.url!.toString(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(15_000),
+      redirect: "error",
     });
 
     if (!webhookResponse.ok) {
@@ -39,7 +50,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error: `Webhook responded with ${webhookResponse.status}`,
-          details,
+          details: details.slice(0, 500),
         },
         { status: 502 },
       );
@@ -47,7 +58,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unexpected error";
+    const isProd = process.env.NODE_ENV === "production";
+    const message =
+      !isProd && error instanceof Error ? error.message : "Unexpected error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

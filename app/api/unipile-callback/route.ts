@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { timingSafeEqual } from "crypto";
 
 // Map Unipile Account Status webhook messages to our status format
 function normalizeStatus(raw: string): string {
@@ -10,19 +11,36 @@ function normalizeStatus(raw: string): string {
   return upper; // CREATION_SUCCESS, RECONNECTED, CONNECTING, etc.
 }
 
+function safeCompare(provided: string | null, expected: string): boolean {
+  if (!provided) return false;
+  // Normalise lengths to keep timingSafeEqual happy and the comparison constant-time.
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) {
+    // Still run a constant-time compare against a same-length scratch buffer
+    // so we don't leak length via early return timing.
+    timingSafeEqual(b, b);
+    return false;
+  }
+  return timingSafeEqual(a, b);
+}
+
 export async function POST(request: NextRequest) {
   try {
-    // Validate webhook secret via query parameter or header (if configured)
+    // Webhook secret is REQUIRED. Without it the endpoint would accept
+    // any payload and let an attacker take over linkedin_accounts entries.
     const expectedSecret = process.env.UNIPILE_WEBHOOK_SECRET;
+    if (!expectedSecret) {
+      console.error("Unipile callback: UNIPILE_WEBHOOK_SECRET is not configured");
+      return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+    }
 
-    if (expectedSecret) {
-      const secretFromQuery = request.nextUrl.searchParams.get("secret");
-      const secretFromHeader = request.headers.get("unipile-auth");
+    const secretFromQuery = request.nextUrl.searchParams.get("secret");
+    const secretFromHeader = request.headers.get("unipile-auth");
 
-      if (secretFromQuery !== expectedSecret && secretFromHeader !== expectedSecret) {
-        console.error("Unipile callback: secret mismatch");
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
+    if (!safeCompare(secretFromQuery, expectedSecret) && !safeCompare(secretFromHeader, expectedSecret)) {
+      console.error("Unipile callback: secret mismatch");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Parse body - handle both JSON and form-encoded
@@ -117,7 +135,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (upsertError) {
-      console.error("Failed to upsert linkedin_accounts:", JSON.stringify(upsertError));
+      console.error("Unipile callback: failed to upsert linkedin_accounts");
       return NextResponse.json({ error: "Failed to save account event" }, { status: 500 });
     }
 
@@ -128,13 +146,12 @@ export async function POST(request: NextRequest) {
         .upsert({ user_id: clientId, linkedin_account_id: account_id }, { onConflict: "user_id" });
 
       if (settingsError) {
-        console.error("Failed to update settings:", JSON.stringify(settingsError));
+        console.error("Unipile callback: failed to update settings");
       }
     }
 
     return NextResponse.json({ ok: true, status: normalizedStatus });
-  } catch (err) {
-    console.error("Unipile callback: unexpected error", err);
+  } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

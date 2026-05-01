@@ -10,9 +10,30 @@ import { Settings } from "@/types";
 
 export type FeedbackMessage = { type: "success" | "error"; text: string } | null;
 
+const PRIVATE_HOST_PATTERN =
+  /^(localhost|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|0\.0\.0\.0|::1?$|fc[0-9a-f]{2}:|fd[0-9a-f]{2}:|fe80:)/i;
+
+const webhookUrlField = z
+  .string()
+  .max(2048, "URL too long")
+  .refine(
+    (value) => {
+      if (value === "") return true;
+      try {
+        const parsed = new URL(value);
+        if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return false;
+        if (PRIVATE_HOST_PATTERN.test(parsed.hostname)) return false;
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    { message: "Enter a public http(s) URL — private hosts are not allowed" },
+  );
+
 const settingsSchema = z.object({
-  webhookUrl: z.string().url("Enter a valid URL").or(z.literal("")),
-  linkedinWebhookUrl: z.string().url("Enter a valid URL").or(z.literal("")),
+  webhookUrl: webhookUrlField,
+  linkedinWebhookUrl: webhookUrlField,
 });
 
 export type SettingsFormValues = z.infer<typeof settingsSchema>;

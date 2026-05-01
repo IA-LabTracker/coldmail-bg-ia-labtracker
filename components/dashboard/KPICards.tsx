@@ -86,18 +86,29 @@ const kpiConfig = [
 ];
 
 export function KPICards({ emails, activeFilter, onFilterChange }: KPICardsProps) {
-  const sparklines = useMemo(() => {
-    return kpiConfig.map((kpi) => {
-      const filtered = emails.filter(kpi.filterFn);
-      return generateSparkline(filtered, (e) => e.date_sent || e.created_at);
-    });
+  // Single pass over emails: build per-KPI filtered arrays, then derive
+  // counts and sparklines from those. Avoids 5x .filter() walks per render
+  // and 5x more inside the sparkline memo.
+  const { values, sparklines } = useMemo(() => {
+    const buckets: Email[][] = kpiConfig.map(() => []);
+    for (const e of emails) {
+      for (let i = 0; i < kpiConfig.length; i++) {
+        if (kpiConfig[i].filterFn(e)) buckets[i].push(e);
+      }
+    }
+    return {
+      values: buckets.map((b) => b.length),
+      sparklines: buckets.map((b) =>
+        generateSparkline(b, (e) => e.date_sent || e.created_at),
+      ),
+    };
   }, [emails]);
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
       {kpiConfig.map((kpi, idx) => {
         const Icon = kpi.icon;
-        const value = kpi.compute(emails);
+        const value = values[idx];
         const isActive =
           activeFilter?.type === kpi.filter.type && activeFilter?.value === kpi.filter.value;
 

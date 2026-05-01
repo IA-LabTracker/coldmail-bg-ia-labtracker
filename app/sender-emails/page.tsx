@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { Loader2, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { SenderEmail, Email, EmailTemplate } from "@/types";
+import { SenderEmail, EmailTemplate } from "@/types";
 import {
   useSenderEmails,
   CreateSenderEmailInput,
@@ -22,28 +22,29 @@ import { SenderEmailListSkeleton } from "@/components/sender-emails/SenderEmailL
 import { CreateSenderEmailDialog } from "@/components/sender-emails/CreateSenderEmailDialog";
 import { resolveTemplateForSender } from "@/lib/resolveTemplate";
 
+interface SenderStatRow {
+  sender_email_id: string;
+  total: number;
+  sent: number;
+  replied: number;
+  bounced: number;
+  opened: number;
+}
+
 function buildSenderEmailGroups(
   senderEmails: SenderEmail[],
-  emails: Email[],
+  statsBySender: Map<string, SenderStatRow>,
   templates: EmailTemplate[],
 ): SenderEmailGroup[] {
-  const emailsBySender = new Map<string, Email[]>();
-  for (const email of emails) {
-    if (!email.sender_email_id) continue;
-    const list = emailsBySender.get(email.sender_email_id) || [];
-    list.push(email);
-    emailsBySender.set(email.sender_email_id, list);
-  }
-
   return senderEmails.map((se) => {
-    const seEmails = emailsBySender.get(se.id) || [];
+    const s = statsBySender.get(se.id);
     return {
       senderEmail: se,
-      totalEmails: seEmails.length,
-      sent: seEmails.filter((e) => e.status === "sent").length,
-      replied: seEmails.filter((e) => e.status === "replied").length,
-      bounced: seEmails.filter((e) => e.status === "bounced").length,
-      opened: seEmails.filter((e) => e.status === "opened").length,
+      totalEmails: s?.total ?? 0,
+      sent: s?.sent ?? 0,
+      replied: s?.replied ?? 0,
+      bounced: s?.bounced ?? 0,
+      opened: s?.opened ?? 0,
       template: resolveTemplateForSender(se.platform, templates),
     };
   });
@@ -62,8 +63,8 @@ export default function SenderEmailsPage() {
   } = useSenderEmails();
   const { templates, loading: templatesLoading } = useTemplates();
 
-  const [emails, setEmails] = useState<Email[]>([]);
-  const [emailsLoading, setEmailsLoading] = useState(true);
+  const [statsBySender, setStatsBySender] = useState<Map<string, SenderStatRow>>(new Map());
+  const [statsLoading, setStatsLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEmail, setEditingEmail] = useState<SenderEmail | null>(null);
   const [zapmailSyncing, setZapmailSyncing] = useState(false);
@@ -103,23 +104,29 @@ export default function SenderEmailsPage() {
     }
   }, [refetch]);
 
-  // Fetch all emails for metrics
+  // Fetch per-sender aggregates via RPC. Returns one row per sender
+  // instead of every email — server does the COUNT, client just maps.
   useEffect(() => {
     if (!user) return;
-    setEmailsLoading(true);
-    supabase
-      .from("emails")
-      .select("id,status,sender_email_id")
-      .eq("user_id", user.id)
-      .then(({ data }) => {
-        setEmails((data as Email[]) || []);
-        setEmailsLoading(false);
-      });
+    setStatsLoading(true);
+    supabase.rpc("sender_email_stats").then(({ data, error }) => {
+      if (error) {
+        toast.error(error.message);
+        setStatsLoading(false);
+        return;
+      }
+      const map = new Map<string, SenderStatRow>();
+      for (const row of (data as SenderStatRow[]) || []) {
+        map.set(row.sender_email_id, row);
+      }
+      setStatsBySender(map);
+      setStatsLoading(false);
+    });
   }, [user]);
 
   const groups = useMemo(
-    () => buildSenderEmailGroups(senderEmails, emails, templates),
-    [senderEmails, emails, templates],
+    () => buildSenderEmailGroups(senderEmails, statsBySender, templates),
+    [senderEmails, statsBySender, templates],
   );
 
   const handleOpenCreate = useCallback(() => {
@@ -162,7 +169,7 @@ export default function SenderEmailsPage() {
   );
 
   const defaultEmail = senderEmails.find((se) => se.is_default);
-  const isLoading = loading || emailsLoading || templatesLoading;
+  const isLoading = loading || statsLoading || templatesLoading;
 
   // Platform stats
   const platformCounts = senderEmails.reduce(

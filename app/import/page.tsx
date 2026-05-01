@@ -53,16 +53,15 @@ export default function ImportPage() {
   useEffect(() => {
     if (!user) return;
     const fetchCampaigns = async () => {
-      const { data } = await supabase
-        .from("emails")
-        .select("campaign_name")
-        .eq("user_id", user.id)
-        .neq("campaign_name", "")
-        .not("campaign_name", "is", null);
+      // RPC does DISTINCT + ORDER BY in Postgres — returns N strings
+      // instead of N copies of every email's campaign_name.
+      const { data } = await supabase.rpc("user_campaign_names");
       if (data) {
-        const unique = Array.from(new Set(data.map((d) => d.campaign_name).filter(Boolean)));
-        unique.sort((a, b) => a.localeCompare(b));
-        setDbCampaigns(unique);
+        setDbCampaigns(
+          (data as { campaign_name: string }[])
+            .map((r) => r.campaign_name)
+            .filter(Boolean),
+        );
       }
     };
     fetchCampaigns();

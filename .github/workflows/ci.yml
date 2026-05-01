@@ -6,10 +6,22 @@ on:
   pull_request:
     branches: [main]
 
+# Cancel superseded runs on the same ref so a quick second push
+# doesn't queue behind a stale build.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Default-deny: this workflow only needs to read the checked-out code.
+permissions:
+  contents: read
+
 jobs:
-  validate-build:
+  validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
+      # Stub values — only needed because next build evaluates env at compile time.
       NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key
       NEXT_PUBLIC_APP_URL: https://example.com
@@ -26,6 +38,15 @@ jobs:
 
       - name: Install
         run: npm ci
+
+      # Typecheck and lint are explicit steps so they fail fast — the
+      # `next build` step skips lint (eslint.ignoreDuringBuilds=true)
+      # and only finds type errors after compiling.
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
 
       - name: Build
         run: npm run build

@@ -7,6 +7,7 @@ import { SIDEBAR_LAST_PAGE_KEY } from "@/components/Sidebar";
 
 const ALLOWED_LANDING_PATHS = [
   "/dashboard",
+  "/inbox",
   "/campaigns",
   "/import",
   "/schedules",

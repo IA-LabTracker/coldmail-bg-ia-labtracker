@@ -34,7 +34,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { AlertCircle, Loader2, Building2, User, MapPin, Send, MessageSquare } from "lucide-react";
+import { AlertCircle, Loader2, Building2, User, MapPin, Send, MessageSquare, Briefcase } from "lucide-react";
 import { SenderEmail } from "@/types";
 import { SenderEmailSelect } from "@/components/sender-emails/SenderEmailSelect";
 
@@ -79,6 +79,9 @@ const editSchema = z.object({
   cc_email_2: z.string().optional(),
   cc_email_3: z.string().optional(),
   bcc_email_1: z.string().optional(),
+  deal_status: z.enum(["none", "open", "won", "lost"]),
+  deal_value: z.string().optional(),
+  deal_lost_reason: z.string().optional(),
 });
 
 type EditFormValues = z.infer<typeof editSchema>;
@@ -99,6 +102,16 @@ export function EmailDetailModal({ email, senderEmails = [], open, onOpenChange,
 
   const onSubmit = async (values: EditFormValues) => {
     try {
+      const dealStatus = values.deal_status === "none" ? null : values.deal_status;
+      const dealValueParsed = values.deal_value ? Number(values.deal_value) : null;
+      const previousStatus = email.deal_status ?? null;
+      const dealClosedAt =
+        dealStatus === "won" || dealStatus === "lost"
+          ? previousStatus === dealStatus
+            ? (email.deal_closed_at ?? new Date().toISOString())
+            : new Date().toISOString()
+          : null;
+
       const { error: updateError } = await supabase
         .from("emails")
         .update({
@@ -120,6 +133,10 @@ export function EmailDetailModal({ email, senderEmails = [], open, onOpenChange,
           cc_email_2: values.cc_email_2 || null,
           cc_email_3: values.cc_email_3 || null,
           bcc_email_1: values.bcc_email_1 || null,
+          deal_status: dealStatus,
+          deal_value: Number.isFinite(dealValueParsed) ? dealValueParsed : null,
+          deal_closed_at: dealClosedAt,
+          deal_lost_reason: dealStatus === "lost" ? values.deal_lost_reason || null : null,
         })
         .eq("id", email.id);
 
@@ -179,7 +196,7 @@ export function EmailDetailModal({ email, senderEmails = [], open, onOpenChange,
             className="flex flex-col flex-1 overflow-hidden"
           >
             <Tabs defaultValue="general" className="flex flex-col flex-1 overflow-hidden">
-              <TabsList className="w-full grid grid-cols-4 shrink-0">
+              <TabsList className="w-full grid grid-cols-5 shrink-0">
                 <TabsTrigger value="general" className="text-xs gap-1">
                   <User className="h-3.5 w-3.5" />
                   General
@@ -195,6 +212,10 @@ export function EmailDetailModal({ email, senderEmails = [], open, onOpenChange,
                 <TabsTrigger value="replies" className="text-xs gap-1">
                   <MessageSquare className="h-3.5 w-3.5" />
                   Replies
+                </TabsTrigger>
+                <TabsTrigger value="deal" className="text-xs gap-1">
+                  <Briefcase className="h-3.5 w-3.5" />
+                  Deal
                 </TabsTrigger>
               </TabsList>
 
@@ -616,6 +637,87 @@ export function EmailDetailModal({ email, senderEmails = [], open, onOpenChange,
                       </div>
                     )}
                 </TabsContent>
+
+                {/* Deal Tab */}
+                <TabsContent value="deal" className="mt-0 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="deal_status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs text-muted-foreground">
+                            Deal status
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="none">No deal</SelectItem>
+                              <SelectItem value="open">Open</SelectItem>
+                              <SelectItem value="won">Won</SelectItem>
+                              <SelectItem value="lost">Lost</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="deal_value"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs text-muted-foreground">
+                            Deal value (R$)
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              inputMode="decimal"
+                              step="0.01"
+                              min="0"
+                              placeholder="0.00"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {form.watch("deal_status") === "lost" && (
+                    <FormField
+                      control={form.control}
+                      name="deal_lost_reason"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs text-muted-foreground">
+                            Lost reason
+                          </FormLabel>
+                          <FormControl>
+                            <Textarea
+                              rows={3}
+                              placeholder="Why was the deal lost? (e.g. budget, timing, competitor)"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  {email.deal_closed_at && (
+                    <p className="text-xs text-muted-foreground">
+                      Last closed: {formatDate(email.deal_closed_at)}
+                    </p>
+                  )}
+                </TabsContent>
               </div>
 
               {/* Footer with Save/Cancel */}
@@ -665,5 +767,8 @@ function getDefaults(email: Email | null): EditFormValues {
     cc_email_2: email?.cc_email_2 || "",
     cc_email_3: email?.cc_email_3 || "",
     bcc_email_1: email?.bcc_email_1 || "",
+    deal_status: (email?.deal_status as "open" | "won" | "lost" | undefined) ?? "none",
+    deal_value: email?.deal_value != null ? String(email.deal_value) : "",
+    deal_lost_reason: email?.deal_lost_reason || "",
   };
 }

@@ -10,6 +10,7 @@ import { StatusPieChart } from "./StatusPieChart";
 import { ClassificationPieChart } from "./ClassificationPieChart";
 import { CampaignBarChart } from "./CampaignBarChart";
 import { TopCompaniesTable } from "./TopCompaniesTable";
+import { PipelineSection } from "./PipelineSection";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface AnalyticsDashboardProps {
@@ -103,6 +104,11 @@ export function AnalyticsDashboard({ emails }: AnalyticsDashboardProps) {
       {/* Row 4: Top Companies Table */}
       <div className="animate-fade-up">
         <TopCompaniesTable data={topCompanies} />
+      </div>
+
+      {/* Row 5: Pipeline (deal value tracking, fed by /inbox + detail modal) */}
+      <div className="animate-fade-up">
+        <PipelineSection />
       </div>
     </div>
   );

@@ -98,6 +98,23 @@ export interface Email {
   reply_time?: string;
   sender_email_id?: string | null;
   dispatch_platform?: string | null;
+  // Pipeline / deal tracking (Feature 2)
+  deal_status?: DealStatus | null;
+  deal_value?: number | null;
+  deal_closed_at?: string | null;
+  deal_lost_reason?: string | null;
+}
+
+export type DealStatus = "open" | "won" | "lost";
+
+export interface ReplyAction {
+  email_id: string;
+  user_id: string;
+  intent_override: string | null;
+  is_archived: boolean;
+  archived_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export type EmailTemplatePlatform =

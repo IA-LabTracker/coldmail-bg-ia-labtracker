@@ -19,6 +19,7 @@ import {
   CreditCard,
   UserCircle,
   FileText,
+  Inbox,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import {
@@ -35,6 +36,7 @@ export const SIDEBAR_LAST_PAGE_KEY = "coldmail:last-page";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/inbox", label: "Inbox", icon: Inbox },
   { href: "/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/search", label: "Search & Trigger", icon: Search },
   { href: "/linkedin-table", label: "LinkedIn", icon: Linkedin },
